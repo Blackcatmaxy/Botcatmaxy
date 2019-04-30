@@ -29,7 +29,7 @@ namespace BotCatMaxy {
 
             Logging logger = new Logging(_client);
 
-            await _client.SetGameAsync("version 0.4.1");
+            await _client.SetGameAsync("version 0.4.2");
 
             await handler.InstallCommandsAsync();
             logger.SetUp();
