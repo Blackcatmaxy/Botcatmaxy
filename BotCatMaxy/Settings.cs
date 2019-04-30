@@ -420,6 +420,15 @@ namespace BotCatMaxy {
                     serializer.Serialize(sw, settings);
                 }
             }
+           public static void SaveModSettings(this ModerationSettings settings, SocketGuild Guild) {
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.NullValueHandling = NullValueHandling.Include;
+
+                using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/moderationSettings.txt"))
+                using (JsonTextWriter writer = new JsonTextWriter(sw)) {
+                    serializer.Serialize(sw, settings);
+                }
+            }
         }
         //Might replace these with a struct OR make them inherit from a "Saveable" class or make an interface
         //so then we can have a dynamic function to save things?
