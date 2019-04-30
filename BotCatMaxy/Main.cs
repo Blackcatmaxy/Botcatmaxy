@@ -46,9 +46,6 @@ namespace BotCatMaxy {
         }
 
         private async Task MessageReceivedAsync(SocketMessage message) {
-            if (message.Content == "!ping") {
-                await message.Channel.SendMessageAsync("Pong!");
-            }
             //Console.WriteLine("pizza");
             if (!message.Author.IsBot && message.Channel is SocketGuildChannel) {
                 _ = SwearFilter.CheckMessage(message);

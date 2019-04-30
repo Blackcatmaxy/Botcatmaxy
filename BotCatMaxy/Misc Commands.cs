@@ -19,5 +19,10 @@ namespace BotCatMaxy {
             embed.AddField("Report issues and contribute at", "https://github.com/Blackcatmaxy/Botcatmaxy", true);
             await ReplyAsync(embed: embed.Build());
         }
+
+        [Command("ping")]
+        public async Task Ping() {
+            await ReplyAsync("pong");
+        }
     }
 }
