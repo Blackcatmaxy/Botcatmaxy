@@ -10,12 +10,7 @@ using BotCatMaxy;
 using BotCatMaxy.Settings;
 
 namespace BotCatMaxy {
-    public class SettingsModule : ModuleBase<SocketCommandContext> {
-        [Command("!commands")]
-        public async Task ListCommands() {
-            await ReplyAsync("View commands here https://docs.google.com/document/d/1uVYHX9WEe2aRy2QbzMIwHMHthxJsViqu5Ah-yFKCANc/edit?usp=sharing");
-        }
-
+    public class SettingsModule : ModuleBase<SocketCommandContext> { 
         [Command("allowwarn")]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.Administrator)]
