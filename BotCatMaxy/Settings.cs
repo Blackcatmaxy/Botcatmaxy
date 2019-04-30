@@ -20,8 +20,8 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task AddWarnRole(SocketRole role) {
-            if (!Utilities.HasAdmin(Context.Message.Author as SocketGuildUser)) {
-                await ReplyAsync("You do not have administrator access");
+            if (!((SocketGuildUser)Context.User).HasAdmin()) {
+                await ReplyAsync("You do have administrator permissions");
                 return;
             }
 

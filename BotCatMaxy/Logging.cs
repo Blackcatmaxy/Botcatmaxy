@@ -50,7 +50,7 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 SocketTextChannel channel = message.Channel as SocketTextChannel;
                 if (message.Embeds.Count == 0) {
-                    embed.AddField(reason + " in #" + channel.Name,
+                    embed.AddField(reason + " in <#" + message.Channel.Id + ">",
                     message.Content, true);
                 } else {
                     embed.AddField(reason + " in #" + channel.Name,
