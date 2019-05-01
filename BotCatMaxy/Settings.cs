@@ -173,9 +173,9 @@ namespace BotCatMaxy {
                     string allBadWords = "";
                     foreach (BadWord badWord in badWords) {
                         if (allBadWords == "") {
-                            allBadWords = "Any words that contain or are the following words are not allowed: " + badWord.euphemism + (badWord.word);
+                            allBadWords = "Any words that contain or are the following words are not allowed: " + badWord.euphemism + "(" + badWord.word + ")";
                         } else {
-                            allBadWords += ", " + badWord.euphemism + (badWord.word);
+                            allBadWords += ", " + badWord.euphemism + "(" + badWord.word + ")";
                         }
                     }
                     await dMChannel.SendMessageAsync(allBadWords);
