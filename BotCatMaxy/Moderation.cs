@@ -368,6 +368,7 @@ namespace BotCatMaxy {
                     badWords = serializer.Deserialize<List<BadWord>>(reader);
                 }
 
+                //Checks if a message contains an invite
                 if (message.Content.Contains("discord.gg/")) {
                     if (!SettingFunctions.LoadModSettings(Guild).invitesAllowed) {
                         ModerationFunctions.WarnUser(message.Author, 0.5f, "Posted Invite", Guild.OwnerId + "/Infractions/Discord/" + message.Author.Id);
@@ -379,7 +380,6 @@ namespace BotCatMaxy {
                     }
                 }
 
-                //Guild.OwnerId
                 if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
                     foreach (BadWord badWord in badWords) {
                         if (message.Content.Contains(badWord.word)) {
