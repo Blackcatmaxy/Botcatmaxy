@@ -327,7 +327,7 @@ namespace BotCatMaxy {
         [RequireUserPermission(GuildPermission.BanMembers)]
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
-        public async Task RemooveWarnAsync(SocketUser user, int index) {
+        public async Task RemoveWarnAsync(SocketUser user, int index) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id)) {
                 List<Infraction> infractions = ModerationFunctions.LoadInfractions(Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
@@ -351,8 +351,11 @@ namespace BotCatMaxy {
         }
     }
 
-    public static class SwearFilter {
+    public static class Filter {
         public static async Task CheckMessage(SocketMessage message) {
+            if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
+                return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+            }
             var chnl = message.Channel as SocketGuildChannel;
             var Guild = chnl.Guild;
             if (Guild != null && Directory.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {

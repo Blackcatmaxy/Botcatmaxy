@@ -18,9 +18,10 @@ namespace BotCatMaxy {
                 MessageCacheSize = 120
             };
 
+            //Sets up the events
             _client = new DiscordSocketClient(config);
             _client.Log += Log;
-            _client.MessageReceived += MessageReceivedAsync;
+            _client.MessageReceived += SwearFilter.CheckMessage;
             await _client.LoginAsync(TokenType.Bot, HiddenInfo.token);
             await _client.StartAsync();
 
@@ -34,8 +35,8 @@ namespace BotCatMaxy {
             await handler.InstallCommandsAsync();
             logger.SetUp();
 
+            //Debug info
             await Log(new LogMessage(LogSeverity.Info, "Main", "Setup complete"));
-            //Console.WriteLine(DateTime.Now.TimeOfDay + " All classes created");
             if (!Directory.Exists("/home/bob_the_daniel/Data")) {
                 Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
             }
@@ -44,15 +45,6 @@ namespace BotCatMaxy {
             await Task.Delay(-1);
             await _client.SetGameAsync("shutting down");
         }
-
-        private async Task MessageReceivedAsync(SocketMessage message) {
-            //Console.WriteLine("pizza");
-            if (!message.Author.IsBot && message.Channel is SocketGuildChannel) {
-                _ = SwearFilter.CheckMessage(message);
-            }
-        }
-
-        //async Task MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) => Logging.LogDeleted("Deleted message", message.Value as SocketMessage);
 
         private Task Log(LogMessage msg) {
             Console.WriteLine(msg.ToString());
