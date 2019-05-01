@@ -77,21 +77,32 @@ namespace BotCatMaxy {
         }
     }
 }
-/*
+
 namespace Discord.Commands {
-    // Inherit from PreconditionAttribute
-    public class ModAttribute : CommandAttribute {
-        public Task<PreconditionResult> NeedAdmin(ICommandContext context, CommandInfo command, IServiceProvider services) {
-            // Check if this user is a Guild User, which is the only context where roles exist
-            if (context.Guild == null) {
+    public class CanWarnAttribute : PreconditionAttribute {
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services) {
+            //Makes sure it's in a server
+            if (context.User is SocketGuildUser gUser) {
+                // If this command was executed by a user with the appropriate role, return a success
+                if (gUser.CanWarn()) 
+                    return Task.FromResult(PreconditionResult.FromSuccess());
+                else
+                    return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
+            } else
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
-            }
-            if (Utilities.HasAdmin(context.Message.Author as SocketGuildUser)) {
-                return Task.FromResult(PreconditionResult.FromSuccess());
-            } else {
-                context.Channel.SendMessageAsync("You do not have the permission");
-                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
-            }
         }
     }
-}*/
+    public class HasAdminAttribute : PreconditionAttribute {
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services) {
+            //Makes sure it's in a server
+            if (context.User is SocketGuildUser gUser) {
+                // If this command was executed by a user with administrator permission, return a success
+                if (gUser.HasAdmin())
+                    return Task.FromResult(PreconditionResult.FromSuccess());
+                else
+                    return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
+            } else
+                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
+        }
+    }
+}

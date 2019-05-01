@@ -168,11 +168,8 @@ namespace BotCatMaxy {
     [RequireContext(ContextType.Guild)]
     public class GameWarnModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
+        [CanWarn()]
         public async Task WarnUserAsync(SocketUser user, float size, [Remainder] string reason) {
-            if (!((SocketGuildUser)Context.User).CanWarn()) {
-                await ReplyAsync("You do not have permission to use this command");
-                return;
-            }
             if (size > 999 || size < 0.01) {
                 await ReplyAsync("Why would you need to warn someone with that size?");
                 return;
@@ -185,11 +182,8 @@ namespace BotCatMaxy {
         }
 
         [Command("warn")]
+        [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
-            if (!((SocketGuildUser)Context.User).CanWarn()) {
-                await ReplyAsync("You do not have permission to use this command");
-                return;
-            }
             ModerationFunctions.CheckDirectories(Context.Guild);
             ModerationFunctions.WarnUser(user, 1, reason, Context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
 
@@ -198,6 +192,7 @@ namespace BotCatMaxy {
 
         [Command("warns")]
         [Alias("infractions", "warnings")]
+        [CanWarn()]
         public async Task CheckUserWarnsAsync(SocketUser user = null) {
             if (user == null) {
                 user = Context.Message.Author;
@@ -213,6 +208,7 @@ namespace BotCatMaxy {
 
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
+        [HasAdmin()]
         public async Task RemooveWarnAsync(SocketUser user, int index) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
                 await ReplyAsync("You do have administrator permissions");
@@ -292,17 +288,22 @@ namespace BotCatMaxy {
     [Alias("general", "chat", "")]
     [RequireContext(ContextType.Guild)]
     public class DiscordWarnModule : ModuleBase<SocketCommandContext> {
-        [RequireUserPermission(GuildPermission.BanMembers)]
         [Command("warn")]
+        [CanWarn()]
         public async Task WarnUserAsync(SocketUser user, float size, [Remainder] string reason) {
+            if (size > 999 || size < 0.01) {
+                await ReplyAsync("Why would you need to warn someone with that size?");
+                return;
+            }
+
             ModerationFunctions.CheckDirectories(Context.Guild);
             ModerationFunctions.WarnUser(user, size, reason, Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
 
-        [RequireUserPermission(GuildPermission.BanMembers)]
         [Command("warn")]
+        [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             ModerationFunctions.WarnUser(user, 1, reason, Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
@@ -324,9 +325,9 @@ namespace BotCatMaxy {
             }
         }
 
-        [RequireUserPermission(GuildPermission.BanMembers)]
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
+        [HasAdmin()]
         public async Task RemoveWarnAsync(SocketUser user, int index) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id)) {

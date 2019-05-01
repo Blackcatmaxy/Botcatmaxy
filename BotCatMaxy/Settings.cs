@@ -13,7 +13,7 @@ namespace BotCatMaxy {
     public class SettingsModule : ModuleBase<SocketCommandContext> {
         [Command("allowwarn")]
         [RequireContext(ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.Administrator)]
+        [HasAdmin]
         public async Task AddWarnRole(SocketRole role) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
                 await ReplyAsync("You do have administrator permissions");
@@ -43,7 +43,7 @@ namespace BotCatMaxy {
 
         [Command("removewarnability")]
         [RequireContext(ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.Administrator)]
+        [HasAdmin]
         public async Task RemoveWarnRole(SocketRole role) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
                 await ReplyAsync("You do have administrator permissions");
@@ -72,13 +72,8 @@ namespace BotCatMaxy {
         }
 
         [Command("toggleinvitewarn")]
-        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
         public async Task ToggleInviteWarn() {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permissions");
-                return;
-            }
-
             Console.WriteLine(DateTime.Now.ToShortTimeString() + " Toggling invite warn");
 
             IUserMessage message = await ReplyAsync("Trying to toggle");
@@ -157,11 +152,8 @@ namespace BotCatMaxy {
         }
 
         [Command("explicitbadwords")]
+        [CanWarn]
         public async Task ListExplicitBadWords() {
-            if (!((SocketGuildUser)Context.User).CanWarn()) {
-                await ReplyAsync("You do not have permission to use this command");
-                return;
-            }
             if (Directory.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId)) {
                 JsonSerializer serializer = new JsonSerializer();
                 serializer.NullValueHandling = NullValueHandling.Ignore;
@@ -192,7 +184,7 @@ namespace BotCatMaxy {
         }
 
         [Command("addbadword")]
-        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
                 await ReplyAsync("You do have administrator permissions");
@@ -235,13 +227,8 @@ namespace BotCatMaxy {
         }
 
         [Command("removebadword")]
-        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
         public async Task RemoveBadWord(string word) {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permissions");
-                return;
-            }
-
             ModerationFunctions.CheckDirectories(Context.Guild);
             List<BadWord> badWords;
 
@@ -286,11 +273,8 @@ namespace BotCatMaxy {
     [RequireContext(ContextType.Guild)]
     public class LogSettingCommands : ModuleBase<SocketCommandContext> {
         [Command("setchannel")]
+        [HasAdmin]
         public async Task SetLogChannel() {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do not have administrator access");
-                return;
-            }
             IUserMessage message = await ReplyAsync("Setting...");
             ModerationFunctions.CheckDirectories(Context.Guild);
             LogSettings settings = null;
@@ -326,11 +310,8 @@ namespace BotCatMaxy {
         }
 
         [Command("toggleLogDeleted")]
+        [HasAdmin]
         public async Task ToggleLoggingDeleted() {
-            if (!Utilities.HasAdmin(Context.Message.Author as SocketGuildUser)) {
-                await ReplyAsync("You do not have administrator access");
-                return;
-            }
             IUserMessage message = await ReplyAsync("Setting...");
             ModerationFunctions.CheckDirectories(Context.Guild);
             LogSettings settings = null;
