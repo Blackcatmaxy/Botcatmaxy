@@ -70,8 +70,10 @@ namespace BotCatMaxy {
             // to be executed; however, this may not always be desired,
             // as it may clog up the request queue should a user spam a
             // command.
-             if (!result.IsSuccess && result.ErrorReason != "Unknown command.")
-             await context.Channel.SendMessageAsync(result.ErrorReason);
+             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
+                await context.Channel.SendMessageAsync(result.ErrorReason);
+                Console.WriteLine(new LogMessage(LogSeverity.Error, "Commands", result.ErrorReason));
+             }
         }
     }
 }
