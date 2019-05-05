@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using BotCatMaxy.Settings;
 using BotCatMaxy;
+using System.Linq;
 //using Discord.Addons.Preconditions;
 
 namespace BotCatMaxy {
@@ -360,26 +361,25 @@ namespace BotCatMaxy {
             var chnl = message.Channel as SocketGuildChannel;
             var Guild = chnl.Guild;
             if (Guild != null && Directory.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.NullValueHandling = NullValueHandling.Ignore;
-                List<BadWord> badWords;
+                ModerationSettings modSettings = Guild.LoadModSettings(false);
+                List<BadWord> badWords = Guild.LoadBadWords();
 
-                using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
-                using (JsonTextReader reader = new JsonTextReader(sr)) {
-                    badWords = serializer.Deserialize<List<BadWord>>(reader);
-                }
-
-                //Checks if a message contains an invite
-                if (message.Content.Contains("discord.gg/")) {
-                    if (!SettingFunctions.LoadModSettings(Guild).invitesAllowed) {
-                        ModerationFunctions.WarnUser(message.Author, 0.5f, "Posted Invite", Guild.OwnerId + "/Infractions/Discord/" + message.Author.Id);
-                        await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
-
-                        Logging.LogDeleted("Bad word removed", message, Guild);
-                        await message.DeleteAsync();
-                        return;
+                if (modSettings != null) {
+                    if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
+                        return; //Returns if channel is set as not using automod
                     }
-                }
+                    //Checks if a message contains an invite
+                    if (message.Content.Contains("discord.gg/")) {
+                        if (!modSettings.invitesAllowed) {
+                            ModerationFunctions.WarnUser(message.Author, 0.5f, "Posted Invite", Guild.OwnerId + "/Infractions/Discord/" + message.Author.Id);
+                            await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
+
+                            Logging.LogDeleted("Bad word removed", message, Guild);
+                            await message.DeleteAsync();
+                            return;
+                        }
+                    }
+                } 
 
                 if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
                     foreach (BadWord badWord in badWords) {

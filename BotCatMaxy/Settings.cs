@@ -74,23 +74,9 @@ namespace BotCatMaxy {
         [Command("toggleinvitewarn")]
         [HasAdmin]
         public async Task ToggleInviteWarn() {
-            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Toggling invite warn");
-
             IUserMessage message = await ReplyAsync("Trying to toggle");
             ModerationFunctions.CheckDirectories(Context.Guild);
-            ModerationSettings settings = null;
-
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Include;
-            try {
-                StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt");
-                JsonTextReader reader = new JsonTextReader(sr);
-                settings = serializer.Deserialize<ModerationSettings>(reader);
-            } catch (Exception error) {
-                await message.ModifyAsync(msg => msg.Content = "an error has occurred loading settings " + error.Message);
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + "an error has occurred loading settings " + error.Message);
-            }
-
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -99,15 +85,7 @@ namespace BotCatMaxy {
             settings.invitesAllowed = !settings.invitesAllowed;
             Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
 
-            /*using (StreamWriter file = File.CreateText(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.text")) {
-                JsonSerializer newserializer = new JsonSerializer();
-                newserializer.Serialize(file, settings);
-            }*/
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
+            settings.SaveModSettings(Context.Guild);
 
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings")) {
                 Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings saved");
@@ -118,17 +96,27 @@ namespace BotCatMaxy {
             await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
         }
 
+        [Command("toggleautomod")]
+        [HasAdmin]
+        public async Task ToggleAutoMod() {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            
+            if (settings.channelsWithoutAutoMod.Contains(Context.Channel.Id)) {
+                settings.channelsWithoutAutoMod.Remove(Context.Channel.Id);
+                await ReplyAsync("Disabled automod in this channel");
+            } else {
+                settings.channelsWithoutAutoMod.Add(Context.Channel.Id);
+                await ReplyAsync("Enabled automod in this channel");
+            }
+
+            settings.SaveModSettings(Context.Guild);
+        }
+
         [Command("badwords")]
         public async Task ListBadWords() {
             if (Directory.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId)) {
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.NullValueHandling = NullValueHandling.Ignore;
-                List<BadWord> badWords;
+                List<BadWord> badWords = Context.Guild.LoadBadWords();
 
-                using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json"))
-                using (JsonTextReader reader = new JsonTextReader(sr)) {
-                    badWords = serializer.Deserialize<List<BadWord>>(reader);
-                }
                 IDMChannel dMChannel = await Context.User.GetOrCreateDMChannelAsync();
                 if (dMChannel == null) {
                     await ReplyAsync("Something has gone wrong, ERROR: DMChannel is null");
@@ -155,14 +143,8 @@ namespace BotCatMaxy {
         [CanWarn]
         public async Task ListExplicitBadWords() {
             if (Directory.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId)) {
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.NullValueHandling = NullValueHandling.Ignore;
-                List<BadWord> badWords;
+                List<BadWord> badWords = Context.Guild.LoadBadWords();
 
-                using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json"))
-                using (JsonTextReader reader = new JsonTextReader(sr)) {
-                    badWords = serializer.Deserialize<List<BadWord>>(reader);
-                }
                 IDMChannel dMChannel = await Context.User.GetOrCreateDMChannelAsync();
                 if (dMChannel == null) {
                     await ReplyAsync("Something has gone wrong, ERROR: DMChannel is null");
@@ -187,37 +169,22 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permissions");
+                await ReplyAsync("You do have administrator permission");
                 return;
             }
             ModerationFunctions.CheckDirectories(Context.Guild);
-            BadWord badWord = new BadWord();
-            badWord.word = word;
-            badWord.euphemism = euphemism;
-            badWord.size = size;
-            List<BadWord> badWords;
-
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
-
-            /*if (!File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json")) {
-                File.Create("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json");
-            }*/
-
-            using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json"))
-            using (JsonTextReader reader = new JsonTextReader(sr)) {
-                badWords = serializer.Deserialize<List<BadWord>>(reader);
-            }
+            BadWord badWord = new BadWord {
+                word = word,
+                euphemism = euphemism,
+                size = size
+            };
+            List<BadWord> badWords = Context.Guild.LoadBadWords();
 
             if (badWords == null) {
                 badWords = new List<BadWord>();
             }
             badWords.Add(badWord);
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, badWords);
-            }
+            badWords.SaveBadWords(Context.Guild);
 
             if (euphemism != null) {
                 await ReplyAsync("added " + badWord.word + " also known as " + euphemism + " to bad word list");
@@ -230,20 +197,7 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task RemoveBadWord(string word) {
             ModerationFunctions.CheckDirectories(Context.Guild);
-            List<BadWord> badWords;
-
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
-
-            if (!File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json")) {
-                await ReplyAsync("No bad words file found");
-                return;
-            }
-
-            using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json"))
-            using (JsonTextReader reader = new JsonTextReader(sr)) {
-                badWords = serializer.Deserialize<List<BadWord>>(reader);
-            }
+            List<BadWord> badWords = Context.Guild.LoadBadWords(); ;
 
             if (badWords == null) {
                 await ReplyAsync("Bad words is null");
@@ -257,10 +211,7 @@ namespace BotCatMaxy {
             }
             if (badToRemove != null) {
                 badWords.Remove(badToRemove);
-                using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/badwords.json"))
-                using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                    serializer.Serialize(sw, badWords);
-                }
+                badWords.SaveBadWords(Context.Guild);
 
                 await ReplyAsync("removed " + word + " from bad word list");
             } else {
@@ -334,7 +285,7 @@ namespace BotCatMaxy {
 
     namespace Settings {
         public static class SettingFunctions {
-            public static ModerationSettings LoadModSettings(IGuild guild, bool createFile = true) {
+            public static ModerationSettings LoadModSettings(this IGuild guild, bool createFile = true) {
                 ModerationSettings settings = null;
 
                 ModerationFunctions.CheckDirectories(guild);
@@ -370,7 +321,7 @@ namespace BotCatMaxy {
 
                 return settings;
             }
-            public static LogSettings LoadLogSettings(IGuild guild, bool createFile = true) {
+            public static LogSettings LoadLogSettings(this IGuild guild, bool createFile = true) {
                 LogSettings settings = null;
 
                 JsonSerializer serializer = new JsonSerializer();
@@ -407,7 +358,31 @@ namespace BotCatMaxy {
 
                 return settings;
             }
+            public static List<BadWord> LoadBadWords(this IGuild Guild) {
+                List<BadWord> badWords = null;
 
+                if (!File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
+                    return null;
+                }
+
+                using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
+                using (JsonTextReader reader = new JsonTextReader(sr)) {
+                    badWords = new JsonSerializer().Deserialize<List<BadWord>>(reader);
+                }
+
+                return badWords;
+            }
+            public static void SaveBadWords(this List<BadWord> badWords, IGuild Guild) {
+                if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
+                    JsonSerializer serializer = new JsonSerializer();
+                    using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
+                    using (JsonTextWriter writer = new JsonTextWriter(sw)) {
+                        serializer.Serialize(sw, badWords);
+                    }
+                } else {
+                    File.Create("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json");
+                }
+            }
             public static void SaveLogSettings(this LogSettings settings, IGuild Guild) {
                 JsonSerializer serializer = new JsonSerializer();
                 serializer.NullValueHandling = NullValueHandling.Include;
@@ -417,7 +392,7 @@ namespace BotCatMaxy {
                     serializer.Serialize(sw, settings);
                 }
             }
-           public static void SaveModSettings(this ModerationSettings settings, IGuild Guild) {
+            public static void SaveModSettings(this ModerationSettings settings, IGuild Guild) {
                 JsonSerializer serializer = new JsonSerializer();
                 serializer.NullValueHandling = NullValueHandling.Include;
 
@@ -436,6 +411,8 @@ namespace BotCatMaxy {
         }
         public class ModerationSettings {
             public List<ulong> ableToWarn = new List<ulong>();
+            public List<ulong> cantBeWarned = new List<ulong>();
+            public List<ulong> channelsWithoutAutoMod = new List<ulong>();
             public List<ulong> ableToBan = new List<ulong>();
             public bool useOwnerID = false;
             public bool moderateUsernames = false;
