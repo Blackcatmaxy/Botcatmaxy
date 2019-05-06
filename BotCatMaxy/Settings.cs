@@ -103,10 +103,10 @@ namespace BotCatMaxy {
             
             if (settings.channelsWithoutAutoMod.Contains(Context.Channel.Id)) {
                 settings.channelsWithoutAutoMod.Remove(Context.Channel.Id);
-                await ReplyAsync("Disabled automod in this channel");
+                await ReplyAsync("Enabled automod in this channel");
             } else {
                 settings.channelsWithoutAutoMod.Add(Context.Channel.Id);
-                await ReplyAsync("Enabled automod in this channel");
+                await ReplyAsync("Disabled automod in this channel");
             }
 
             settings.SaveModSettings(Context.Guild);
