@@ -95,22 +95,21 @@ namespace BotCatMaxy {
                 Infraction infraction = infractions[i];
 
                 //Gets how long ago all the infractions were
-                int daysAgo = (DateTime.Now.Date - infraction.time.Date).Days;
-                string timeAgo;
+                TimeSpan dateAgo = (DateTime.Now.Date - infraction.time.Date);
                 totalInfractions += infraction.size;
-                timeAgo = DateTime.Now.Month - infraction.time.Month + " months ago";
+                string timeAgo = MathF.Round(dateAgo.Days / 30) + " months ago";
                 
-                if (daysAgo <= 7) {
+                if (dateAgo.Days <= 7) {
                     last7Days += infraction.size;
                 }
-                if (daysAgo <= 30) {
+                if (dateAgo.Days <= 30) {
                     if (DateTime.Now.Day - infraction.time.Day == 1) {
                         plural = "";
                     } else {
                         plural = "s";
                     }
                     infractions30Days += infraction.size;
-                    timeAgo = DateTime.Now.Day - infraction.time.Day + " day" + plural + " ago";
+                    timeAgo = dateAgo.Days + " day" + plural + " ago";
                     if (infraction.time.Date == DateTime.Now.Date) {
                         infractionsToday += infraction.size;
                         if (DateTime.Now.Hour - infraction.time.Hour == 1) {
@@ -118,21 +117,21 @@ namespace BotCatMaxy {
                         } else {
                             plural = "s";
                         }
-                        timeAgo = DateTime.Now.Hour - infraction.time.Hour + " hour" + plural + " ago";
+                        timeAgo = dateAgo.Hours + " hour" + plural + " ago";
                         if (infraction.time.Hour == DateTime.Now.Hour) {
                             if (DateTime.Now.Minute - infraction.time.Minute == 1) {
                                 plural = "";
                             } else {
                                 plural = "s";
                             }
-                            timeAgo = DateTime.Now.Minute - infraction.time.Minute + " minute" + plural + " ago";
+                            timeAgo = dateAgo.Minutes + " minute" + plural + " ago";
                             if (infraction.time.Minute == DateTime.Now.Minute) {
                                 if (DateTime.Now.Second - infraction.time.Second == 1) {
                                     plural = "";
                                 } else {
                                     plural = "s";
                                 }
-                                timeAgo = DateTime.Now.Second - infraction.time.Second + " second" + plural + " ago";
+                                timeAgo = dateAgo.Seconds + " second" + plural + " ago";
                             }
                         }
                     }
