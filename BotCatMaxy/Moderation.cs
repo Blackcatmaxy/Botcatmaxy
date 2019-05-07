@@ -384,7 +384,11 @@ namespace BotCatMaxy {
                 if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
                     foreach (BadWord badWord in badWords) {
                         if (message.Content.Contains(badWord.word)) {
-                            _ = message.Author.Warn(0.5f, "Bad word", context);
+                            if (badWord.euphemism != null && badWord.euphemism != "") {
+                                _ = message.Author.Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                            } else {
+                                _ = message.Author.Warn(0.5f, "Bad word usage", context);
+                            }
                             await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
                             
                             Logging.LogDeleted("Bad word removed", message, Guild);
