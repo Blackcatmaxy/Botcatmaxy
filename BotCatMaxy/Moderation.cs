@@ -62,6 +62,11 @@ namespace BotCatMaxy {
         }
 
         public static async Task Warn(this IUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
+            if (size > 999 || size < 0.01) {
+                await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                return;
+            }
+
             List<Infraction> infractions = LoadInfractions(context.Guild.OwnerId + "/Infractions/" + dir + "/" + user.Id);
 
             Infraction newInfraction = new Infraction {
@@ -175,11 +180,6 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketUser user, float size, [Remainder] string reason) {
-            if (size > 999 || size < 0.01) {
-                await ReplyAsync("Why would you need to warn someone with that size?");
-                return;
-            }
-
             ModerationFunctions.CheckDirectories(Context.Guild);
             await user.Warn(size, reason, Context, "Games");
 
@@ -295,11 +295,6 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketUser user, float size, [Remainder] string reason) {
-            if (size > 999 || size < 0.01) {
-                await ReplyAsync("Why would you need to warn someone with that size?");
-                return;
-            }
-
             ModerationFunctions.CheckDirectories(Context.Guild);
             _ = user.Warn(size, reason, Context);
 
