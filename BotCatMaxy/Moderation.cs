@@ -61,8 +61,8 @@ namespace BotCatMaxy {
             return infractions;
         }
 
-        public static void WarnUser(SocketUser user, float size, string reason, string location) {
-            List<Infraction> infractions = LoadInfractions(location);
+        public static async Task Warn(this IUser user, float size, string reason, SocketCommandContext context) {
+            List<Infraction> infractions = LoadInfractions(context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
 
             Infraction newInfraction = new Infraction {
                 reason = reason,
@@ -70,8 +70,13 @@ namespace BotCatMaxy {
                 size = size
             };
             infractions.Add(newInfraction);
+            SaveInfractions(context.Guild.OwnerId + "/Infractions/Games/" + user.Id, infractions);
 
-            SaveInfractions(location, infractions);
+            IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
+            if (!users.Contains(user)) {
+                IDMChannel DM = await user.GetOrCreateDMChannelAsync();
+                _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + "discord for \"" + reason + "\" in a channel you can't view");
+            }
         }
 
         public static Embed CheckInfractions(SocketUser user, string location) {
@@ -177,7 +182,7 @@ namespace BotCatMaxy {
             }
 
             ModerationFunctions.CheckDirectories(Context.Guild);
-            ModerationFunctions.WarnUser(user, size, reason, Context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
+            _ = user.Warn(size, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
@@ -186,7 +191,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
-            ModerationFunctions.WarnUser(user, 1, reason, Context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
+            _ = user.Warn(1, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
@@ -298,7 +303,7 @@ namespace BotCatMaxy {
             }
 
             ModerationFunctions.CheckDirectories(Context.Guild);
-            ModerationFunctions.WarnUser(user, size, reason, Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
+            _ = user.Warn(size, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
@@ -307,7 +312,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
-            ModerationFunctions.WarnUser(user, 1, reason, Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
+            _ = user.Warn(1, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
@@ -354,16 +359,18 @@ namespace BotCatMaxy {
     }
 
     public static class Filter {
+        public static DiscordSocketClient client;
         public static async Task CheckMessage(SocketMessage message) {
             if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
+            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
             var chnl = message.Channel as SocketGuildChannel;
             var Guild = chnl.Guild;
             if (Guild != null && Directory.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
                 ModerationSettings modSettings = Guild.LoadModSettings(false);
                 List<BadWord> badWords = Guild.LoadBadWords();
-
+                
                 if (modSettings != null) {
                     if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
                         return; //Returns if channel is set as not using automod
@@ -371,7 +378,7 @@ namespace BotCatMaxy {
                     //Checks if a message contains an invite
                     if (message.Content.Contains("discord.gg/")) {
                         if (!modSettings.invitesAllowed) {
-                            ModerationFunctions.WarnUser(message.Author, 0.5f, "Posted Invite", Guild.OwnerId + "/Infractions/Discord/" + message.Author.Id);
+                            _ = message.Author.Warn(0.5f, "Posted Invite", context);
                             await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
 
                             Logging.LogDeleted("Bad word removed", message, Guild);
@@ -384,7 +391,7 @@ namespace BotCatMaxy {
                 if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
                     foreach (BadWord badWord in badWords) {
                         if (message.Content.Contains(badWord.word)) {
-                            ModerationFunctions.WarnUser(message.Author, 0.5f, "Bad word", Guild.OwnerId + "/Infractions/Discord/" + message.Author.Id);
+                            _ = message.Author.Warn(0.5f, "Bad word", context);
                             await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
                             
                             Logging.LogDeleted("Bad word removed", message, Guild);
