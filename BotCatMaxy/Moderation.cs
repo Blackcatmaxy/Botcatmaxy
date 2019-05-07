@@ -61,8 +61,8 @@ namespace BotCatMaxy {
             return infractions;
         }
 
-        public static async Task Warn(this IUser user, float size, string reason, SocketCommandContext context) {
-            List<Infraction> infractions = LoadInfractions(context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
+        public static async Task Warn(this IUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
+            List<Infraction> infractions = LoadInfractions(context.Guild.OwnerId + "/Infractions/" + dir + "/" + user.Id);
 
             Infraction newInfraction = new Infraction {
                 reason = reason,
@@ -70,7 +70,7 @@ namespace BotCatMaxy {
                 size = size
             };
             infractions.Add(newInfraction);
-            SaveInfractions(context.Guild.OwnerId + "/Infractions/Games/" + user.Id, infractions);
+            SaveInfractions(context.Guild.OwnerId + "/Infractions/" + dir + "/" + user.Id, infractions);
 
             IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
             if (!users.Contains(user)) {
@@ -95,7 +95,7 @@ namespace BotCatMaxy {
                 Infraction infraction = infractions[i];
 
                 //Gets how long ago all the infractions were
-                TimeSpan dateAgo = (DateTime.Now.Date - infraction.time.Date);
+                TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
                 totalInfractions += infraction.size;
                 string timeAgo = MathF.Round(dateAgo.Days / 30) + " months ago";
                 
@@ -103,7 +103,7 @@ namespace BotCatMaxy {
                     last7Days += infraction.size;
                 }
                 if (dateAgo.Days <= 30) {
-                    if (DateTime.Now.Day - infraction.time.Day == 1) {
+                    if (dateAgo.Days == 1) {
                         plural = "";
                     } else {
                         plural = "s";
@@ -112,26 +112,26 @@ namespace BotCatMaxy {
                     timeAgo = dateAgo.Days + " day" + plural + " ago";
                     if (infraction.time.Date == DateTime.Now.Date) {
                         infractionsToday += infraction.size;
-                        if (DateTime.Now.Hour - infraction.time.Hour == 1) {
+                        if (dateAgo.Days == 1) {
                             plural = "";
                         } else {
                             plural = "s";
                         }
                         timeAgo = dateAgo.Hours + " hour" + plural + " ago";
                         if (infraction.time.Hour == DateTime.Now.Hour) {
-                            if (DateTime.Now.Minute - infraction.time.Minute == 1) {
+                            if (dateAgo.Hours == 1) {
                                 plural = "";
                             } else {
                                 plural = "s";
                             }
                             timeAgo = dateAgo.Minutes + " minute" + plural + " ago";
                             if (infraction.time.Minute == DateTime.Now.Minute) {
-                                if (DateTime.Now.Second - infraction.time.Second == 1) {
+                                if (dateAgo.TotalSeconds == 1) {
                                     plural = "";
                                 } else {
                                     plural = "s";
                                 }
-                                timeAgo = dateAgo.Seconds + " second" + plural + " ago";
+                                timeAgo = dateAgo.TotalSeconds + " second" + plural + " ago";
                             }
                         }
                     }
@@ -181,7 +181,7 @@ namespace BotCatMaxy {
             }
 
             ModerationFunctions.CheckDirectories(Context.Guild);
-            _ = user.Warn(size, reason, Context);
+            await user.Warn(size, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
@@ -190,14 +190,13 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
-            _ = user.Warn(1, reason, Context);
+            await user.Warn(1, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
 
         [Command("warns")]
         [Alias("infractions", "warnings")]
-        [CanWarn()]
         public async Task CheckUserWarnsAsync(SocketUser user = null) {
             if (user == null) {
                 user = Context.Message.Author;
