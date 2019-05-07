@@ -181,7 +181,7 @@ namespace BotCatMaxy {
             }
 
             ModerationFunctions.CheckDirectories(Context.Guild);
-            await user.Warn(size, reason, Context);
+            await user.Warn(size, reason, Context, "Games");
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
@@ -190,7 +190,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
-            await user.Warn(1, reason, Context);
+            await user.Warn(1, reason, Context, "Games");
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
         }
