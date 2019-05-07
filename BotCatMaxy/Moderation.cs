@@ -110,7 +110,7 @@ namespace BotCatMaxy {
                     }
                     infractions30Days += infraction.size;
                     timeAgo = dateAgo.Days + " day" + plural + " ago";
-                    if (infraction.time.Date == DateTime.Now.Date) {
+                    if (dateAgo.Days < 1) {
                         infractionsToday += infraction.size;
                         if (dateAgo.Days == 1) {
                             plural = "";
@@ -118,14 +118,14 @@ namespace BotCatMaxy {
                             plural = "s";
                         }
                         timeAgo = dateAgo.Hours + " hour" + plural + " ago";
-                        if (infraction.time.Hour == DateTime.Now.Hour) {
+                        if (dateAgo.Hours < 1) {
                             if (dateAgo.Hours == 1) {
                                 plural = "";
                             } else {
                                 plural = "s";
                             }
                             timeAgo = dateAgo.Minutes + " minute" + plural + " ago";
-                            if (infraction.time.Minute == DateTime.Now.Minute) {
+                            if (dateAgo.Seconds < 1) {
                                 if (dateAgo.TotalSeconds == 1) {
                                     plural = "";
                                 } else {
