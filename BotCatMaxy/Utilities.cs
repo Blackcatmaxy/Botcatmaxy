@@ -5,9 +5,11 @@ using Discord;
 using Discord.WebSocket;
 using BotCatMaxy.Settings;
 using System.Linq;
+using System.IO;
 
 namespace BotCatMaxy {
     public static class Utilities {
+        public static string BasePath = "/home/bob_the_daniel/Data/";
         public static bool HasAdmin(this SocketGuildUser user) {
             if (user.Guild.Owner == user) {
                 return true;
@@ -49,6 +51,21 @@ namespace BotCatMaxy {
 
         public static SocketGuild GetGuild(SocketGuildChannel channel) {
             return channel.Guild;
+        }
+
+        public static string GuildDataPath(this IGuild guild, bool createIfNull = true) {
+            string path = null;
+
+            if (Directory.Exists(BasePath + guild.Id)) {
+                return (BasePath + guild.Id);
+            } else if (Directory.Exists(BasePath + guild.OwnerId)) {
+                return (BasePath + guild.OwnerId);
+            }
+            
+            if (createIfNull && path == null) {
+                guild.CheckDirectories();
+            }
+            return null;
         }
     }
 }

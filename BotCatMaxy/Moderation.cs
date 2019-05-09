@@ -21,7 +21,7 @@ namespace BotCatMaxy {
     }
 
     public static class ModerationFunctions {
-        public static void CheckDirectories(IGuild guild) {
+        public static void CheckDirectories(this IGuild guild) {
             //old directory was fC:/Users/Daniel/Google-Drive/Botcatmaxy/Data/
             if (!Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId)) {
                 Directory.CreateDirectory("/home/bob_the_daniel/Data/" + guild.OwnerId);
@@ -170,6 +170,20 @@ namespace BotCatMaxy {
                 .WithColor(Color.Blue)
                 .WithCurrentTimestamp();
             return embed.Build();
+        }
+    }
+
+    public static class TempBanChecker {
+        public static async Task Timer(DiscordSocketClient client) {
+            foreach (SocketGuild guild in client.Guilds) {
+                string guildDir = guild.GuildDataPath(false);
+                if (guildDir != null) {
+
+                }
+            }
+
+            await Task.Delay(3600000);
+            _ = Timer(client);
         }
     }
 

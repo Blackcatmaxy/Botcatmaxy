@@ -30,6 +30,7 @@ namespace BotCatMaxy {
             CommandHandler handler = new CommandHandler(_client, service);
 
             Logging logger = new Logging(_client);
+            _ = TempBanChecker.Timer(_client);
 
             await _client.SetGameAsync("version 0.4.3");
 
@@ -42,6 +43,7 @@ namespace BotCatMaxy {
                 Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
             }
 
+            await Log(new LogMessage(LogSeverity.Info, "Info", "Running in " + _client.Guilds.Count + " guilds!"));
             // Block this task until the program is closed.
             await Task.Delay(-1);
             await _client.SetGameAsync("shutting down");
