@@ -177,8 +177,8 @@ namespace BotCatMaxy {
         public static async Task Timer(DiscordSocketClient client) {
             foreach (SocketGuild guild in client.Guilds) {
                 string guildDir = guild.GuildDataPath(false);
-                if (guildDir != null) {
-
+                if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "tempActions.json")) {
+                    
                 }
             }
 

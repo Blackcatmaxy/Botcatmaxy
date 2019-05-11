@@ -100,7 +100,7 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task ToggleAutoMod() {
             ModerationSettings settings = Context.Guild.LoadModSettings(true);
-            
+
             if (settings.channelsWithoutAutoMod.Contains(Context.Channel.Id)) {
                 settings.channelsWithoutAutoMod.Remove(Context.Channel.Id);
                 await ReplyAsync("Enabled automod in this channel");
@@ -372,15 +372,48 @@ namespace BotCatMaxy {
 
                 return badWords;
             }
-            public static void SaveBadWords(this List<BadWord> badWords, IGuild Guild) {
-                if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
+            public static List<TempBan> LoadTempActions(this IGuild Guild, bool createNew = false) {
+                List<TempBan> tempBans = new List<TempBan>();
+                string guildDir = Guild.GuildDataPath(createNew);
+                if (guildDir == null || !Directory.Exists(guildDir)) {
+                    return tempBans;
+                }
+                if (File.Exists(Guild.GuildDataPath() + "tempActions.json")) {
                     JsonSerializer serializer = new JsonSerializer();
-                    using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
+                    using (StreamWriter sw = new StreamWriter(@guildDir + "tempActions.json"))
                     using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                        serializer.Serialize(sw, badWords);
+                        serializer.Serialize(sw, tempBans);
                     }
+                    return tempBans;
                 } else {
+                    if (createNew) {
+                        File.Create(guildDir + "tempActions.json");
+                    }
+                    return tempBans;
+                }
+            }
+            public static void SaveTempBans(this List<TempBan> tempBans, IGuild Guild) {
+                string guildDir = Guild.GuildDataPath(true);
+                tempBans.RemoveNullEntries();
+
+                if (!File.Exists(guildDir + "tempActions.json")) {
+                    File.Create(guildDir + "tempActions.json");
+                }
+
+                JsonSerializer serializer = new JsonSerializer();
+                using (StreamWriter sw = new StreamWriter(@guildDir + "tempActions.json"))
+                using (JsonTextWriter writer = new JsonTextWriter(sw)) {
+                    serializer.Serialize(sw, tempBans);
+                }
+            }
+            public static void SaveBadWords(this List<BadWord> badWords, IGuild Guild) {
+                if (!File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
                     File.Create("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json");
+                }
+                JsonSerializer serializer = new JsonSerializer();
+                using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
+                using (JsonTextWriter writer = new JsonTextWriter(sw)) {
+                    serializer.Serialize(sw, badWords);
                 }
             }
             public static void SaveLogSettings(this LogSettings settings, IGuild Guild) {
@@ -404,6 +437,11 @@ namespace BotCatMaxy {
         }
         //Might replace these with a struct OR make them inherit from a "Saveable" class or make an interface
         //so then we can have a dynamic function to save things?
+        public class TempBan {
+            public ulong personBanned;
+            public int length;
+            public DateTime dateBanned;
+        }
         public class BadWord {
             public string word;
             public string euphemism;
