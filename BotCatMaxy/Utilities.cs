@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using BotCatMaxy.Settings;
 using System.Linq;
 using System.IO;
+using System.Collections;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -66,6 +67,16 @@ namespace BotCatMaxy {
                 guild.CheckDirectories();
             }
             return null;
+        }
+
+        public static void RemoveNullEntries(this IList list) {
+            if (list != null || list.Count > 0) {
+                foreach (object thing in list) {
+                    if (thing == null) {
+                        list.Remove(thing);
+                    }
+                }
+            }
         }
     }
 }
