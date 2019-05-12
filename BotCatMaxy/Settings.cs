@@ -378,16 +378,17 @@ namespace BotCatMaxy {
                 if (guildDir == null || !Directory.Exists(guildDir)) {
                     return tempBans;
                 }
-                if (File.Exists(Guild.GuildDataPath() + "tempActions.json")) {
+                if (File.Exists(guildDir + "/tempActions.json")) {
                     JsonSerializer serializer = new JsonSerializer();
-                    using (StreamWriter sw = new StreamWriter(@guildDir + "tempActions.json"))
+                    using (StreamWriter sw = new StreamWriter(@guildDir + "/tempActions.json"))
                     using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                         serializer.Serialize(sw, tempBans);
                     }
                     return tempBans;
                 } else {
                     if (createNew) {
-                        File.Create(guildDir + "tempActions.json");
+                        var newFile = File.Create(guildDir + "/tempActions.json");
+                        newFile.Close();
                     }
                     return tempBans;
                 }
@@ -396,12 +397,12 @@ namespace BotCatMaxy {
                 string guildDir = Guild.GuildDataPath(true);
                 tempBans.RemoveNullEntries();
 
-                if (!File.Exists(guildDir + "tempActions.json")) {
-                    File.Create(guildDir + "tempActions.json");
+                if (!File.Exists(guildDir + "/tempActions.json")) {
+                    File.Create(guildDir + "/tempActions.json");
                 }
 
                 JsonSerializer serializer = new JsonSerializer();
-                using (StreamWriter sw = new StreamWriter(@guildDir + "tempActions.json"))
+                using (StreamWriter sw = new StreamWriter(@guildDir + "/tempActions.json"))
                 using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                     serializer.Serialize(sw, tempBans);
                 }
