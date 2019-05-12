@@ -438,6 +438,11 @@ namespace BotCatMaxy {
         //Might replace these with a struct OR make them inherit from a "Saveable" class or make an interface
         //so then we can have a dynamic function to save things?
         public class TempBan {
+            public TempBan(ulong userID, int days) {
+                personBanned = userID;
+                length = days;
+                dateBanned = DateTime.Now;
+            }
             public ulong personBanned;
             public int length;
             public DateTime dateBanned;
