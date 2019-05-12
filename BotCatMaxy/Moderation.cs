@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using BotCatMaxy.Settings;
 using BotCatMaxy;
 using System.Linq;
+using Discord.Rest;
 //using Discord.Addons.Preconditions;
 
 namespace BotCatMaxy {
@@ -178,7 +179,16 @@ namespace BotCatMaxy {
             foreach (SocketGuild guild in client.Guilds) {
                 string guildDir = guild.GuildDataPath(false);
                 if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "tempActions.json")) {
-                    
+                    List<TempBan> tempBans = guild.LoadTempActions(false);
+                    if (tempBans != null && tempBans.Count > 0) {
+                        foreach(TempBan tempBan in tempBans) {
+                            if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
+                                if (client.GetUser(tempBan.personBanned) != null && await guild.GetBanAsync(tempBan.personBanned) != null) {
+                                    await guild.RemoveBanAsync(tempBan.personBanned);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -362,6 +372,13 @@ namespace BotCatMaxy {
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }
+        }
+
+        [Command("tempban")]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task TempBan(SocketUser user, int days) {
+            TempBan tempBan = new TempBan();
+            
         }
     }
 
