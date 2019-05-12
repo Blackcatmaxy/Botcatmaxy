@@ -376,9 +376,14 @@ namespace BotCatMaxy {
 
         [Command("tempban")]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task TempBan(SocketUser user, int days) {
-            TempBan tempBan = new TempBan();
-            
+        public async Task TempBan(SocketUser user, int days, string reason) {
+            IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + days + "because of " + reason);
+            TempBan tempBan = new TempBan(user.Id, days);
+            List<TempBan> tempBans = Context.Guild.LoadTempActions(true);
+            tempBans.Add(tempBan);
+            tempBans.SaveTempBans(Context.Guild);
+            await Context.Guild.AddBanAsync(user, reason: reason);
+            _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + days + "because of " + reason);
         }
     }
 
