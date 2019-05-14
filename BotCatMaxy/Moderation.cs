@@ -131,13 +131,17 @@ namespace BotCatMaxy {
                                 plural = "s";
                             }
                             timeAgo = dateAgo.Minutes + " minute" + plural + " ago";
-                            if (dateAgo.Seconds < 1) {
-                                if (dateAgo.TotalSeconds == 1) {
+                            if (dateAgo.Minutes < 1) {
+                                if (dateAgo.Seconds == 1) {
                                     plural = "";
                                 } else {
                                     plural = "s";
                                 }
-                                timeAgo = dateAgo.TotalSeconds + " second" + plural + " ago";
+                                if (dateAgo.Seconds == 0) {
+                                    timeAgo = dateAgo.TotalSeconds + " second" + plural + " ago";
+                                } else {
+                                    timeAgo = dateAgo.Seconds + " second" + plural + " ago";
+                                }
                             }
                         }
                     }

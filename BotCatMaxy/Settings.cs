@@ -314,8 +314,7 @@ namespace BotCatMaxy {
                 }
 
                 if (createFile && settings == null) {
-                    var newFile = File.Create("/home/bob_the_daniel/Data/" + guild.OwnerId + "/moderationSettings.txt");
-                    newFile.Close();
+                    File.Create("/home/bob_the_daniel/Data/" + guild.OwnerId + "/moderationSettings.txt").Close();
                     return new ModerationSettings();
                 }
 
@@ -387,8 +386,7 @@ namespace BotCatMaxy {
                     return tempBans;
                 } else {
                     if (createNew) {
-                        var newFile = File.Create(guildDir + "/tempActions.json");
-                        newFile.Close();
+                        File.Create(guildDir + "/tempActions.json").Close();
                     }
                     return tempBans;
                 }
