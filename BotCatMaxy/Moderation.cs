@@ -94,6 +94,7 @@ namespace BotCatMaxy {
             float totalInfractions = 0;
             float last7Days = 0;
             string plural = "";
+            infractions.Reverse();
             for (int i = 0; i < infractions.Count; i++) {
                 if (i != 0) { //Creates new line if it's not the first infraction
                     infractionList += "\n";
@@ -149,10 +150,10 @@ namespace BotCatMaxy {
 
                 string size = "";
                 if (infraction.size != 1) {
-                    size = "["  + infraction.size  + "x] ";
+                    size = "("  + infraction.size  + "x) ";
                 }
 
-                infractionList += size + infraction.reason + " - " + timeAgo;
+                infractionList += "[" +  (i + 1) + "] " + size + infraction.reason + " - " + timeAgo;
             }
 
             if (infractions.Count > 1) {
