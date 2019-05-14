@@ -153,7 +153,7 @@ namespace BotCatMaxy {
                     size = "("  + infraction.size  + "x) ";
                 }
 
-                infractionList += "[" +  (i + 1) + "] " + size + infraction.reason + " - " + timeAgo;
+                infractionList += "[" +  MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + " - " + timeAgo;
             }
 
             if (infractions.Count > 1) {
