@@ -85,7 +85,7 @@ namespace BotCatMaxy {
             }
         }
 
-        public static Embed CheckInfractions(SocketUser user, string location) {
+        public static Embed CheckInfractions(SocketUser user, string location, int amount = 5) {
             List<Infraction> infractions = LoadInfractions(location);
 
             string infractionList = "";
@@ -95,7 +95,10 @@ namespace BotCatMaxy {
             float last7Days = 0;
             string plural = "";
             infractions.Reverse();
-            for (int i = 0; i < infractions.Count; i++) {
+            if (infractions.Count < amount) {
+                amount = infractions.Count;
+            }
+            for (int i = 0; i < amount; i++) {
                 if (i != 0) { //Creates new line if it's not the first infraction
                     infractionList += "\n";
                 }
@@ -226,14 +229,14 @@ namespace BotCatMaxy {
 
         [Command("warns")]
         [Alias("infractions", "warnings")]
-        public async Task CheckUserWarnsAsync(SocketUser user = null) {
+        public async Task CheckUserWarnsAsync(SocketUser user = null, int amount = 5) {
             if (user == null) {
                 user = Context.Message.Author;
             }
 
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id)) {
-                await ReplyAsync(embed: ModerationFunctions.CheckInfractions(user, Context.Guild.OwnerId + "/Infractions/Games/" + user.Id));
+                await ReplyAsync(embed: ModerationFunctions.CheckInfractions(user, Context.Guild.OwnerId + "/Infractions/Games/" + user.Id, amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }
@@ -341,13 +344,13 @@ namespace BotCatMaxy {
 
         [Command("warns")]
         [Alias("infractions", "warnings")]
-        public async Task CheckUserWarnsAsync(SocketUser user = null) {
+        public async Task CheckUserWarnsAsync(SocketUser user = null, int amount = 5) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (user == null) {
                 user = Context.Message.Author;
             }
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id)) {
-                await ReplyAsync(embed: ModerationFunctions.CheckInfractions(user, Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id));
+                await ReplyAsync(embed: ModerationFunctions.CheckInfractions(user, Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id, amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }
