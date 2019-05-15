@@ -32,7 +32,7 @@ namespace BotCatMaxy {
             Logging logger = new Logging(_client);
             _ = TempBanChecker.Timer(_client);
 
-            await _client.SetGameAsync("version 0.5.3");
+            await _client.SetGameAsync("version 0.5.4");
 
             await handler.InstallCommandsAsync();
             logger.SetUp();

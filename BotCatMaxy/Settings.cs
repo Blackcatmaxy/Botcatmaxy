@@ -383,6 +383,9 @@ namespace BotCatMaxy {
                     using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                         serializer.Serialize(sw, tempBans);
                     }
+                    if (tempBans == null) {
+                        return new List<TempBan>();
+                    }
                     return tempBans;
                 } else {
                     if (createNew) {
