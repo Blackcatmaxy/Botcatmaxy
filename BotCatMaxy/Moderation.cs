@@ -98,7 +98,8 @@ namespace BotCatMaxy {
             if (infractions.Count < amount) {
                 amount = infractions.Count;
             }
-            for (int i = 0; i < amount; i++) {
+            int n = 0;
+            for (int i = 0; i < infractions.Count; i++) {
                 if (i != 0) { //Creates new line if it's not the first infraction
                     infractionList += "\n";
                 }
@@ -156,7 +157,10 @@ namespace BotCatMaxy {
                     size = "("  + infraction.size  + "x) ";
                 }
 
-                infractionList += "[" +  MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + " - " + timeAgo;
+                if (n < amount) {
+                    infractionList += "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + " - " + timeAgo;
+                    n++;
+                }
             }
 
             if (infractions.Count > 1) {
