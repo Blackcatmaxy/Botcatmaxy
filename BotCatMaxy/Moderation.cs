@@ -194,11 +194,15 @@ namespace BotCatMaxy {
                     List<TempBan> tempBans = guild.LoadTempActions(false);
                     if (tempBans != null && tempBans.Count > 0) {
                         foreach(TempBan tempBan in tempBans) {
+                            bool needSave = false;
                             if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
                                 if (client.GetUser(tempBan.personBanned) != null && await guild.GetBanAsync(tempBan.personBanned) != null) {
                                     await guild.RemoveBanAsync(tempBan.personBanned);
+                                    tempBans.Remove(tempBan);
+                                    needSave = true;
                                 }
                             }
+                            tempBans.SaveTempBans(guild);
                         }
                     }
                 }
@@ -386,7 +390,7 @@ namespace BotCatMaxy {
             }
         }
 
-        [Command("tempban")]
+        [Command("testtempban")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task TempBan(SocketUser user, int days, [Remainder] string reason) {
             string plural = "";
