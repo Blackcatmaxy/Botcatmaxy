@@ -50,8 +50,13 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 SocketTextChannel channel = message.Channel as SocketTextChannel;
                 if (message.Embeds.Count == 0) {
-                    embed.AddField(reason + " in #" + message.Channel.Name,
-                    message.Content, true);
+                    if (message.Content == null || message.Content == "") {
+                        embed.AddField(reason + " in #" + message.Channel.Name,
+                        "This message had no text", true);
+                    } else {
+                        embed.AddField(reason + " in #" + message.Channel.Name,
+                        message.Content, true);
+                    }
                 } else {
                     embed.AddField(reason + " in #" + channel.Name,
                     "`Embed cannot be displayed`", true);
@@ -64,7 +69,7 @@ namespace BotCatMaxy {
 
                 _ = logChannel.SendMessageAsync(embed: embed.Build());
             } catch (Exception exception) {
-                Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", "Error: ", exception));
+                Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception));
             }
         }
 
@@ -73,6 +78,9 @@ namespace BotCatMaxy {
                 SocketGuild guild = Utilities.GetGuild(channel as SocketTextChannel);
 
                 LogDeleted("Deleted message", message.Value, guild);
+                if (message.Value.Attachments != null) {
+
+                }
             } catch (Exception exception) {
                 Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", "Error", exception));
             }
