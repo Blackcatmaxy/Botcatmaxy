@@ -124,14 +124,14 @@ namespace BotCatMaxy {
                     timeAgo = dateAgo.Days + " day" + plural + " ago";
                     if (dateAgo.Days < 1) {
                         infractionsToday += infraction.size;
-                        if (dateAgo.Days == 1) {
+                        if (dateAgo.Hours == 1) {
                             plural = "";
                         } else {
                             plural = "s";
                         }
                         timeAgo = dateAgo.Hours + " hour" + plural + " ago";
                         if (dateAgo.Hours < 1) {
-                            if (dateAgo.Hours == 1) {
+                            if (dateAgo.Minutes == 1) {
                                 plural = "";
                             } else {
                                 plural = "s";
