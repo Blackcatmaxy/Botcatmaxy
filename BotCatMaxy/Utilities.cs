@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Discord;
 using Discord.WebSocket;
+using BotCatMaxy.Data;
 using BotCatMaxy.Settings;
 using System.Linq;
 using System.IO;
@@ -11,6 +12,21 @@ using System.Collections;
 namespace BotCatMaxy {
     public static class Utilities {
         public static string BasePath = "/home/bob_the_daniel/Data/";
+
+        public static string ServerPath (this IGuild guild, bool createDir = true) {
+            if (Directory.Exists(BasePath + guild.Id)) {
+                return BasePath + guild.Id;
+            } else if (Directory.Exists(BasePath + guild.OwnerId)) {
+                return BasePath + guild.OwnerId;
+            } else {
+                if (createDir) {
+                    Directory.CreateDirectory(BasePath + guild.OwnerId);
+                    return BasePath + guild.OwnerId;
+                } else {
+                    return null;
+                }
+            }
+        }
         public static bool HasAdmin(this SocketGuildUser user) {
             if (user.Guild.Owner == user) {
                 return true;
@@ -31,7 +47,7 @@ namespace BotCatMaxy {
                 return true;
             }
 
-            ModerationSettings settings = SettingFunctions.LoadModSettings(user.Guild, false);
+            ModerationSettings settings = user.Guild.LoadModSettings(false);
             if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
                 List<SocketRole> rolesAbleToWarn = new List<SocketRole>();
                 foreach (ulong roleID in settings.ableToWarn) {

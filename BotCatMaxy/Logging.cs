@@ -7,6 +7,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using BotCatMaxy;
 using BotCatMaxy.Settings;
+using BotCatMaxy.Data;
 
 namespace BotCatMaxy { 
     class Logging {
@@ -41,7 +42,7 @@ namespace BotCatMaxy {
                     }
                 }
 
-                LogSettings settings = SettingFunctions.LoadLogSettings(guild);
+                LogSettings settings = guild.LoadLogSettings();
                 SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (settings == null || logChannel == null || !settings.logDeletes) {
                     return;

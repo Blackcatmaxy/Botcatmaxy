@@ -11,6 +11,7 @@ using BotCatMaxy.Settings;
 using BotCatMaxy;
 using System.Linq;
 using Discord.Rest;
+using BotCatMaxy.Data;
 //using Discord.Addons.Preconditions;
 
 namespace BotCatMaxy {
@@ -285,7 +286,7 @@ namespace BotCatMaxy {
     public class ModerationCommands : ModuleBase<SocketCommandContext> {
         [Command("moderationInfo")]
         public async Task ModerationInfo() {
-            ModerationSettings settings = SettingFunctions.LoadModSettings(Context.Guild, false);
+            ModerationSettings settings = Context.Guild.LoadModSettings(false);
             if (settings == null) {
                 _ = ReplyAsync("Moderation settings are null");
                 return;
