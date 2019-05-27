@@ -7,6 +7,7 @@ using BotCatMaxy.Settings;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace BotCatMaxy.Data {
     public static class SettingsData {
@@ -119,6 +120,23 @@ namespace BotCatMaxy.Data {
                 return tempBans;
             }
         }
+
+        public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord") {
+            List<Infraction> infractions = new List<Infraction>();
+
+            if (Directory.Exists(user.Guild.GuildDataPath() + "/Infractions/" + dir) && File.Exists(user.Guild.GuildDataPath() + "/Infractions/" + dir + "/" + user.Id)) {
+                BinaryFormatter newbf = new BinaryFormatter();
+                FileStream newFile = File.Open(user.Guild.GuildDataPath() + "/Infractions/" + dir + "/" + user.Id, FileMode.Open);
+                Infraction[] oldInfractions;
+                oldInfractions = (Infraction[])newbf.Deserialize(newFile);
+                newFile.Close();
+                foreach (Infraction infraction in oldInfractions) {
+                    infractions.Add(infraction);
+                }
+            }
+            return infractions;
+        }
+
         public static void SaveTempBans(this List<TempBan> tempBans, IGuild Guild) {
             string guildDir = Guild.GuildDataPath(true);
             tempBans.RemoveNullEntries();

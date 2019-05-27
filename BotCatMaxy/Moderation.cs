@@ -41,27 +41,12 @@ namespace BotCatMaxy {
 
         public static void SaveInfractions(string location, List<Infraction> infractions) {
             BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create("/home/bob_the_daniel/Data/" + location);
+            FileStream file = File.Create(location);
             bf.Serialize(file, infractions.ToArray());
             file.Close();
         }
 
-        public static List<Infraction> LoadInfractions(string location) {
-            List<Infraction> infractions = new List<Infraction>();
-
-            if (File.Exists("/home/bob_the_daniel/Data/" + location)) {
-
-                BinaryFormatter newbf = new BinaryFormatter();
-                FileStream newFile = File.Open("/home/bob_the_daniel/Data/" + location, FileMode.Open);
-                Infraction[] oldInfractions;
-                oldInfractions = (Infraction[])newbf.Deserialize(newFile);
-                newFile.Close();
-                foreach (Infraction infraction in oldInfractions) {
-                    infractions.Add(infraction);
-                }
-            }
-            return infractions;
-        }
+        
 
         public static async Task Warn(this IUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
             if (size > 999 || size < 0.01) {
@@ -69,7 +54,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            List<Infraction> infractions = LoadInfractions(context.Guild.OwnerId + "/Infractions/" + dir + "/" + user.Id);
+            List<Infraction> infractions = LoadInfractions(context.Guild.GuildDataPath(false) + "/Infractions/" + dir + "/" + user.Id);
 
             Infraction newInfraction = new Infraction {
                 reason = reason,
@@ -77,7 +62,7 @@ namespace BotCatMaxy {
                 size = size
             };
             infractions.Add(newInfraction);
-            SaveInfractions(context.Guild.OwnerId + "/Infractions/" + dir + "/" + user.Id, infractions);
+            SaveInfractions(context.Guild.GuildDataPath(false) + "/Infractions/" + dir + "/" + user.Id, infractions);
 
             IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
             if (!users.Contains(user)) {
@@ -87,8 +72,7 @@ namespace BotCatMaxy {
         }
 
         public static Embed CheckInfractions(this SocketGuildUser user, int amount = 5) {
-            List<Infraction> infractions = LoadInfractions(user.Guild.GuildDataPath(false));
-
+            List<Infraction> infractions = LoadInfractions(user.Guild.GuildDataPath(false) + "/" + user.Id);
 
             string infractionList = "";
             float infractionsToday = 0;
