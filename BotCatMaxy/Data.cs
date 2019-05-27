@@ -175,7 +175,7 @@ namespace BotCatMaxy.Data {
             JsonSerializer serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Include;
 
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/moderationSettings.txt"))
+            using (StreamWriter sw = new StreamWriter(Guild.GuildDataPath(true) + "/moderationSettings.txt"))
             using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                 serializer.Serialize(sw, settings);
             }

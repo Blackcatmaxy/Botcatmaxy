@@ -48,13 +48,13 @@ namespace BotCatMaxy {
 
         
 
-        public static async Task Warn(this IUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
+        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
             if (size > 999 || size < 0.01) {
                 await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
                 return;
             }
 
-            List<Infraction> infractions = LoadInfractions(context.Guild.GuildDataPath(false) + "/Infractions/" + dir + "/" + user.Id);
+            List<Infraction> infractions = user.LoadInfractions();
 
             Infraction newInfraction = new Infraction {
                 reason = reason,
@@ -72,7 +72,7 @@ namespace BotCatMaxy {
         }
 
         public static Embed CheckInfractions(this SocketGuildUser user, int amount = 5) {
-            List<Infraction> infractions = LoadInfractions(user.Guild.GuildDataPath(false) + "/" + user.Id);
+            List<Infraction> infractions = user.LoadInfractions();
 
             string infractionList = "";
             float infractionsToday = 0;
@@ -205,7 +205,7 @@ namespace BotCatMaxy {
     public class GameWarnModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserAsync(SocketUser user, float size, [Remainder] string reason) {
+        public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             await user.Warn(size, reason, Context, "Games");
 
@@ -214,7 +214,7 @@ namespace BotCatMaxy {
 
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
+        public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             await user.Warn(1, reason, Context, "Games");
 
@@ -240,14 +240,14 @@ namespace BotCatMaxy {
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task RemooveWarnAsync(SocketUser user, int index) {
+        public async Task RemooveWarnAsync(SocketGuildUser user, int index) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
                 await ReplyAsync("You do have administrator permissions");
                 return;
             }
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id)) {
-                List<Infraction> infractions = ModerationFunctions.LoadInfractions(Context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
+                List<Infraction> infractions = user.LoadInfractions();
 
                 if (infractions.Count < index || index <= 0) {
                     await ReplyAsync("invalid infraction number");
@@ -321,7 +321,7 @@ namespace BotCatMaxy {
     public class DiscordWarnModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserAsync(SocketUser user, float size, [Remainder] string reason) {
+        public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             _ = user.Warn(size, reason, Context);
 
@@ -330,7 +330,7 @@ namespace BotCatMaxy {
 
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserSmallSizeAsync(SocketUser user, [Remainder] string reason) {
+        public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             _ = user.Warn(1, reason, Context);
 
@@ -354,10 +354,10 @@ namespace BotCatMaxy {
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task RemoveWarnAsync(SocketUser user, int index) {
+        public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id)) {
-                List<Infraction> infractions = ModerationFunctions.LoadInfractions(Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
+                List<Infraction> infractions = user.LoadInfractions();
 
                 if (infractions.Count < index || index <= 0) {
                     await ReplyAsync("invalid infraction number");
@@ -420,7 +420,7 @@ namespace BotCatMaxy {
                     //Checks if a message contains an invite
                     if (message.Content.Contains("discord.gg/")) {
                         if (!modSettings.invitesAllowed) {
-                            _ = message.Author.Warn(0.5f, "Posted Invite", context);
+                            _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
                             await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
 
                             Logging.LogDeleted("Bad word removed", message, Guild);
@@ -434,9 +434,9 @@ namespace BotCatMaxy {
                     foreach (BadWord badWord in badWords) {
                         if (message.Content.Contains(badWord.word)) {
                             if (badWord.euphemism != null && badWord.euphemism != "") {
-                                _ = message.Author.Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
                             } else {
-                                _ = message.Author.Warn(0.5f, "Bad word usage", context);
+                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
                             }
                             await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
                             
