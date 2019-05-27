@@ -20,6 +20,7 @@ namespace BotCatMaxy {
             await ReplyAsync(embed: embed.Build());
         }
 
+
         [Command("ping")]
         public async Task Ping() {
             await ReplyAsync("pong");
