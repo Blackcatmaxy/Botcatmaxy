@@ -69,30 +69,5 @@ namespace BotCatMaxy {
         public static SocketGuild GetGuild(SocketGuildChannel channel) {
             return channel.Guild;
         }
-
-        public static string GuildDataPath(this IGuild guild, bool createIfNull = true) {
-            string path = null;
-
-            if (Directory.Exists(BasePath + guild.Id)) {
-                return (BasePath + guild.Id);
-            } else if (Directory.Exists(BasePath + guild.OwnerId)) {
-                return (BasePath + guild.OwnerId);
-            }
-            
-            if (createIfNull && path == null) {
-                guild.CheckDirectories();
-            }
-            return null;
-        }
-
-        public static void RemoveNullEntries(this IList list) {
-            if (list != null || list.Count > 0) {
-                foreach (object thing in list) {
-                    if (thing == null) {
-                        list.Remove(thing);
-                    }
-                }
-            }
-        }
     }
 }
