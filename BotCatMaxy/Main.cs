@@ -22,6 +22,7 @@ namespace BotCatMaxy {
             _client = new DiscordSocketClient(config);
             Filter.client = _client;
             _client.Log += Log;
+            _client.Ready += Ready;
             _client.MessageReceived += Filter.CheckMessage;
             await _client.LoginAsync(TokenType.Bot, HiddenInfo.token);
             await _client.StartAsync();
@@ -43,10 +44,13 @@ namespace BotCatMaxy {
                 Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
             }
 
-            await Log(new LogMessage(LogSeverity.Info, "Info", "Running in " + _client.Guilds.Count + " guilds!"));
             // Block this task until the program is closed.
             await Task.Delay(-1);
             await _client.SetGameAsync("shutting down");
+        }
+
+        private async Task Ready() {
+            await Log(new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!"));
         }
 
         private Task Log(LogMessage msg) {
