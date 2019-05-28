@@ -13,20 +13,21 @@ namespace BotCatMaxy {
     public static class Utilities {
         public static string BasePath = "/home/bob_the_daniel/Data/";
 
-        public static string ServerPath (this IGuild guild, bool createDir = true) {
-            if (Directory.Exists(BasePath + guild.Id)) {
-                return BasePath + guild.Id;
-            } else if (Directory.Exists(BasePath + guild.OwnerId)) {
-                return BasePath + guild.OwnerId;
+        public static string GetPath (this IGuild guild, bool createDir = true) {
+            if (Directory.Exists(BasePath + "/" + guild.Id)) {
+                return BasePath + "/" + guild.Id;
+            } else if (Directory.Exists(BasePath + "/" + guild.OwnerId)) {
+                return BasePath + "/" + guild.OwnerId;
             } else {
                 if (createDir) {
-                    Directory.CreateDirectory(BasePath + guild.OwnerId);
-                    return BasePath + guild.OwnerId;
+                    Directory.CreateDirectory(BasePath + "/" + guild.OwnerId);
+                    return BasePath + "/" + guild.OwnerId;
                 } else {
                     return null;
                 }
             }
         }
+
         public static bool HasAdmin(this SocketGuildUser user) {
             if (user.Guild.Owner == user) {
                 return true;
@@ -68,6 +69,16 @@ namespace BotCatMaxy {
 
         public static SocketGuild GetGuild(SocketGuildChannel channel) {
             return channel.Guild;
+        }
+
+        public static void RemoveNullEntries(this IList list) {
+            if (list != null || list.Count > 0) {
+                foreach (object thing in list) {
+                    if (thing == null) {
+                        list.Remove(thing);
+                    }
+                }
+            }
         }
     }
 }

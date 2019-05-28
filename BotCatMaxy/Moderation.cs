@@ -54,7 +54,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            List<Infraction> infractions = user.LoadInfractions();
+            List<Infraction> infractions = user.LoadInfractions(dir, true);
 
             Infraction newInfraction = new Infraction {
                 reason = reason,
@@ -62,7 +62,7 @@ namespace BotCatMaxy {
                 size = size
             };
             infractions.Add(newInfraction);
-            SaveInfractions(context.Guild.GuildDataPath(false) + "/Infractions/" + dir + "/" + user.Id, infractions);
+            SaveInfractions(context.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id, infractions);
 
             IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
             if (!users.Contains(user)) {
@@ -71,8 +71,8 @@ namespace BotCatMaxy {
             }
         }
 
-        public static Embed CheckInfractions(this SocketGuildUser user, int amount = 5) {
-            List<Infraction> infractions = user.LoadInfractions();
+        public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
+            List<Infraction> infractions = user.LoadInfractions(dir, false);
 
             string infractionList = "";
             float infractionsToday = 0;
@@ -175,7 +175,7 @@ namespace BotCatMaxy {
     public static class TempBanChecker {
         public static async Task Timer(DiscordSocketClient client) {
             foreach (SocketGuild guild in client.Guilds) {
-                string guildDir = guild.GuildDataPath(false);
+                string guildDir = guild.GetPath(false);
                 if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "tempActions.json")) {
                     List<TempBan> tempBans = guild.LoadTempActions(false);
                     if (tempBans != null && tempBans.Count > 0) {
@@ -231,7 +231,7 @@ namespace BotCatMaxy {
 
             ModerationFunctions.CheckDirectories(Context.Guild);
             if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions(amount));
+                await ReplyAsync(embed: user.CheckInfractions("Games", amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }
@@ -246,7 +246,7 @@ namespace BotCatMaxy {
                 return;
             }
             ModerationFunctions.CheckDirectories(Context.Guild);
-            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id)) {
+            if (File.Exists(user.Guild.GetPath(false) + "/Infractions/Games/" + user.Id)) {
                 List<Infraction> infractions = user.LoadInfractions();
 
                 if (infractions.Count < index || index <= 0) {
@@ -344,8 +344,8 @@ namespace BotCatMaxy {
             if (user == null) {
                 user = Context.Message.Author as SocketGuildUser;
             }
-            if (Directory.Exists(Context.Guild.GuildDataPath(false)) && File.Exists(Context.Guild.GuildDataPath(false) + "/Infractions/Discord/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions(amount));
+            if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
+                await ReplyAsync(embed: user.CheckInfractions(amount: amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }

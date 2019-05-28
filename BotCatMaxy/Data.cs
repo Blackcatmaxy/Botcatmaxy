@@ -12,6 +12,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace BotCatMaxy.Data {
     public static class SettingsData {
         public static ModerationSettings LoadModSettings(this SocketGuild guild, bool createFile = true) {
+            string guildDir = guild.GetPath(createFile);
             ModerationSettings settings = null;
 
             ModerationFunctions.CheckDirectories(guild);
@@ -20,15 +21,9 @@ namespace BotCatMaxy.Data {
             serializer.NullValueHandling = NullValueHandling.Include;
 
             //The hope of these is for when Botcatmaxy starts to have an option to sync between servers
-            if (Directory.Exists("/home/bob_the_daniel/Data/" + guild)) {
-                Console.WriteLine("This should never happen");
-                using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + guild + "/moderationSettings.txt"))
-                using (JsonTextReader reader = new JsonTextReader(sr)) {
-                    settings = serializer.Deserialize<ModerationSettings>(reader);
-                }
-            } else if (Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId)) {
-                if (File.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId + "/moderationSettings.txt")) {
-                    using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + guild.OwnerId + "/moderationSettings.txt"))
+            if (guildDir =! null && Directory.Exists(guildDir + "/" + guild.OwnerId)) {
+                if (File.Exists(guildDir + "/moderationSettings.txt")) {
+                    using (StreamReader sr = new StreamReader(guildDir + "/moderationSettings.txt"))
                     using (JsonTextReader reader = new JsonTextReader(sr)) {
                         settings = serializer.Deserialize<ModerationSettings>(reader);
                     }
@@ -40,57 +35,46 @@ namespace BotCatMaxy.Data {
             }
 
             if (createFile && settings == null) {
-                File.Create("/home/bob_the_daniel/Data/" + guild.OwnerId + "/moderationSettings.txt").Close();
+                File.Create(guildDir + "/moderationSettings.txt").Close();
                 return new ModerationSettings();
             }
 
             return settings;
         }
         public static LogSettings LoadLogSettings(this IGuild guild, bool createFile = true) {
+            string guildPath = guild.GetPath(createFile);
             LogSettings settings = null;
 
             JsonSerializer serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Include;
 
-            //The hope of this is for when Botcatmaxy starts to have an option to sync between servers
-            if (Directory.Exists("/home/bob_the_daniel/Data/" + guild.Id)) {
-                Console.WriteLine("This should never happen");
-                using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + guild.Id + "/logSettings.txt"))
+            if (guild.GetPath(createFile) != null) {
+                using (StreamReader sr = new StreamReader(@guildPath + "/logSettings.txt"))
                 using (JsonTextReader reader = new JsonTextReader(sr)) {
                     settings = serializer.Deserialize<LogSettings>(reader);
-                }//It should always go here \/
-            } else if (Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId)) {
-                if (!File.Exists(@"/home/bob_the_daniel/Data/" + guild.OwnerId + "/logSettings.txt")) {
+                }
+            
+                if (!File.Exists(guildPath + "/logSettings.txt")) {
                     if (createFile) {
                         Console.WriteLine("Creating log settings");
                         SaveLogSettings(new LogSettings(), guild);
                         return new LogSettings();
                     }
                     return null;
-                } else {
-                    Console.WriteLine("Loading log settings");
-                    using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + guild.OwnerId + "/logSettings.txt"))
-                    using (JsonTextReader reader = new JsonTextReader(sr)) {
-                        settings = serializer.Deserialize<LogSettings>(reader);
-                    }
                 }
-            }
-
-            if (createFile && settings == null) {
-                SaveLogSettings(new LogSettings(), guild);
-                return new LogSettings();
             }
 
             return settings;
         }
-        public static List<BadWord> LoadBadWords(this IGuild Guild) {
+        public static List<BadWord> LoadBadWords(this IGuild Guild) {   
+            string guildDir = Guild.GetPath(false);
             List<BadWord> badWords = null;
 
-            if (!File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
+            if (guildDir == null || !File.Exists(guildDir + "/badwords.json")) {
                 return null;
             }
 
-            using (StreamReader sr = new StreamReader(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
+            using (StreamReader sr = new StreamReader(@guildDir + "/badwords.json"))
             using (JsonTextReader reader = new JsonTextReader(sr)) {
                 badWords = new JsonSerializer().Deserialize<List<BadWord>>(reader);
             }
@@ -99,7 +83,7 @@ namespace BotCatMaxy.Data {
         }
         public static List<TempBan> LoadTempActions(this IGuild Guild, bool createNew = false) {
             List<TempBan> tempBans = new List<TempBan>();
-            string guildDir = Guild.GuildDataPath(createNew);
+            string guildDir = Guild.GetPath(createNew);
             if (guildDir == null || !Directory.Exists(guildDir)) {
                 return tempBans;
             }
@@ -121,12 +105,12 @@ namespace BotCatMaxy.Data {
             }
         }
 
-        public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord") {
+        public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord", bool createDir = false) {
             List<Infraction> infractions = new List<Infraction>();
 
-            if (Directory.Exists(user.Guild.GuildDataPath() + "/Infractions/" + dir) && File.Exists(user.Guild.GuildDataPath() + "/Infractions/" + dir + "/" + user.Id)) {
+            if (Directory.Exists(user.Guild.GetPath(createDir) + "/Infractions/" + dir) && File.Exists(user.Guild.GetPath(createDir) + "/Infractions/" + dir + "/" + user.Id)) {
                 BinaryFormatter newbf = new BinaryFormatter();
-                FileStream newFile = File.Open(user.Guild.GuildDataPath() + "/Infractions/" + dir + "/" + user.Id, FileMode.Open);
+                FileStream newFile = File.Open(user.Guild.GetPath(createDir) + "/Infractions/" + dir + "/" + user.Id, FileMode.Open);
                 Infraction[] oldInfractions;
                 oldInfractions = (Infraction[])newbf.Deserialize(newFile);
                 newFile.Close();
@@ -138,7 +122,7 @@ namespace BotCatMaxy.Data {
         }
 
         public static void SaveTempBans(this List<TempBan> tempBans, IGuild Guild) {
-            string guildDir = Guild.GuildDataPath(true);
+            string guildDir = Guild.GetPath(true);
             tempBans.RemoveNullEntries();
 
             if (!File.Exists(guildDir + "/tempActions.json")) {
@@ -153,11 +137,11 @@ namespace BotCatMaxy.Data {
         }
 
         public static void SaveBadWords(this List<BadWord> badWords, IGuild Guild) {
-            if (!File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
-                File.Create("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json");
+            if (!File.Exists(Guild.GetPath(true) + "/badwords.json")) {
+                File.Create(Guild.GetPath(true) + "/badwords.json");
             }
             JsonSerializer serializer = new JsonSerializer();
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json"))
+            using (StreamWriter sw = new StreamWriter(@Guild.GetPath(true) + "/badwords.json"))
             using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                 serializer.Serialize(sw, badWords);
             }
@@ -166,7 +150,7 @@ namespace BotCatMaxy.Data {
             JsonSerializer serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Include;
 
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Guild.OwnerId + "/logSettings.txt"))
+            using (StreamWriter sw = new StreamWriter(Guild.GetPath(true) + "/logSettings.txt"))
             using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                 serializer.Serialize(sw, settings);
             }
@@ -175,7 +159,7 @@ namespace BotCatMaxy.Data {
             JsonSerializer serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Include;
 
-            using (StreamWriter sw = new StreamWriter(Guild.GuildDataPath(true) + "/moderationSettings.txt"))
+            using (StreamWriter sw = new StreamWriter(Guild.GetPath(true) + "/moderationSettings.txt"))
             using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                 serializer.Serialize(sw, settings);
             }
