@@ -24,29 +24,21 @@ namespace BotCatMaxy {
 
     public static class ModerationFunctions {
         public static void CheckDirectories(this IGuild guild) {
-            //old directory was fC:/Users/Daniel/Google-Drive/Botcatmaxy/Data/
-            if (!Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId)) {
-                Directory.CreateDirectory("/home/bob_the_daniel/Data/" + guild.OwnerId);
+            string guildDir = guild.GetPath(true);
+            if (!Directory.Exists(guildDir + "/Infractions/")) {
+                Directory.CreateDirectory(guildDir + "/Infractions/");
             }
-            if (!Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId + "/Infractions/")) {
-                Directory.CreateDirectory("/home/bob_the_daniel/Data/" + guild.OwnerId + "/Infractions/");
-            }
-            if (!Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId + "/Infractions/Discord/")) {
-                Directory.CreateDirectory("/home/bob_the_daniel/Data/" + guild.OwnerId + "/Infractions/Discord/");
-            }
-            if (!Directory.Exists("/home/bob_the_daniel/Data/" + guild.OwnerId + "/Infractions/Games/")) {
-                Directory.CreateDirectory("/home/bob_the_daniel/Data/" + guild.OwnerId + "/Infractions/Games/");
+            if (!Directory.Exists(guildDir + "/Infractions/Discord/")) {
+                Directory.CreateDirectory(guildDir + "/Infractions/Discord/");
             }
         }
 
-        public static void SaveInfractions(string location, List<Infraction> infractions) {
+        public static void SaveInfractions(SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
             BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(location);
+            FileStream file = File.Create(user.Guild.GetPath(true) + "/" + dir + "/" + user.Id);
             bf.Serialize(file, infractions.ToArray());
             file.Close();
         }
-
-        
 
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
             if (size > 999 || size < 0.01) {
@@ -62,7 +54,7 @@ namespace BotCatMaxy {
                 size = size
             };
             infractions.Add(newInfraction);
-            SaveInfractions(context.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id, infractions);
+            SaveInfractions(user, infractions, dir);
 
             IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
             if (!users.Contains(user)) {
@@ -241,12 +233,9 @@ namespace BotCatMaxy {
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
         public async Task RemooveWarnAsync(SocketGuildUser user, int index) {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permissions");
-                return;
-            }
             ModerationFunctions.CheckDirectories(Context.Guild);
-            if (File.Exists(user.Guild.GetPath(false) + "/Infractions/Games/" + user.Id)) {
+            string guildDir = user.Guild.GetPath(false);
+            if (guildDir != null && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
                 List<Infraction> infractions = user.LoadInfractions();
 
                 if (infractions.Count < index || index <= 0) {
@@ -258,7 +247,7 @@ namespace BotCatMaxy {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
 
-                    ModerationFunctions.SaveInfractions(Context.Guild.OwnerId + "/Infractions/Games/" + user.Id, infractions);
+                    ModerationFunctions.SaveInfractions(user, infractions, "Games");
 
                     await ReplyAsync("removed " + user.Mention + "'s warning for " + reason);
                 }
@@ -356,19 +345,20 @@ namespace BotCatMaxy {
         [HasAdmin()]
         public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
             ModerationFunctions.CheckDirectories(Context.Guild);
-            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id)) {
+            string guildDir = user.Guild.GetPath(false);
+            if (guildDir != null && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
                 List<Infraction> infractions = user.LoadInfractions();
 
                 if (infractions.Count < index || index <= 0) {
                     await ReplyAsync("invalid infraction number");
                 } else if (infractions.Count == 1) {
                     await ReplyAsync("removed " + user.Username + "'s warning for " + infractions[index - 1].reason);
-                    File.Delete("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id);
+                    File.Delete(guildDir + "/Infractions/Discord/" + user.Id);
                 } else {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
 
-                    ModerationFunctions.SaveInfractions(Context.Guild.OwnerId + "/Infractions/Discord/" + user.Id, infractions);
+                    ModerationFunctions.SaveInfractions(user, infractions, "Discord");
 
                     await ReplyAsync("removed " + user.Mention + "'s warning for " + reason);
                 }
