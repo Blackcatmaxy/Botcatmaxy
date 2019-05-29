@@ -15,8 +15,8 @@ namespace BotCatMaxy {
         [Command("help")]
         public async Task Help() {
             var embed = new EmbedBuilder();
-            embed.AddField("To see commands", "do !commands", true);
-            embed.AddField("Report issues and contribute at", "https://github.com/Blackcatmaxy/Botcatmaxy", true);
+            embed.AddField("To see commands", "[Click here](https://docs.google.com/document/d/1uVYHX9WEe2aRy2QbzMIwHMHthxJsViqu5Ah-yFKCANc/edit?usp=sharing)", true);
+            embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
             await ReplyAsync(embed: embed.Build());
         }
 
