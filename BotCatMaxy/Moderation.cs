@@ -164,24 +164,28 @@ namespace BotCatMaxy {
 
     public static class TempBanChecker {
         public static async Task Timer(DiscordSocketClient client) {
-            foreach (SocketGuild guild in client.Guilds) {
-                string guildDir = guild.GetPath(false);
-                if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "tempActions.json")) {
-                    List<TempBan> tempBans = guild.LoadTempActions(false);
-                    if (tempBans != null && tempBans.Count > 0) {
-                        foreach(TempBan tempBan in tempBans) {
-                            bool needSave = false;
-                            if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
-                                if (client.GetUser(tempBan.personBanned) != null && await guild.GetBanAsync(tempBan.personBanned) != null) {
-                                    await guild.RemoveBanAsync(tempBan.personBanned);
-                                    tempBans.Remove(tempBan);
-                                    needSave = true;
+            try {
+                foreach (SocketGuild guild in client.Guilds) {
+                    string guildDir = guild.GetPath(false);
+                    if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
+                        List<TempBan> tempBans = guild.LoadTempActions(false);
+                        if (tempBans != null && tempBans.Count > 0) {
+                            foreach (TempBan tempBan in tempBans) {
+                                bool needSave = false;
+                                if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
+                                    if (client.GetUser(tempBan.personBanned) != null && await guild.GetBanAsync(tempBan.personBanned) != null) {
+                                        await guild.RemoveBanAsync(tempBan.personBanned);
+                                        tempBans.Remove(tempBan);
+                                        needSave = true;
+                                    }
                                 }
+                                tempBans.SaveTempBans(guild);
                             }
-                            tempBans.SaveTempBans(guild);
                         }
                     }
                 }
+            } catch (Exception e) {
+                Console.WriteLine(new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e));
             }
 
             await Task.Delay(3600000);
