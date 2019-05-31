@@ -33,14 +33,14 @@ namespace BotCatMaxy {
             Logging logger = new Logging(_client);
             _ = TempBanChecker.Timer(_client);
 
-            await _client.SetGameAsync("version 0.6.0");
+            await _client.SetGameAsync("version 0.6.1");
 
             await handler.InstallCommandsAsync();
             logger.SetUp();
 
             //Debug info
             await Log(new LogMessage(LogSeverity.Info, "Main", "Setup complete"));
-            if (!Directory.Exists("/home/bob_the_daniel/Data")) {
+            if (!Directory.Exists(Utilities.BasePath)) {
                 Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
             }
 
