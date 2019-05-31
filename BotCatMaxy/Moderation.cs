@@ -41,26 +41,31 @@ namespace BotCatMaxy {
         }
 
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
-            if (size > 999 || size < 0.01) {
-                await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
-                return;
+            try {
+                if (size > 999 || size < 0.01) {
+                    await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                    return;
+                }
+
+                List<Infraction> infractions = user.LoadInfractions(dir, true);
+
+                Infraction newInfraction = new Infraction {
+                    reason = reason,
+                    time = DateTime.Now,
+                    size = size
+                };
+                infractions.Add(newInfraction);
+                SaveInfractions(user, infractions, dir);
+
+                IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
+                if (!users.Contains(user)) {
+                    IDMChannel DM = await user.GetOrCreateDMChannelAsync();
+                    _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+                }
+            } catch (Exception e) {
+                await context.Channel.SendMessageAsync("Error warning person: " + e.Message);
             }
-
-            List<Infraction> infractions = user.LoadInfractions(dir, true);
-
-            Infraction newInfraction = new Infraction {
-                reason = reason,
-                time = DateTime.Now,
-                size = size
-            };
-            infractions.Add(newInfraction);
-            SaveInfractions(user, infractions, dir);
-
-            IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
-            if (!users.Contains(user)) {
-                IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-                _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
-            }
+            
         }
 
         public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
