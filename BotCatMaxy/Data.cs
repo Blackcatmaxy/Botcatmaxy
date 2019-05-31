@@ -21,7 +21,7 @@ namespace BotCatMaxy.Data {
             serializer.NullValueHandling = NullValueHandling.Include;
 
             //The hope of these is for when Botcatmaxy starts to have an option to sync between servers
-            if (guildDir =! null && Directory.Exists(guildDir + "/" + guild.OwnerId)) {
+            if (guildDir != null && Directory.Exists(guildDir + "/" + guild.OwnerId)) {
                 if (File.Exists(guildDir + "/moderationSettings.txt")) {
                     using (StreamReader sr = new StreamReader(guildDir + "/moderationSettings.txt"))
                     using (JsonTextReader reader = new JsonTextReader(sr)) {
