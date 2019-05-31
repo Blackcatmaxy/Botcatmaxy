@@ -123,7 +123,7 @@ namespace BotCatMaxy.Data {
 
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
             BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(user.Guild.GetPath(true) + "/" + dir + "/" + user.Id);
+            FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
             bf.Serialize(file, infractions.ToArray());
             file.Close();
         }
