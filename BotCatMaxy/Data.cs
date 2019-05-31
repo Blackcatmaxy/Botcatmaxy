@@ -121,6 +121,13 @@ namespace BotCatMaxy.Data {
             return infractions;
         }
 
+        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Create(user.Guild.GetPath(true) + "/" + dir + "/" + user.Id);
+            bf.Serialize(file, infractions.ToArray());
+            file.Close();
+        }
+
         public static void SaveTempBans(this List<TempBan> tempBans, IGuild Guild) {
             string guildDir = Guild.GetPath(true);
             tempBans.RemoveNullEntries();

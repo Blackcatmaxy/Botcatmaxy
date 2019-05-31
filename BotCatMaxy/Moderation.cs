@@ -33,13 +33,6 @@ namespace BotCatMaxy {
             }
         }
 
-        public static void SaveInfractions(SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(user.Guild.GetPath(true) + "/" + dir + "/" + user.Id);
-            bf.Serialize(file, infractions.ToArray());
-            file.Close();
-        }
-
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
             try {
                 if (size > 999 || size < 0.01) {
@@ -55,7 +48,7 @@ namespace BotCatMaxy {
                     size = size
                 };
                 infractions.Add(newInfraction);
-                SaveInfractions(user, infractions, dir);
+                user.SaveInfractions(infractions, dir);
 
                 IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
                 if (!users.Contains(user)) {
@@ -252,7 +245,7 @@ namespace BotCatMaxy {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
 
-                    ModerationFunctions.SaveInfractions(user, infractions, "Games");
+                    user.SaveInfractions(infractions, "Games");
 
                     await ReplyAsync("removed " + user.Mention + "'s warning for " + reason);
                 }
@@ -363,7 +356,7 @@ namespace BotCatMaxy {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
 
-                    ModerationFunctions.SaveInfractions(user, infractions, "Discord");
+                    user.SaveInfractions(infractions, "Discord");
 
                     await ReplyAsync("removed " + user.Mention + "'s warning for " + reason);
                 }
