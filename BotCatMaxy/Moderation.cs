@@ -403,7 +403,8 @@ namespace BotCatMaxy {
             SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
             var chnl = message.Channel as SocketGuildChannel;
             var Guild = chnl.Guild;
-            if (Guild != null && Directory.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
+            string guildDir = Guild.GetPath();
+            if (Guild != null && Directory.Exists(guildDir) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
                 ModerationSettings modSettings = Guild.LoadModSettings(false);
                 List<BadWord> badWords = Guild.LoadBadWords();
                 
@@ -424,7 +425,7 @@ namespace BotCatMaxy {
                     }
                 } 
 
-                if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
+                if (File.Exists(guildDir + "/badwords.json")) {
                     foreach (BadWord badWord in badWords) {
                         if (message.Content.Contains(badWord.word)) {
                             if (badWord.euphemism != null && badWord.euphemism != "") {
