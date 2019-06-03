@@ -179,7 +179,9 @@ namespace BotCatMaxy {
                                         needSave = true;
                                     }
                                 }
-                                tempBans.SaveTempBans(guild);
+                                if (needSave) {
+                                    tempBans.SaveTempBans(guild);
+                                }
                             }
                         }
                     }
