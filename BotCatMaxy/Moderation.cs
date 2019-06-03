@@ -397,50 +397,54 @@ namespace BotCatMaxy {
     public static class Filter {
         public static DiscordSocketClient client;
         public static async Task CheckMessage(SocketMessage message) {
-            if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
-                return; //Makes sure it's not logging a message from a bot and that it's in a discord server
-            }
-            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
-            var chnl = message.Channel as SocketGuildChannel;
-            var Guild = chnl.Guild;
-            string guildDir = Guild.GetPath();
-            if (Guild != null && Directory.Exists(guildDir) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
-                ModerationSettings modSettings = Guild.LoadModSettings(false);
-                List<BadWord> badWords = Guild.LoadBadWords();
-                
-                if (modSettings != null) {
-                    if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
-                        return; //Returns if channel is set as not using automod
-                    }
-                    //Checks if a message contains an invite
-                    if (message.Content.Contains("discord.gg/")) {
-                        if (!modSettings.invitesAllowed) {
-                            _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                            await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
+            try {
+                if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
+                    return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+                }
+                SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
+                var chnl = message.Channel as SocketGuildChannel;
+                var Guild = chnl.Guild;
+                string guildDir = Guild.GetPath();
+                if (Guild != null && Directory.Exists(guildDir) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
+                    ModerationSettings modSettings = Guild.LoadModSettings(false);
+                    List<BadWord> badWords = Guild.LoadBadWords();
 
-                            Logging.LogDeleted("Bad word removed", message, Guild);
-                            await message.DeleteAsync();
-                            return;
+                    if (modSettings != null) {
+                        if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
+                            return; //Returns if channel is set as not using automod
+                        }
+                        //Checks if a message contains an invite
+                        if (message.Content.Contains("discord.gg/")) {
+                            if (!modSettings.invitesAllowed) {
+                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
+                                await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
+
+                                Logging.LogDeleted("Bad word removed", message, Guild);
+                                await message.DeleteAsync();
+                                return;
+                            }
                         }
                     }
-                } 
 
-                if (File.Exists(guildDir + "/badwords.json")) {
-                    foreach (BadWord badWord in badWords) {
-                        if (message.Content.Contains(badWord.word)) {
-                            if (badWord.euphemism != null && badWord.euphemism != "") {
-                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
-                            } else {
-                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                    if (File.Exists(guildDir + "/badwords.json")) {
+                        foreach (BadWord badWord in badWords) {
+                            if (message.Content.Contains(badWord.word)) {
+                                if (badWord.euphemism != null && badWord.euphemism != "") {
+                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                } else {
+                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                }
+                                await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
+
+                                Logging.LogDeleted("Bad word removed", message, Guild);
+                                await message.DeleteAsync();
+                                return;
                             }
-                            await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
-                            
-                            Logging.LogDeleted("Bad word removed", message, Guild);
-                            await message.DeleteAsync();
-                            return;
                         }
                     }
                 }
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the filter", e).Log();
             }
         }
     }
