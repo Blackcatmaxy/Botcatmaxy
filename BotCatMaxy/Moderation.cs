@@ -225,8 +225,9 @@ namespace BotCatMaxy {
                 user = Context.Message.Author as SocketGuildUser;
             }
 
-            ModerationFunctions.CheckDirectories(Context.Guild);
-            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id)) {
+            string guildDir = Context.Guild.GetPath(false);
+
+            if (Directory.Exists(guildDir) && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
                 await ReplyAsync(embed: user.CheckInfractions("Games", amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
