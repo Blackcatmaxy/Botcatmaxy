@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using BotCatMaxy.Data;
 using BotCatMaxy.Settings;
 using System.Linq;
+using System.Threading.Tasks;
 using System.IO;
 using System.Collections;
 
@@ -78,6 +79,14 @@ namespace BotCatMaxy {
                         list.Remove(thing);
                     }
                 }
+            }
+        }
+
+        public static async Task Log(this LogMessage message) {
+            Console.WriteLine(message);
+
+            using (StreamWriter w = File.AppendText(BasePath + "log.txt")) {
+                w.WriteLine(message);
             }
         }
     }
