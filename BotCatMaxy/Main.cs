@@ -18,8 +18,6 @@ namespace BotCatMaxy {
                 MessageCacheSize = 120
             };
 
-            File.CreateText(Utilities.BasePath + "log.txt");
-
             //Sets up the events
             _client = new DiscordSocketClient(config);
             Filter.client = _client;
