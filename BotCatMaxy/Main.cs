@@ -41,7 +41,7 @@ namespace BotCatMaxy {
             logger.SetUp();
 
             //Debug info
-            await Log(new LogMessage(LogSeverity.Info, "Main", "Setup complete"));
+            _ = new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
             if (!Directory.Exists(Utilities.BasePath)) {
                 Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
             }
@@ -52,7 +52,7 @@ namespace BotCatMaxy {
         }
 
         private async Task Ready() {
-            await Log(new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!"));
+            await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
         }
 
         private Task Log(LogMessage msg) {

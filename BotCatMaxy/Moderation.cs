@@ -185,7 +185,7 @@ namespace BotCatMaxy {
                     }
                 }
             } catch (Exception e) {
-                Console.WriteLine(new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e));
+                _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
             }
 
             await Task.Delay(3600000);
