@@ -246,7 +246,7 @@ namespace BotCatMaxy {
                     await ReplyAsync("invalid infraction number");
                 } else if (infractions.Count == 1) {
                     await ReplyAsync("removed " + user.Username + "'s warning for " + infractions[0]);
-                    File.Delete("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
+                    File.Delete(guildDir + "/Infractions/Games/" + user.Id);
                 } else {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
