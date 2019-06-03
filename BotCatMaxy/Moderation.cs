@@ -382,15 +382,15 @@ namespace BotCatMaxy {
             if (days > 1) {
                 plural = "s ";
             }
-            IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + days + " day " + plural + "because of " + reason);
+            IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + days + " day" + plural + " because of " + reason);
             TempBan tempBan = new TempBan(user.Id, days);
             List<TempBan> tempBans = Context.Guild.LoadTempActions(true);
             tempBans.Add(tempBan);
             tempBans.SaveTempBans(Context.Guild);
             await Context.Guild.AddBanAsync(user, reason: reason);
-            _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + days + " day " + plural + "because of " + reason);
+            _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + days + " day" + plural + " because of " + reason);
             IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-            _ = DM.SendMessageAsync("You have been temp banned in " + Context.Guild.Name + " discord for \"" + reason + "\" for " + days + " days");
+            _ = DM.SendMessageAsync("You have been temp banned in " + Context.Guild.Name + " discord for \"" + reason + "\" for " + days + " day" + plural);
         }
     }
 
