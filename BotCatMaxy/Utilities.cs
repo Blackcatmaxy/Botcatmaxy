@@ -83,7 +83,12 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
-            Console.ForegroundColor = ConsoleColor.Red;
+            if (message.Severity == LogSeverity.Error || message.Severity == LogSeverity.Critical) {
+                Console.ForegroundColor = ConsoleColor.Red;
+            } else if (message.Severity == LogSeverity.Warning) {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            }
+            
             Console.WriteLine(message);
             Console.ResetColor();
 
