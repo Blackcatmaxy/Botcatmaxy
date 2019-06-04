@@ -83,7 +83,9 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(message);
+            Console.ResetColor();
 
             using (StreamWriter w = File.AppendText(BasePath + "log.txt")) {
                 w.WriteLine(message);
