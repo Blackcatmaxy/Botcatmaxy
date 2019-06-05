@@ -13,6 +13,22 @@ using BotCatMaxy.Settings;
 namespace BotCatMaxy {
     public class SettingsModule : ModuleBase<SocketCommandContext> {
         public Task needsConfirmation;
+        [Command("Settings Info")]
+        [RequireContext(ContextType.Guild)]
+        public async Task SettingsInfo() {
+            var embed = new EmbedBuilder();
+            string guildDir = Context.Guild.GetPath(false);
+            if (guildDir == null) {
+                embed.AddField("Storage", "Not created yet", true);
+            } else if (guildDir.Contains(Context.Guild.OwnerId.ToString())) {
+                embed.AddField("Storage", "Using Owner's ID", true);
+            } else if (guildDir.Contains(Context.Guild.Id.ToString())) {
+                embed.AddField("Storage", "Using Guild ID", true);
+            }
+
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("ToggleServerID")]
         [HasAdmin]
         public async Task ServerIDCommand() {

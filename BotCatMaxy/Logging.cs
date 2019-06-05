@@ -36,7 +36,7 @@ namespace BotCatMaxy {
                 deletedMessagesCache.Insert(0, message.Id);
 
                 if (guild == null) {
-                    Utilities.GetGuild(message.Channel as SocketGuildChannel);
+                    guild = Utilities.GetGuild(message.Channel as SocketGuildChannel);
                     if (guild == null) {
                         return;
                     }
@@ -68,9 +68,9 @@ namespace BotCatMaxy {
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp();
 
-                _ = logChannel.SendMessageAsync(embed: embed.Build());
+                logChannel.SendMessageAsync(embed: embed.Build());
             } catch (Exception exception) {
-                Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception));
+                _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
             }
         }
 

@@ -34,31 +34,26 @@ namespace BotCatMaxy {
         }
 
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
-            try {
-                if (size > 999 || size < 0.01) {
-                    await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
-                    return;
-                }
-
-                List<Infraction> infractions = user.LoadInfractions(dir, true);
-
-                Infraction newInfraction = new Infraction {
-                    reason = reason,
-                    time = DateTime.Now,
-                    size = size
-                };
-                infractions.Add(newInfraction);
-                user.SaveInfractions(infractions, dir);
-
-                IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
-                if (!users.Contains(user)) {
-                    IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-                    _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
-                }
-            } catch (Exception e) {
-                await context.Channel.SendMessageAsync("Error warning person: " + e.Message);
+            if (size > 999 || size < 0.01) {
+                await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                return;
             }
-            
+
+            List<Infraction> infractions = user.LoadInfractions(dir, true);
+
+            Infraction newInfraction = new Infraction {
+                reason = reason,
+                time = DateTime.Now,
+                size = size
+            };
+            infractions.Add(newInfraction);
+            user.SaveInfractions(infractions, dir);
+
+            IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
+            if (!users.Contains(user)) {
+                IDMChannel DM = await user.GetOrCreateDMChannelAsync();
+                _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+            }
         }
 
         public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
@@ -85,7 +80,7 @@ namespace BotCatMaxy {
                 TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
                 totalInfractions += infraction.size;
                 string timeAgo = MathF.Round(dateAgo.Days / 30) + " months ago";
-                
+
                 if (dateAgo.Days <= 7) {
                     last7Days += infraction.size;
                 }
@@ -130,7 +125,7 @@ namespace BotCatMaxy {
 
                 string size = "";
                 if (infraction.size != 1) {
-                    size = "("  + infraction.size  + "x) ";
+                    size = "(" + infraction.size + "x) ";
                 }
 
                 if (n < amount) {
@@ -179,13 +174,15 @@ namespace BotCatMaxy {
                                         needSave = true;
                                     }
                                 }
-                                tempBans.SaveTempBans(guild);
+                                if (needSave) {
+                                    tempBans.SaveTempBans(guild);
+                                }
                             }
                         }
                     }
                 }
             } catch (Exception e) {
-                Console.WriteLine(new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e));
+                _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
             }
 
             await Task.Delay(3600000);
@@ -223,8 +220,9 @@ namespace BotCatMaxy {
                 user = Context.Message.Author as SocketGuildUser;
             }
 
-            ModerationFunctions.CheckDirectories(Context.Guild);
-            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id)) {
+            string guildDir = Context.Guild.GetPath(false);
+
+            if (Directory.Exists(guildDir) && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
                 await ReplyAsync(embed: user.CheckInfractions("Games", amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
@@ -244,7 +242,7 @@ namespace BotCatMaxy {
                     await ReplyAsync("invalid infraction number");
                 } else if (infractions.Count == 1) {
                     await ReplyAsync("removed " + user.Username + "'s warning for " + infractions[0]);
-                    File.Delete("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/Infractions/Games/" + user.Id);
+                    File.Delete(guildDir + "/Infractions/Games/" + user.Id);
                 } else {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
@@ -380,64 +378,69 @@ namespace BotCatMaxy {
             if (days > 1) {
                 plural = "s ";
             }
-            IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + days + " day " + plural + "because of " + reason);
+            IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + days + " day" + plural + " because of " + reason);
             TempBan tempBan = new TempBan(user.Id, days);
             List<TempBan> tempBans = Context.Guild.LoadTempActions(true);
             tempBans.Add(tempBan);
             tempBans.SaveTempBans(Context.Guild);
             await Context.Guild.AddBanAsync(user, reason: reason);
-            _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + days + " day " + plural + "because of " + reason);
+            _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + days + " day" + plural + " because of " + reason);
             IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-            _ = DM.SendMessageAsync("You have been temp banned in " + Context.Guild.Name + " discord for \"" + reason + "\" for " + days + " days");
+            _ = DM.SendMessageAsync("You have been temp banned in " + Context.Guild.Name + " discord for \"" + reason + "\" for " + days + " day" + plural);
         }
     }
 
     public static class Filter {
         public static DiscordSocketClient client;
         public static async Task CheckMessage(SocketMessage message) {
-            if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
-                return; //Makes sure it's not logging a message from a bot and that it's in a discord server
-            }
-            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
-            var chnl = message.Channel as SocketGuildChannel;
-            var Guild = chnl.Guild;
-            if (Guild != null && Directory.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
-                ModerationSettings modSettings = Guild.LoadModSettings(false);
-                List<BadWord> badWords = Guild.LoadBadWords();
-                
-                if (modSettings != null) {
-                    if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
-                        return; //Returns if channel is set as not using automod
-                    }
-                    //Checks if a message contains an invite
-                    if (message.Content.Contains("discord.gg/")) {
-                        if (!modSettings.invitesAllowed) {
-                            _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                            await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
+            try {
+                if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
+                    return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+                }
+                SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
+                var chnl = message.Channel as SocketGuildChannel;
+                var Guild = chnl.Guild;
+                string guildDir = Guild.GetPath();
+                if (Guild != null && Directory.Exists(guildDir) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
+                    ModerationSettings modSettings = Guild.LoadModSettings(false);
+                    List<BadWord> badWords = Guild.LoadBadWords();
 
-                            Logging.LogDeleted("Bad word removed", message, Guild);
-                            await message.DeleteAsync();
-                            return;
+                    if (modSettings != null) {
+                        if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
+                            return; //Returns if channel is set as not using automod
+                        }
+                        //Checks if a message contains an invite
+                        if (message.Content.ToLower().Contains("discord.gg/")) {
+                            if (!modSettings.invitesAllowed) {
+                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
+                                await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
+
+                                Logging.LogDeleted("Bad word removed", message, Guild);
+                                await message.DeleteAsync();
+                                return;
+                            }
                         }
                     }
-                } 
 
-                if (File.Exists("/home/bob_the_daniel/Data/" + Guild.OwnerId + "/badwords.json")) {
-                    foreach (BadWord badWord in badWords) {
-                        if (message.Content.Contains(badWord.word)) {
-                            if (badWord.euphemism != null && badWord.euphemism != "") {
-                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
-                            } else {
-                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                    if (File.Exists(guildDir + "/badwords.json")) {
+                        foreach (BadWord badWord in badWords) {
+                            if (message.Content.ToLower().Contains(badWord.word.ToLower())) {
+                                if (badWord.euphemism != null && badWord.euphemism != "") {
+                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                } else {
+                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                }
+                                await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
+
+                                Logging.LogDeleted("Bad word removed", message, Guild);
+                                await message.DeleteAsync();
+                                return;
                             }
-                            await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
-                            
-                            Logging.LogDeleted("Bad word removed", message, Guild);
-                            await message.DeleteAsync();
-                            return;
                         }
                     }
                 }
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the filter", e).Log();
             }
         }
     }
