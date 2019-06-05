@@ -415,7 +415,7 @@ namespace BotCatMaxy {
                             return; //Returns if channel is set as not using automod
                         }
                         //Checks if a message contains an invite
-                        if (message.Content.Contains("discord.gg/")) {
+                        if (message.Content.ToLower().Contains("discord.gg/")) {
                             if (!modSettings.invitesAllowed) {
                                 _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
                                 await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
@@ -429,7 +429,7 @@ namespace BotCatMaxy {
 
                     if (File.Exists(guildDir + "/badwords.json")) {
                         foreach (BadWord badWord in badWords) {
-                            if (message.Content.Contains(badWord.word)) {
+                            if (message.Content.ToLower().Contains(badWord.word.ToLower())) {
                                 if (badWord.euphemism != null && badWord.euphemism != "") {
                                     _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
                                 } else {
