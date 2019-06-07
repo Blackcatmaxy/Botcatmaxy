@@ -27,11 +27,11 @@ namespace BotCatMaxy {
         async Task LogNew(IMessage message) {
             SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
             if (guild != null && Regex.IsMatch(message, "/^<@&(\d+)>/")) {
-                LogMessage("Role ping", message, guild);
+                LogMessage("Role ping", message, guild, true);
             }
         }
 
-        public static void LogMessage(string reason, IMessage message, SocketGuild guild = null) {
+        public static void LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
             try {
                 if (deletedMessagesCache == null) {
                     deletedMessagesCache = new List<ulong>();
@@ -71,8 +71,13 @@ namespace BotCatMaxy {
                     embed.AddField(reason + " in #" + channel.Name,
                     "`Embed cannot be displayed`", true);
                 }
+                string jumpLink = "";
                 
-                embed.WithFooter("ID: " + message.Id)
+                if (addJumpLink) {
+                    jumpLink = " • " + message.GetJumpUrl();
+                }
+
+                embed.WithFooter("ID: " + message.Id + jumpLink)
                     .WithAuthor(message.Author)
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp();
