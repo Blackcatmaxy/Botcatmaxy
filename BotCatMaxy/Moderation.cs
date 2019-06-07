@@ -367,6 +367,23 @@ namespace BotCatMaxy {
             }
         }
 
+        [Command("kickwarn")]
+        [Alias("warnkick")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason) {
+            await user.Warn(1, reason, Context, "Discord");
+
+            var embed = new EmbedBuilder();
+            embed.WithTitle("You have been kicked from a discord guild");
+            embed.AddField("Reason", reason, true);
+            embed.AddField("Guild name", Context.Guild.Name);
+            embed.WithCurrentTimestamp();
+            embed.WithAuthor(Context.Message.Author);
+
+            await user.GetOrCreateDMChannelAsync().Result.SendMessageAsync("");
+            user.KickAsync(reason);
+        }
+
         [Command("testtempban")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task TempBan(SocketUser user, int days, [Remainder] string reason) {
