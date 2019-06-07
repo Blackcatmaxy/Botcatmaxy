@@ -406,7 +406,7 @@ namespace BotCatMaxy {
                     List<BadWord> badWords = Guild.LoadBadWords();
 
                     if (modSettings != null) {
-                        if (modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
+                        if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
                             return; //Returns if channel is set as not using automod
                         }
                         //Checks if a message contains an invite
@@ -415,7 +415,7 @@ namespace BotCatMaxy {
                                 _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
                                 await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
 
-                                Logging.LogDeleted("Bad word removed", message, Guild);
+                                Logging.LogMessage("Bad word removed", message, Guild);
                                 await message.DeleteAsync();
                                 return;
                             }
@@ -432,7 +432,7 @@ namespace BotCatMaxy {
                                 }
                                 await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
 
-                                Logging.LogDeleted("Bad word removed", message, Guild);
+                                Logging.LogMessage("Bad word removed", message, Guild);
                                 await message.DeleteAsync();
                                 return;
                             }
