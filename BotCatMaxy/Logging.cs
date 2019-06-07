@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
@@ -20,9 +21,17 @@ namespace BotCatMaxy {
         public void SetUp() {
             //Console.WriteLine(DateTime.Now.TimeOfDay + " Setup logging");
             _client.MessageDeleted += LogDelete;
+            _client.MessageReceived += LogNew;
         }
 
-        public static void LogDeleted(string reason, IMessage message, SocketGuild guild = null) {
+        async Task LogNew(IMessage message) {
+            SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
+            if (guild != null && Regex.IsMatch(message, "/^<@&(\d+)>/")) {
+                LogMessage("Role ping", message, guild);
+            }
+        }
+
+        public static void LogMessage(string reason, IMessage message, SocketGuild guild = null) {
             try {
                 if (deletedMessagesCache == null) {
                     deletedMessagesCache = new List<ulong>();
@@ -78,7 +87,7 @@ namespace BotCatMaxy {
             try {
                 SocketGuild guild = Utilities.GetGuild(channel as SocketTextChannel);
 
-                LogDeleted("Deleted message", message.Value, guild);
+                LogMessage("Deleted message", message.Value, guild);
                 if (message.Value.Attachments != null) {
 
                 }
