@@ -26,7 +26,7 @@ namespace BotCatMaxy {
 
         async Task LogNew(IMessage message) {
             SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
-            if (guild != null && Regex.IsMatch(message, "/^<@&(\d+)>/")) {
+            if (guild != null && Regex.IsMatch(message.Content, @"/^<@&(\d+)>/")) {
                 LogMessage("Role ping", message, guild, true);
             }
         }
