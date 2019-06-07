@@ -380,7 +380,7 @@ namespace BotCatMaxy {
             embed.WithCurrentTimestamp();
             embed.WithAuthor(Context.Message.Author);
 
-            await user.GetOrCreateDMChannelAsync().Result.SendMessageAsync("");
+            await user.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: embed.Build());
             user.KickAsync(reason);
         }
 
