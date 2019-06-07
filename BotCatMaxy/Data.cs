@@ -15,28 +15,20 @@ namespace BotCatMaxy.Data {
             string guildDir = guild.GetPath(createFile);
             ModerationSettings settings = null;
 
-            ModerationFunctions.CheckDirectories(guild);
-
             JsonSerializer serializer = new JsonSerializer();
             serializer.NullValueHandling = NullValueHandling.Include;
 
-            //The hope of these is for when Botcatmaxy starts to have an option to sync between servers
             if (guildDir != null && Directory.Exists(guildDir + "/" + guild.OwnerId)) {
                 if (File.Exists(guildDir + "/moderationSettings.txt")) {
                     using (StreamReader sr = new StreamReader(guildDir + "/moderationSettings.txt"))
                     using (JsonTextReader reader = new JsonTextReader(sr)) {
                         settings = serializer.Deserialize<ModerationSettings>(reader);
                     }
-                } else {
+                } else if (createFile) {
                     Console.WriteLine("Creating mod settings");
                     SaveModSettings(new ModerationSettings(), guild);
                     return new ModerationSettings();
                 }
-            }
-
-            if (createFile && settings == null) {
-                File.Create(guildDir + "/moderationSettings.txt").Close();
-                return new ModerationSettings();
             }
 
             return settings;
@@ -93,13 +85,11 @@ namespace BotCatMaxy.Data {
                 using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                     serializer.Serialize(sw, tempBans);
                 }
-                if (tempBans == null) {
-                    return new List<TempBan>();
-                }
                 return tempBans;
             } else {
                 if (createNew) {
                     File.Create(guildDir + "/tempActions.json").Close();
+                    return new List<TempBan>();
                 }
                 return tempBans;
             }
