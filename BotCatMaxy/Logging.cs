@@ -74,7 +74,7 @@ namespace BotCatMaxy {
                 string jumpLink = "";
                 
                 if (addJumpLink) {
-                    jumpLink = " • " + message.GetJumpUrl();
+                    jumpLink = " • [Message Link](" + message.GetJumpUrl() + ")";
                 }
 
                 embed.WithFooter("ID: " + message.Id + jumpLink)
