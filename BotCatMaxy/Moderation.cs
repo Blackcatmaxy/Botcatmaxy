@@ -369,12 +369,13 @@ namespace BotCatMaxy {
             var embed = new EmbedBuilder();
             embed.WithTitle("You have been kicked from a discord guild");
             embed.AddField("Reason", reason, true);
-            embed.AddField("Guild name", Context.Guild.Name);
+            embed.AddField("Guild name", Context.Guild.Name, true);
             embed.WithCurrentTimestamp();
             embed.WithAuthor(Context.Message.Author);
 
             await user.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: embed.Build());
-            user.KickAsync(reason);
+            await ReplyAsync(user.Mention + " has been kicked for " + reason);
+            await user.KickAsync(reason);
         }
 
         [Command("testtempban")]
