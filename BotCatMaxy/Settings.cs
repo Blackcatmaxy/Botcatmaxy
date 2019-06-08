@@ -61,7 +61,7 @@ namespace BotCatMaxy {
         public async Task ToggleServerIDUse(SocketGuild guild) {
             if (Directory.Exists(Utilities.BasePath + guild.Id)) {
                 await ReplyAsync("Switching to using owner ID to store data");
-                Directory.Delete(Utilities.BasePath + guild.Id);
+                Directory.Delete(Utilities.BasePath + guild.Id, true);
             } else {
                 await ReplyAsync("Switching to using server ID to store data");
                 Directory.CreateDirectory(Utilities.BasePath + guild.Id);
