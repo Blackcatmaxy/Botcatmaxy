@@ -127,7 +127,6 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task ToggleInviteWarn() {
             IUserMessage message = await ReplyAsync("Trying to toggle");
-            ModerationFunctions.CheckDirectories(Context.Guild);
             ModerationSettings settings = Context.Guild.LoadModSettings(true);
 
             if (settings == null) {
@@ -224,7 +223,6 @@ namespace BotCatMaxy {
                 await ReplyAsync("You do have administrator permission");
                 return;
             }
-            ModerationFunctions.CheckDirectories(Context.Guild);
             BadWord badWord = new BadWord {
                 word = word,
                 euphemism = euphemism,
@@ -248,7 +246,6 @@ namespace BotCatMaxy {
         [Command("removebadword")]
         [HasAdmin]
         public async Task RemoveBadWord(string word) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
             List<BadWord> badWords = Context.Guild.LoadBadWords(); ;
 
             if (badWords == null) {
@@ -279,7 +276,6 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task SetLogChannel() {
             IUserMessage message = await ReplyAsync("Setting...");
-            ModerationFunctions.CheckDirectories(Context.Guild);
             LogSettings settings = null;
 
             settings = Context.Guild.LoadLogSettings(true);
@@ -316,7 +312,6 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task ToggleLoggingDeleted() {
             IUserMessage message = await ReplyAsync("Setting...");
-            ModerationFunctions.CheckDirectories(Context.Guild);
             LogSettings settings = null;
 
             settings = Context.Guild.LoadLogSettings(true);

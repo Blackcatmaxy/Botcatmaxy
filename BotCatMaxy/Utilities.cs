@@ -15,20 +15,20 @@ namespace BotCatMaxy {
         public static string BasePath = "/home/bob_the_daniel/Data/";
 
         public static string GetPath (this IGuild guild, bool createDir = true) {
-            if (Directory.Exists(BasePath + guild.Id)) {
-                if (createDir) guild.CheckDirectories();
-                return BasePath + guild.Id;
-            } else if (Directory.Exists(BasePath + guild.OwnerId)) {
-                if (createDir) guild.CheckDirectories();
-                return BasePath + guild.OwnerId;
+            string ownerPath = BasePath + guild.OwnerId;
+            string guildPath = BasePath + guild.Id;
+            if (Directory.Exists(guildPath)) {
+                if (createDir) guildPath.CheckDirectories();
+                return guildPath;
+            } else if (Directory.Exists(ownerPath)) {
+                if (createDir) ownerPath.CheckDirectories();
+                return ownerPath;
             } else {
                 if (createDir) {
-                    Directory.CreateDirectory(BasePath + guild.OwnerId);
-                    guild.CheckDirectories();
-                    return BasePath + guild.OwnerId;
-                } else {
-                    return null;
-                }
+                    Directory.CreateDirectory(ownerPath);
+                    ownerPath.CheckDirectories();
+                    return ownerPath;
+                } else return null;
             }
         }
 

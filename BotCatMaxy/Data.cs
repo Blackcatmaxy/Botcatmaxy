@@ -97,10 +97,11 @@ namespace BotCatMaxy.Data {
 
         public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord", bool createDir = false) {
             List<Infraction> infractions = new List<Infraction>();
+            string guildDir = user.Guild.GetPath(createDir);
 
-            if (Directory.Exists(user.Guild.GetPath(createDir) + "/Infractions/" + dir) && File.Exists(user.Guild.GetPath(createDir) + "/Infractions/" + dir + "/" + user.Id)) {
+            if (Directory.Exists(guildDir + "/Infractions/" + dir) && File.Exists(guildDir + "/Infractions/" + dir + "/" + user.Id)) {
                 BinaryFormatter newbf = new BinaryFormatter();
-                FileStream newFile = File.Open(user.Guild.GetPath(createDir) + "/Infractions/" + dir + "/" + user.Id, FileMode.Open);
+                FileStream newFile = File.Open(guildDir + "/Infractions/" + dir + "/" + user.Id, FileMode.Open);
                 Infraction[] oldInfractions;
                 oldInfractions = (Infraction[])newbf.Deserialize(newFile);
                 newFile.Close();

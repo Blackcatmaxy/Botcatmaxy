@@ -23,13 +23,12 @@ namespace BotCatMaxy {
     }
 
     public static class ModerationFunctions {
-        public static void CheckDirectories(this IGuild guild) {
-            string guildDir = guild.GetPath(true);
-            if (!Directory.Exists(guildDir + "/Infractions/")) {
-                Directory.CreateDirectory(guildDir + "/Infractions/");
+        public static void CheckDirectories(this string path) {
+            if (!Directory.Exists(path + "/Infractions/")) {
+                Directory.CreateDirectory(path + "/Infractions/");
             }
-            if (!Directory.Exists(guildDir + "/Infractions/Discord/")) {
-                Directory.CreateDirectory(guildDir + "/Infractions/Discord/");
+            if (!Directory.Exists(path + "/Infractions/Discord/")) {
+                Directory.CreateDirectory(path + "/Infractions/Discord/");
             }
         }
 
@@ -197,7 +196,6 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
             await user.Warn(size, reason, Context, "Games");
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
@@ -206,7 +204,6 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
             await user.Warn(1, reason, Context, "Games");
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
@@ -233,8 +230,7 @@ namespace BotCatMaxy {
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
         public async Task RemooveWarnAsync(SocketGuildUser user, int index) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
-            string guildDir = user.Guild.GetPath(false);
+            string guildDir = user.Guild.GetPath(true);
             if (guildDir != null && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
                 List<Infraction> infractions = user.LoadInfractions();
 
@@ -311,7 +307,6 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
             _ = user.Warn(size, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
@@ -320,7 +315,6 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
             _ = user.Warn(1, reason, Context);
 
             await ReplyAsync(user.Username + " has been warned for " + reason);
@@ -344,7 +338,6 @@ namespace BotCatMaxy {
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
         public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
-            ModerationFunctions.CheckDirectories(Context.Guild);
             string guildDir = user.Guild.GetPath(false);
             if (guildDir != null && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
                 List<Infraction> infractions = user.LoadInfractions();
