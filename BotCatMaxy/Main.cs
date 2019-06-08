@@ -32,13 +32,18 @@ namespace BotCatMaxy {
             await _client.LoginAsync(TokenType.Bot, HiddenInfo.token);
             await _client.StartAsync();
 
+            if (version != null || version != "") {
+                await Log(new LogMessage(LogSeverity.Info, "Ready", "Starting with version " + version));
+                await _client.SetGameAsync("version " + version);
+            } else {
+                await Log(new LogMessage(LogSeverity.Info, "Ready", "Starting with no version num"));
+            }
+
             CommandService service = new CommandService();
             CommandHandler handler = new CommandHandler(_client, service);
 
             Logging logger = new Logging(_client);
             _ = TempBanChecker.Timer(_client);
-
-            if (version != null || version != "") await _client.SetGameAsync("version " + version);
 
             await handler.InstallCommandsAsync();
             logger.SetUp();
