@@ -10,9 +10,9 @@ namespace BotCatMaxy {
         private DiscordSocketClient _client;
 
         public static void Main(string[] args)
-            => new MainClass().MainAsync().GetAwaiter().GetResult();
+            => new MainClass().MainAsync(args[1]).GetAwaiter().GetResult();
 
-        public async Task MainAsync() {
+        public async Task MainAsync(string version) {
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 120
@@ -35,7 +35,7 @@ namespace BotCatMaxy {
             Logging logger = new Logging(_client);
             _ = TempBanChecker.Timer(_client);
 
-            await _client.SetGameAsync("version 0.7.0");
+            if (version != null || version != "") await _client.SetGameAsync("version " + version);
 
             await handler.InstallCommandsAsync();
             logger.SetUp();
