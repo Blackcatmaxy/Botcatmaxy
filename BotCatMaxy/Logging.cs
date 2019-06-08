@@ -71,13 +71,12 @@ namespace BotCatMaxy {
                     embed.AddField(reason + " in #" + channel.Name,
                     "`Embed cannot be displayed`", true);
                 }
-                string jumpLink = "";
                 
                 if (addJumpLink) {
-                    jumpLink = " • [Message Link](" + message.GetJumpUrl() + ")";
+                    embed.AddField("Message Link", "[Click Here](" + message.GetJumpUrl() + ")", true);
                 }
 
-                embed.WithFooter("ID: " + message.Id + jumpLink)
+                embed.WithFooter("ID: " + message.Id)
                     .WithAuthor(message.Author)
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp();
