@@ -198,7 +198,7 @@ namespace BotCatMaxy {
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             await user.Warn(size, reason, Context, "Games");
 
-            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
@@ -206,7 +206,7 @@ namespace BotCatMaxy {
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             await user.Warn(1, reason, Context, "Games");
 
-            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warns")]
@@ -309,7 +309,7 @@ namespace BotCatMaxy {
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             _ = user.Warn(size, reason, Context);
 
-            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
@@ -317,7 +317,7 @@ namespace BotCatMaxy {
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             _ = user.Warn(1, reason, Context);
 
-            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warns")]
@@ -424,7 +424,7 @@ namespace BotCatMaxy {
                         if (message.Content.ToLower().Contains("discord.gg/")) {
                             if (!modSettings.invitesAllowed) {
                                 _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                                await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for posting a discord invite");
+                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
 
                                 Logging.LogMessage("Bad word removed", message, Guild);
                                 await message.DeleteAsync();
@@ -441,7 +441,7 @@ namespace BotCatMaxy {
                                 } else {
                                     _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
                                 }
-                                await message.Channel.SendMessageAsync("warned " + message.Author.Mention + " for bad word");
+                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
 
                                 Logging.LogMessage("Bad word removed", message, Guild);
                                 await message.DeleteAsync();
