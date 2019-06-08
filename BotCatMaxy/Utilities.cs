@@ -16,12 +16,15 @@ namespace BotCatMaxy {
 
         public static string GetPath (this IGuild guild, bool createDir = true) {
             if (Directory.Exists(BasePath + guild.Id)) {
+                if (createDir) guild.CheckDirectories();
                 return BasePath + guild.Id;
             } else if (Directory.Exists(BasePath + guild.OwnerId)) {
+                if (createDir) guild.CheckDirectories();
                 return BasePath + guild.OwnerId;
             } else {
                 if (createDir) {
                     Directory.CreateDirectory(BasePath + guild.OwnerId);
+                    guild.CheckDirectories();
                     return BasePath + guild.OwnerId;
                 } else {
                     return null;
