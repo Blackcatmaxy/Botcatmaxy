@@ -198,7 +198,7 @@ namespace BotCatMaxy {
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             await user.Warn(size, reason, Context, "Games");
 
-            await ReplyAsync(user.Username + " has been warned for " + reason);
+            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
@@ -206,7 +206,7 @@ namespace BotCatMaxy {
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             await user.Warn(1, reason, Context, "Games");
 
-            await ReplyAsync(user.Username + " has been warned for " + reason);
+            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warns")]
@@ -309,7 +309,7 @@ namespace BotCatMaxy {
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             _ = user.Warn(size, reason, Context);
 
-            await ReplyAsync(user.Username + " has been warned for " + reason);
+            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
@@ -317,7 +317,7 @@ namespace BotCatMaxy {
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             _ = user.Warn(1, reason, Context);
 
-            await ReplyAsync(user.Username + " has been warned for " + reason);
+            await ReplyAsync(user.Username + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warns")]
