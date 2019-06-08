@@ -9,10 +9,13 @@ namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
 
-        public static void Main(string[] args)
-            => new MainClass().MainAsync(args[1]).GetAwaiter().GetResult();
+        public static void Main(string[] args) {
+            if (args != null) 
+            new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
+            else new MainClass().MainAsync().GetAwaiter().GetResult();
+        }
 
-        public async Task MainAsync(string version) {
+        public async Task MainAsync(string version = null) {
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 120
