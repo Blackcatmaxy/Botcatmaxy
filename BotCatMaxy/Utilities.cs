@@ -110,9 +110,15 @@ namespace BotCatMaxy {
             return num.ToString() + "th";
         }
 
-        public static async Task AssertAsync(bool assertion, string message = "Assertion failed") {
+        public static async Task AssertAsync(this bool assertion, string message = "Assertion failed") {
             if (assertion == false) {
                 await Log(new LogMessage(LogSeverity.Error, "Assert", message));
+            }
+        }
+
+        public static async Task AssertWarnAsync(this bool assertion, string message = "Assertion failed") {
+            if (assertion == false) {
+                await Log(new LogMessage(LogSeverity.Warning, "Assert", message));
             }
         }
     }

@@ -159,6 +159,7 @@ namespace BotCatMaxy {
     public static class TempBanChecker {
         public static async Task Timer(DiscordSocketClient client) {
             try {
+                int unbannedPeople = 0;
                 foreach (SocketGuild guild in client.Guilds) {
                     string guildDir = guild.GetPath(false);
                     if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
@@ -167,11 +168,12 @@ namespace BotCatMaxy {
                             foreach (TempBan tempBan in tempBans) {
                                 bool needSave = false;
                                 if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
-                                    if (client.GetUser(tempBan.personBanned) != null && await guild.GetBanAsync(tempBan.personBanned) != null) {
-                                        await guild.RemoveBanAsync(tempBan.personBanned);
-                                        tempBans.Remove(tempBan);
-                                        needSave = true;
-                                    }
+                                    await (client.GetUser(tempBan.personBanned) != null).AssertAsync("Tempbanned person doesn't exist");
+                                    await (await guild.GetBanAsync(tempBan.personBanned) != null).AssertWarnAsync("Tempbanned person isn't banned");
+                                    await guild.RemoveBanAsync(tempBan.personBanned);
+                                    tempBans.Remove(tempBan);
+                                    needSave = true;
+                                    unbannedPeople++;
                                 }
                                 if (needSave) {
                                     tempBans.SaveTempBans(guild);
@@ -180,6 +182,7 @@ namespace BotCatMaxy {
                         }
                     }
                 }
+                _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + "people").Log();
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
             }
