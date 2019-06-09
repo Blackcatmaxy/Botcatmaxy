@@ -109,5 +109,11 @@ namespace BotCatMaxy {
             if (num.ToString().EndsWith("3")) return num.ToString() + "rd";
             return num.ToString() + "th";
         }
+
+        public static async Task AssertAsync(bool assertion, string message = "Assertion failed") {
+            if (assertion == false) {
+                await Log(new LogMessage(LogSeverity.Error, "Assert", message));
+            }
+        }
     }
 }
