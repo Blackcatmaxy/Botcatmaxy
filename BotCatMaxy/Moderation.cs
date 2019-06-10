@@ -176,13 +176,16 @@ namespace BotCatMaxy {
                                     unbannedPeople++;
                                 }
                                 if (needSave) {
+                                    _ = new LogMessage(LogSeverity.Info, "TempAction", "Saved banned people").Log();
                                     tempBans.SaveTempBans(guild);
                                 }
                             }
                         }
                     }
                 }
-                _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + "people").Log();
+                if (unbannedPeople > 0) {
+                    _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + " people").Log();
+                }
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
             }
@@ -385,7 +388,7 @@ namespace BotCatMaxy {
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task TempBan(SocketUser user, int days, [Remainder] string reason) {
             string plural = "";
-            if (days == 0) {
+            if (days < 0) {
                 await ReplyAsync("Can't warn for 0 days");
                 return;
             }
