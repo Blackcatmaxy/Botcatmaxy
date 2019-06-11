@@ -27,17 +27,17 @@ namespace BotCatMaxy {
             //Sets up the events
             _client = new DiscordSocketClient(config);
             Filter.client = _client;
-            _client.Log += Log;
+            _client.Log += Utilities.Log;
             _client.Ready += Ready;
             _client.MessageReceived += Filter.CheckMessage;
             await _client.LoginAsync(TokenType.Bot, HiddenInfo.token);
             await _client.StartAsync();
 
             if (version != null || version != "") {
-                await Log(new LogMessage(LogSeverity.Info, "Ready", "Starting with version " + version));
+                await (new LogMessage(LogSeverity.Info, "Ready", "Starting with version " + version)).Log();
                 await _client.SetGameAsync("version " + version);
             } else {
-                await Log(new LogMessage(LogSeverity.Info, "Ready", "Starting with no version num"));
+                await (new LogMessage(LogSeverity.Info, "Ready", "Starting with no version num")).Log();
             }
 
             CommandService service = new CommandService();
@@ -63,15 +63,7 @@ namespace BotCatMaxy {
         private async Task Ready() {
             _ = banChecker.Timer();
 
-            await Log(new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!"));
-
-            string updateMessage = Data.SettingsData.LoadMessage();
-            
-        }
-
-        private Task Log(LogMessage msg) {
-            Console.WriteLine(msg.ToString());
-            return Task.CompletedTask;
+            await (new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!")).Log();
         }
     }
 }

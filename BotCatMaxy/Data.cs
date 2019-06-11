@@ -110,29 +110,6 @@ namespace BotCatMaxy.Data {
             return infractions;
         }
 
-        public static string LoadMessage() {
-            if (!File.Exists(Utilities.BasePath + "messages.json")) {
-                File.Create(Utilities.BasePath + "messages.json").Close();
-
-                JsonSerializer serializer = new JsonSerializer();
-                using (StreamWriter sw = new StreamWriter(Utilities.BasePath + "messages.json"))
-                using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                    serializer.Serialize(sw, "Empty message");
-                }
-            }
-            string message;
-            using (StreamReader sr = new StreamReader(Utilities.BasePath + "messages.json"))
-            using (JsonTextReader reader = new JsonTextReader(sr)) {
-                message = new JsonSerializer().Deserialize<string>(reader);
-            }
-
-            if (message == "Empty message") {
-                return null;
-            } else {
-                return message;
-            }
-        }
-
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
             BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
