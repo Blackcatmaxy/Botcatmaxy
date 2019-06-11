@@ -38,21 +38,19 @@ namespace BotCatMaxy.Data {
             LogSettings settings = null;
 
             JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Include;
 
             if (guild.GetPath(createFile) != null) {
-                using (StreamReader sr = new StreamReader(@guildPath + "/logSettings.txt"))
-                using (JsonTextReader reader = new JsonTextReader(sr)) {
-                    settings = serializer.Deserialize<LogSettings>(reader);
-                }
-            
                 if (!File.Exists(guildPath + "/logSettings.txt")) {
                     if (createFile) {
-                        Console.WriteLine("Creating log settings");
-                        SaveLogSettings(new LogSettings(), guild);
+                        File.Create(guildPath + "/logSettings.txt").Close();
                         return new LogSettings();
                     }
                     return null;
+                }
+
+                using (StreamReader sr = new StreamReader(@guildPath + "/logSettings.txt"))
+                using (JsonTextReader reader = new JsonTextReader(sr)) {
+                    settings = serializer.Deserialize<LogSettings>(reader);
                 }
             }
 
