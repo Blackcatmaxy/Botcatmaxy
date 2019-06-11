@@ -156,16 +156,25 @@ namespace BotCatMaxy {
         }
     }
 
-    public static class TempBanChecker {
-        public static async Task Timer(DiscordSocketClient client) {
+    public class TempBanChecker {
+        readonly DiscordSocketClient client;
+        public TempBanChecker(DiscordSocketClient client) {
+            this.client = client;
+        }
+
+        public async Task Timer() {
             try {
                 int unbannedPeople = 0;
+                int bannedPeople = 0;
+                int checkedGuilds = 0;
                 foreach (SocketGuild guild in client.Guilds) {
                     string guildDir = guild.GetPath(false);
+                    checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
                         List<TempBan> tempBans = guild.LoadTempActions(false);
                         if (tempBans != null && tempBans.Count > 0) {
                             foreach (TempBan tempBan in tempBans) {
+                                bannedPeople += tempBans.Count;
                                 bool needSave = false;
                                 if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
                                     await (client.GetUser(tempBan.personBanned) != null).AssertAsync("Tempbanned person doesn't exist");
@@ -176,22 +185,20 @@ namespace BotCatMaxy {
                                     unbannedPeople++;
                                 }
                                 if (needSave) {
-                                    _ = new LogMessage(LogSeverity.Info, "TempAction", "Saved banned people").Log();
                                     tempBans.SaveTempBans(guild);
                                 }
                             }
                         }
                     }
                 }
-                if (unbannedPeople > 0) {
-                    _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + " people").Log();
-                }
+                _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + " people out of " + bannedPeople + " banned people in " + checkedGuilds + " guilds").Log();
+
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
             }
 
             await Task.Delay(3600000);
-            _ = Timer(client);
+            _ = Timer();
         }
     }
 
