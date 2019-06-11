@@ -13,6 +13,7 @@ namespace BotCatMaxy {
         readonly DiscordSocketClient client;
         public ConsoleReader(DiscordSocketClient client) {
             this.client = client;
+            _ = NewInput();
         }
 
         public async Task NewInput() {

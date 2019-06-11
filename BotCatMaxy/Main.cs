@@ -46,6 +46,7 @@ namespace BotCatMaxy {
             Logging logger = new Logging(_client);
             banChecker = new TempBanChecker(_client);
 
+            ConsoleReader consoleReader = new ConsoleReader(_client);
             await handler.InstallCommandsAsync();
             logger.SetUp();
 
