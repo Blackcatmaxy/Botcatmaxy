@@ -7,11 +7,6 @@ using Discord.Commands;
 
 namespace BotCatMaxy {
     public class MiscCommands : ModuleBase<SocketCommandContext> {
-        [Command("commands")]
-        public async Task ListCommands() {
-            await ReplyAsync("View commands here https://github.com/Blackcatmaxy/Botcatmaxy/wiki");
-        }
-
         [Command("help")]
         public async Task Help() {
             var embed = new EmbedBuilder();
