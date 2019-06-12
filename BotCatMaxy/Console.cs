@@ -24,6 +24,9 @@ namespace BotCatMaxy {
                 splitInput.RemoveAt(0);
                 await new LogMessage(LogSeverity.Info, "Console", "Messaging guild owners: " + splitInput).Log();
             }
+            if (splitInput[0].ToLower() == "checktempbans") {
+                await TempActions.TempBanChecker(client);
+            }
 
             _ = NewInput();
         }

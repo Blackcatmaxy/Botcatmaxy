@@ -17,7 +17,7 @@ namespace BotCatMaxy {
             client.Ready += Timer;
         }
 
-        public async Task TempBanChecker() {
+        public static async Task TempBanChecker(DiscordSocketClient client) {
             try {
                 int unbannedPeople = 0;
                 int bannedPeople = 0;
@@ -54,7 +54,7 @@ namespace BotCatMaxy {
         }
 
         public async Task Timer() {
-            _ = TempBanChecker();
+            _ = TempBanChecker(client);
 
             await Task.Delay(3600000);
             _ = Timer();
