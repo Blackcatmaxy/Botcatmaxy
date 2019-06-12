@@ -9,7 +9,6 @@ using System.IO;
 namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
-        TempBanChecker banChecker;
         public static void Main(string[] args) {
             if (args != null) 
             new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
@@ -44,7 +43,7 @@ namespace BotCatMaxy {
             CommandHandler handler = new CommandHandler(_client, service);
 
             Logging logger = new Logging(_client);
-            banChecker = new TempBanChecker(_client);
+            TempActions tempActions = new TempActions(_client);
 
             ConsoleReader consoleReader = new ConsoleReader(_client);
             await handler.InstallCommandsAsync();
@@ -62,8 +61,6 @@ namespace BotCatMaxy {
         }
 
         private async Task Ready() {
-            _ = banChecker.Timer();
-
             await (new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!")).Log();
         }
     }
