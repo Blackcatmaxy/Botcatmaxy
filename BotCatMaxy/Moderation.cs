@@ -245,6 +245,13 @@ namespace BotCatMaxy {
                     }
                 }
             }
+
+            if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
+                embed.AddField("Are links allowed?", "Links are not auto-moderated", true);
+            } else {
+                embed.AddField("Are links allowed?", "Links are auto-moderated", true);
+            }
+
             if (settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
                 foreach (ulong roleID in settings.ableToWarn) {
                     SocketRole role = Context.Guild.GetRole(roleID);
