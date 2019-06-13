@@ -12,6 +12,7 @@ using BotCatMaxy;
 using System.Linq;
 using Discord.Rest;
 using BotCatMaxy.Data;
+using System.Text.RegularExpressions;
 //using Discord.Addons.Preconditions;
 
 namespace BotCatMaxy {
@@ -388,7 +389,7 @@ namespace BotCatMaxy {
                             return; //Returns if channel is set as not using automod
                         }
                         //Checks if a message contains an invite
-                        if (message.Content.ToLower().Contains("discord.gg/")) {
+                        if (message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
                             if (!modSettings.invitesAllowed) {
                                 _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
                                 await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
@@ -398,15 +399,24 @@ namespace BotCatMaxy {
                                 return;
                             }
                         }
+                        if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) {
+                            const string linkRegex = @"/ ^((?: https ?| steam):\/\/[^\s <] +[^<.,:; \" + "\" '\\]\\s])/";
+                            MatchCollection matches = Regex.Matches(message.Content, linkRegex);
+                            foreach (string match in matches) {
+                                if (!modSettings.allowedLinks.Any(s => match.Contains(s))) {
+                                    await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
+                                }
+                            }
+                        }
                     }
 
                     if (File.Exists(guildDir + "/badwords.json")) {
                         foreach (BadWord badWord in badWords) {
                             if (message.Content.ToLower().Contains(badWord.word.ToLower())) {
                                 if (badWord.euphemism != null && badWord.euphemism != "") {
-                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
                                 } else {
-                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
                                 }
                                 await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
 
