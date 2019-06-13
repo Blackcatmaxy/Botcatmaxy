@@ -17,10 +17,11 @@ namespace BotCatMaxy {
         public CommandHandler(DiscordSocketClient client, CommandService commands) {
             _commands = commands;
             _client = client;
+
+            _ = InstallCommandsAsync();
         }
 
         public async Task InstallCommandsAsync() {
-            //filter = new SwearFilter();
             // Hook the MessageReceived event into our command handler
             _client.MessageReceived += HandleCommandAsync;
 
@@ -34,6 +35,7 @@ namespace BotCatMaxy {
             // See Dependency Injection guide for more information.
             await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
                                             services: null);
+            await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam) {

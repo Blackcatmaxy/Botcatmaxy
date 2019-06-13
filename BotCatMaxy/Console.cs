@@ -21,11 +21,10 @@ namespace BotCatMaxy {
             List<string> splitInput = input.Split(' ').ToList();
 
             if (splitInput[0].ToLower() == "messageowners") {
+                splitInput.RemoveAt(0);
                 string message = "";
                 foreach (string word in splitInput) {
-                    if (word != "messageowners" && message != "") {
-                        message += " " + word;
-                    }
+                    message += " " + word;
                 }
                 await new LogMessage(LogSeverity.Info, "Console", "Messaging guild owners:" + message).Log();
             }

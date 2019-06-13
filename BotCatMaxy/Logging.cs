@@ -16,12 +16,15 @@ namespace BotCatMaxy {
         private readonly DiscordSocketClient _client;
         public Logging(DiscordSocketClient client) {
             _client = client;
+
+            _ = SetUpAsync();
         }
 
-        public void SetUp() {
-            //Console.WriteLine(DateTime.Now.TimeOfDay + " Setup logging");
+        public async Task SetUpAsync() {
             _client.MessageDeleted += LogDelete;
             _client.MessageReceived += LogNew;
+
+            await new LogMessage(LogSeverity.Info, "Logs", "Logging set up").Log();
         }
 
         async Task LogNew(IMessage message) {

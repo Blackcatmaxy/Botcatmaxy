@@ -33,10 +33,10 @@ namespace BotCatMaxy {
             await _client.StartAsync();
 
             if (version != null || version != "") {
-                await (new LogMessage(LogSeverity.Info, "Ready", "Starting with version " + version)).Log();
+                await (new LogMessage(LogSeverity.Info, "Main", "Starting with version " + version)).Log();
                 await _client.SetGameAsync("version " + version);
             } else {
-                await (new LogMessage(LogSeverity.Info, "Ready", "Starting with no version num")).Log();
+                await (new LogMessage(LogSeverity.Info, "Main", "Starting with no version num")).Log();
             }
 
             CommandService service = new CommandService();
@@ -46,8 +46,6 @@ namespace BotCatMaxy {
             TempActions tempActions = new TempActions(_client);
 
             ConsoleReader consoleReader = new ConsoleReader(_client);
-            await handler.InstallCommandsAsync();
-            logger.SetUp();
 
             //Debug info
             _ = new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
