@@ -68,6 +68,30 @@ namespace BotCatMaxy {
             }
         }
 
+        [Command("addallowedlink")]
+        [HasAdmin]
+        public async Task AddAllowedLink(string link) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            if (settings.allowedLinks == null) settings.allowedLinks = new List<string>();
+            settings.allowedLinks.Add(link);
+            settings.SaveModSettings(Context.Guild);
+            await ReplyAsync("People will now be allowed to use " + link);
+        }
+
+        [Command("removeallowedlink")]
+        [HasAdmin]
+        public async Task RemoveAllowedLink(string link) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            if (settings.allowedLinks == null || !settings.allowedLinks.Contains(link)) {
+                await ReplyAsync("Link is already not allowed");
+                return;
+            }
+            settings.allowedLinks.Remove(link);
+            if (settings.allowedLinks.Count == 0) settings.allowedLinks = null;
+            settings.SaveModSettings(Context.Guild);
+            await ReplyAsync("People will no longer be allowed to use " + link);
+        }
+
         [Command("allowwarn")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]

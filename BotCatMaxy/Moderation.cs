@@ -401,9 +401,9 @@ namespace BotCatMaxy {
                         }
                         if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) {
                             const string linkRegex = @"/ ^((?: https ?| steam):\/\/[^\s <] +[^<.,:; \" + "\" '\\]\\s])/";
-                            MatchCollection matches = Regex.Matches(message.Content, linkRegex);
+                            MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
                             foreach (string match in matches) {
-                                if (!modSettings.allowedLinks.Any(s => match.Contains(s))) {
+                                if (!modSettings.allowedLinks.Any(s => match.ToLower().Contains(s.ToLower()))) {
                                     await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
                                 }
                             }
