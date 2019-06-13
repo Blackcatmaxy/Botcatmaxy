@@ -55,7 +55,7 @@ namespace BotCatMaxy {
 
         public async Task Timer() {
             _ = TempBanChecker(client);
-
+            
             await Task.Delay(3600000);
             _ = Timer();
         }
