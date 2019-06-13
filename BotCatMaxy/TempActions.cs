@@ -14,7 +14,11 @@ namespace BotCatMaxy {
         readonly DiscordSocketClient client;
         public TempActions(DiscordSocketClient client) {
             this.client = client;
-            client.Ready += Timer;
+            client.Ready += Ready;
+        }
+
+        public async Task Ready() {
+            _ = Timer();
         }
 
         public static async Task TempBanChecker(DiscordSocketClient client) {
