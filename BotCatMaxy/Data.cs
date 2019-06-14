@@ -63,7 +63,7 @@ namespace BotCatMaxy.Data {
                 return null;
             }
 
-            using (StreamReader sr = new StreamReader(@guildDir + "/badwords.json"))
+            using (StreamReader sr = new StreamReader(guildDir + "/badwords.json"))
             using (JsonTextReader reader = new JsonTextReader(sr)) {
                 badWords = new JsonSerializer().Deserialize<List<BadWord>>(reader);
             }
@@ -78,9 +78,9 @@ namespace BotCatMaxy.Data {
             }
             if (File.Exists(guildDir + "/tempActions.json")) {
                 JsonSerializer serializer = new JsonSerializer();
-                using (StreamWriter sw = new StreamWriter(@guildDir + "/tempActions.json"))
-                using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                    serializer.Serialize(sw, tempBans);
+                using (StreamReader sr = new StreamReader(guildDir + "/tempActions.json"))
+                using (JsonTextReader reader = new JsonTextReader(sr)) {
+                    tempBans = new JsonSerializer().Deserialize<List<TempBan>>(reader);
                 }
                 return tempBans;
             } else {
