@@ -31,6 +31,10 @@ namespace BotCatMaxy {
             if (splitInput[0].ToLower() == "checktempbans") {
                 await TempActions.TempBanChecker(client);
             }
+            if (splitInput[0].ToLower() == "shutdown" || input.ToLower() == "shut down") {
+                await client.SetGameAsync("Restarting");
+                Environment.Exit(0);
+            }
 
             _ = NewInput();
         }

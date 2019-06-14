@@ -50,10 +50,6 @@ namespace BotCatMaxy {
             if (!Directory.Exists(Utilities.BasePath)) {
                 Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
             }
-
-            // Block this task until the program is closed.
-            await Task.Delay(-1);
-            await _client.SetGameAsync("shutting down");
         }
 
         private async Task Ready() {
