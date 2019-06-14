@@ -133,7 +133,7 @@ namespace BotCatMaxy.Data {
 
         public static void SaveBadWords(this List<BadWord> badWords, IGuild Guild) {
             if (!File.Exists(Guild.GetPath(true) + "/badwords.json")) {
-                File.Create(Guild.GetPath(true) + "/badwords.json");
+                File.Create(Guild.GetPath(true) + "/badwords.json").Close();
             }
             JsonSerializer serializer = new JsonSerializer();
             using (StreamWriter sw = new StreamWriter(@Guild.GetPath(true) + "/badwords.json"))
