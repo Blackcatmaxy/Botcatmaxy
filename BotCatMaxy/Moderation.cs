@@ -247,9 +247,9 @@ namespace BotCatMaxy {
             }
 
             if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
-                embed.AddField("Are links allowed?", "Links are not auto-moderated", true);
+                embed.AddField("Are links allowed?", "Links are not auto-moderated  ", true);
             } else {
-                embed.AddField("Are links allowed?", "Links are auto-moderated", true);
+                embed.AddField("Are links allowed?", "Links are auto-moderated  ", true);
             }
 
             if (settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
@@ -376,9 +376,15 @@ namespace BotCatMaxy {
         }
     }
 
-    public static class Filter {
-        public static DiscordSocketClient client;
-        public static async Task CheckMessage(SocketMessage message) {
+    public class Filter {
+        readonly DiscordSocketClient client;
+        public Filter (DiscordSocketClient client) {
+            this.client = client;
+            client.MessageReceived += CheckMessage;
+            new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
+        }
+
+        public async Task CheckMessage(SocketMessage message) {
             try {
                 if (message.Author.IsBot && !(message.Channel is SocketGuildChannel)) {
                     return; //Makes sure it's not logging a message from a bot and that it's in a discord server
@@ -387,6 +393,7 @@ namespace BotCatMaxy {
                 var chnl = message.Channel as SocketGuildChannel;
                 var Guild = chnl.Guild;
                 string guildDir = Guild.GetPath();
+                
                 if (Guild != null && Directory.Exists(guildDir) && !Utilities.HasAdmin(message.Author as SocketGuildUser)) {
                     ModerationSettings modSettings = Guild.LoadModSettings(false);
                     List<BadWord> badWords = Guild.LoadBadWords();
@@ -407,11 +414,17 @@ namespace BotCatMaxy {
                             }
                         }
                         if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) {
-                            const string linkRegex = @"/ ^((?: https ?| steam):\/\/[^\s <] +[^<.,:; \" + "\" '\\]\\s])/";
+                            const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
                             MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
-                            foreach (string match in matches) {
-                                if (!modSettings.allowedLinks.Any(s => match.ToLower().Contains(s.ToLower()))) {
+                            if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
+                            foreach (Match match in matches) {
+                                if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
                                     await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
+                                    await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using unauthorized links");
+
+                                    Logging.LogMessage("Bad link removed", message, Guild);
+                                    await message.DeleteAsync();
+                                    break;
                                 }
                             }
                         }

@@ -16,9 +16,8 @@ namespace BotCatMaxy.Data {
             ModerationSettings settings = null;
 
             JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Include;
 
-            if (guildDir != null && Directory.Exists(guildDir + "/" + guild.OwnerId)) {
+            if (guildDir != null && Directory.Exists(guildDir)) {
                 if (File.Exists(guildDir + "/moderationSettings.txt")) {
                     using (StreamReader sr = new StreamReader(guildDir + "/moderationSettings.txt"))
                     using (JsonTextReader reader = new JsonTextReader(sr)) {
