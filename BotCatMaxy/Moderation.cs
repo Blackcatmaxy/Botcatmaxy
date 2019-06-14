@@ -295,8 +295,22 @@ namespace BotCatMaxy {
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
-        [Command("warns")]
+        [Command("dmwarns")]
         [RequireContext(ContextType.Guild)]
+        [Alias("dminfractions", "dmwarnings")]
+        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 10) {
+            if (user == null) {
+                user = Context.Message.Author as SocketGuildUser;
+            }
+            if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
+                await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
+            } else {
+                await ReplyAsync(user.Username + " has no warns");
+            }
+        }
+
+        [Command("warns")]
+        [CanWarn]
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(SocketGuildUser user = null, int amount = 5) {
             if (user == null) {
