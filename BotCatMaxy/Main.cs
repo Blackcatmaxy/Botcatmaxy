@@ -25,8 +25,10 @@ namespace BotCatMaxy {
 
             //Sets up the events
             _client = new DiscordSocketClient(config);
+            Filter.client = _client;
             _client.Log += Utilities.Log;
             _client.Ready += Ready;
+            _client.MessageReceived += Filter.CheckMessage;
             await _client.LoginAsync(TokenType.Bot, HiddenInfo.token);
             await _client.StartAsync();
 
@@ -42,7 +44,7 @@ namespace BotCatMaxy {
 
             Logging logger = new Logging(_client);
             TempActions tempActions = new TempActions(_client);
-            Filter filter = new Filter(_client);
+
             ConsoleReader consoleReader = new ConsoleReader(_client);
 
             //Debug info
