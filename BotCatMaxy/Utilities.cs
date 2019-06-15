@@ -90,8 +90,10 @@ namespace BotCatMaxy {
                 Console.ForegroundColor = ConsoleColor.Red;
             } else if (message.Severity == LogSeverity.Warning) {
                 Console.ForegroundColor = ConsoleColor.Yellow;
+            } else if (message.Severity == LogSeverity.Info) {
+                Console.ForegroundColor = ConsoleColor.Cyan;
             }
-            
+
             Console.WriteLine(message);
             Console.ResetColor();
 
