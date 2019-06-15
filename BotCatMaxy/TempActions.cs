@@ -32,8 +32,8 @@ namespace BotCatMaxy {
                     if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
                         List<TempBan> tempBans = guild.LoadTempActions(false);
                         if (tempBans != null && tempBans.Count > 0) {
+                            bannedPeople += tempBans.Count;
                             foreach (TempBan tempBan in tempBans) {
-                                bannedPeople += tempBans.Count;
                                 bool needSave = false;
                                 if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
                                     await (client.GetUser(tempBan.personBanned) != null).AssertAsync("Tempbanned person doesn't exist");
@@ -50,7 +50,8 @@ namespace BotCatMaxy {
                         }
                     }
                 }
-                _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + " people out of " + bannedPeople + " banned people in " + checkedGuilds + " guilds").Log();
+                _ = (checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
+                _ = new LogMessage(LogSeverity.Info, "TempAction", "Unbanned " + unbannedPeople + " people out of " + bannedPeople + " banned people").Log();
 
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
