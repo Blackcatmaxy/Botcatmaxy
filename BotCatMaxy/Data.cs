@@ -70,7 +70,7 @@ namespace BotCatMaxy.Data {
 
             return badWords;
         }
-        public static List<TempBan> LoadTempActions(this IGuild Guild, bool createNew = false) {
+        public static List<TempBan> LoadTempBans(this IGuild Guild, bool createNew = false) {
             List<TempBan> tempBans = new List<TempBan>();
             string guildDir = Guild.GetPath(createNew);
             if (guildDir == null || !Directory.Exists(guildDir)) {

@@ -30,26 +30,28 @@ namespace BotCatMaxy {
                     string guildDir = guild.GetPath(false);
                     checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
-                        List<TempBan> tempBans = guild.LoadTempActions(false);
+                        List<TempBan> tempBans = guild.LoadTempBans(false);
                         if (tempBans != null && tempBans.Count > 0) {
                             bannedPeople += tempBans.Count;
+                            bool needSave = false;
+
                             foreach (TempBan tempBan in tempBans) {
-                                bool needSave = false;
-                                if (DateTime.Now.Subtract(tempBan.dateBanned).Days >= tempBan.length) {
-                                    if (client.GetUser(tempBan.personBanned) == null) {
-                                        _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
-                                    } else if (await guild.GetBanAsync(tempBan.personBanned) != null) {
-                                        _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
-                                    } else {
-                                        await guild.RemoveBanAsync(tempBan.personBanned);
-                                        tempBans.Remove(tempBan);
-                                        needSave = true;
-                                        unbannedPeople++;
-                                    }
+                                if (client.GetUser(tempBan.personBanned) == null) {
+                                    _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
+                                } else if (await guild.GetBanAsync(tempBan.personBanned) == null) {
+                                    _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
+                                    tempBans.Remove(tempBan);
+                                    needSave = true;
+                                } else if (DateTime.Now.Subtract(tempBan.dateBanned).Hours >= tempBan.length) {
+                                    await guild.RemoveBanAsync(tempBan.personBanned);
+                                    tempBans.Remove(tempBan);
+                                    needSave = true;
+                                    unbannedPeople++;
                                 }
-                                if (needSave) {
-                                    tempBans.SaveTempBans(guild);
-                                }
+                            }
+
+                            if (needSave) {
+                                tempBans.SaveTempBans(guild);
                             }
                         }
                     }
