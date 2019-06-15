@@ -10,24 +10,28 @@ namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
         public static void Main(string[] args) {
-            if (args != null) 
-            new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
-            else new MainClass().MainAsync().GetAwaiter().GetResult();
+            _ = new MainClass().MainAsync(args[0], args[1]);
         }
 
-        public async Task MainAsync(string version = null) {
+        public async Task MainAsync(string version = null, string beCanary = null) {
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
                 MessageCacheSize = 120
             };
 
             File.CreateText(Utilities.BasePath + "log.txt");
-
+           
             //Sets up the events
             _client = new DiscordSocketClient(config);
             _client.Log += Utilities.Log;
             _client.Ready += Ready;
-            await _client.LoginAsync(TokenType.Bot, HiddenInfo.token);
+
+            if (beCanary != null && beCanary == "canary") {
+                await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
+            } else {
+                await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
+            }
+
             await _client.StartAsync();
 
             if (version != null || version != "") {
