@@ -213,7 +213,7 @@ namespace BotCatMaxy {
 
                     user.SaveInfractions(infractions, "Games");
 
-                    await ReplyAsync("removed " + user.Mention + "'s warning for " + reason);
+                    await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
                 }
             } else {
                 await ReplyAsync(user.Username + " has no warns");
@@ -305,7 +305,7 @@ namespace BotCatMaxy {
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
                 await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
             } else {
-                await ReplyAsync(user.Username + " has no warns");
+                await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(user.Mention + " has no warns");
             }
         }
 
@@ -342,7 +342,7 @@ namespace BotCatMaxy {
 
                     user.SaveInfractions(infractions, "Discord");
 
-                    await ReplyAsync("removed " + user.Mention + "'s warning for " + reason);
+                    await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
                 }
             } else {
                 await ReplyAsync(user.Username + " has no warns");
