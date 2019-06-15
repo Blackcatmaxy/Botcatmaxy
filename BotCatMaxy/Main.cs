@@ -10,7 +10,7 @@ namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
         public static void Main(string[] args) {
-            _ = new MainClass().MainAsync(args[0], args[1]);
+            new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
         }
 
         public async Task MainAsync(string version = null, string beCanary = null) {
@@ -26,7 +26,7 @@ namespace BotCatMaxy {
             _client.Log += Utilities.Log;
             _client.Ready += Ready;
 
-            if (beCanary != null && beCanary == "canary") {
+            if (beCanary != null && beCanary.ToLower() == "canary") {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
             } else {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
