@@ -304,7 +304,12 @@ namespace BotCatMaxy {
 
             settings = Context.Guild.LoadLogSettings(true);
 
-            if (settings != null && Context.Client.GetChannel(settings.logChannel) == Context.Channel) {
+            if (settings == null) {
+                await ReplyAsync("Settings is null");
+                return;
+            }
+
+            if (Context.Client.GetChannel(settings.logChannel) == Context.Channel) {
                 await ReplyAsync("This channel already is the logging channel");
                 return;
             } else {
@@ -318,6 +323,11 @@ namespace BotCatMaxy {
         [Command("info")]
         public async Task DebugLogSettings() {
             LogSettings settings = Context.Guild.LoadLogSettings(false);
+
+            if (settings == null) {
+                await ReplyAsync("Settings is null");
+                return;
+            }
 
             var embed = new EmbedBuilder();
 
