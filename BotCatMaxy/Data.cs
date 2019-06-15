@@ -143,7 +143,10 @@ namespace BotCatMaxy.Data {
         }
         public static void SaveLogSettings(this LogSettings settings, IGuild Guild) {
             JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Include;
+
+            if (!File.Exists(Guild.GetPath(true) + "/logSettings.txt")) {
+                File.Create(Guild.GetPath(true) + "/logSettings.txt").Close();
+            }
 
             using (StreamWriter sw = new StreamWriter(Guild.GetPath(true) + "/logSettings.txt"))
             using (JsonTextWriter writer = new JsonTextWriter(sw)) {
