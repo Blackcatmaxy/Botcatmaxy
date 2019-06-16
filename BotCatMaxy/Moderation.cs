@@ -52,6 +52,7 @@ namespace BotCatMaxy {
             IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
             if (!users.Contains(user)) {
                 IDMChannel DM = await user.GetOrCreateDMChannelAsync();
+                if (DM != null)
                 _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
             }
         }
@@ -366,7 +367,10 @@ namespace BotCatMaxy {
             embed.WithCurrentTimestamp();
             embed.WithAuthor(Context.Message.Author);
 
-            await user.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: embed.Build());
+            IDMChannel DMChannel = await user.GetOrCreateDMChannelAsync();
+            if (DMChannel != null) {
+                await DMChannel.SendMessageAsync(embed: embed.Build());
+            }
             await ReplyAsync(user.Mention + " has been kicked for " + reason);
             await user.KickAsync(reason);
         }
