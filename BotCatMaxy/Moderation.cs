@@ -425,7 +425,12 @@ namespace BotCatMaxy {
         public Filter(DiscordSocketClient client) {
             this.client = client;
             client.MessageReceived += CheckMessage;
+            client.MessageUpdated += CheckEdit;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
+        }
+
+        public async Task CheckEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel) {
+            _ = CheckMessage(editedMessage);
         }
 
         public async Task CheckMessage(SocketMessage message) {
