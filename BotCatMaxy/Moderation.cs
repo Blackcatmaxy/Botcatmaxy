@@ -310,11 +310,15 @@ namespace BotCatMaxy {
         }
 
         [Command("warns")]
-        [CanWarn]
+        [RequireContext(ContextType.Guild)]
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(SocketGuildUser user = null, int amount = 5) {
             if (user == null) {
                 user = Context.Message.Author as SocketGuildUser;
+            }
+            if (!(Context.Message.Author as SocketGuildUser).CanWarn()) {
+                await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead");
+                return;
             }
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
                 await ReplyAsync(embed: user.CheckInfractions(amount: amount));
