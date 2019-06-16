@@ -409,6 +409,7 @@ namespace BotCatMaxy {
             public string word;
             public string euphemism;
             public float size;
+            public bool partOfWord = true;
         }
         public class ModerationSettings {
             public List<ulong> ableToWarn = new List<ulong>();
