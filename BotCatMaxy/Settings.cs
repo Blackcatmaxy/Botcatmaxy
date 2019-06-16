@@ -29,6 +29,34 @@ namespace BotCatMaxy {
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("addignoredrole")]
+        [HasAdmin]
+        public async Task AddWarnIgnoredRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            if (settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
+            else if (settings.cantBeWarned.Contains(role.Id)) {
+                await ReplyAsync($"Role '{role.Name}' is already not able to be warned");
+                return;
+            }
+            settings.cantBeWarned.Add(role.Id);
+            settings.SaveModSettings(Context.Guild);
+            await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
+        }
+
+        [Command("removeignoredrole")]
+        [HasAdmin]
+        public async Task RemovedWarnIgnoredRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(false);
+            if (settings == null || settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
+            else if (settings.cantBeWarned.Contains(role.Id)) {
+                await ReplyAsync($"Role '{role.Name}' is already able to be warned");
+            } else {
+                settings.cantBeWarned.Add(role.Id);
+                settings.SaveModSettings(Context.Guild);
+                await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
+            }
+        }
+
         [Command("ToggleServerID")]
         [HasAdmin]
         public async Task ServerIDCommand() {
