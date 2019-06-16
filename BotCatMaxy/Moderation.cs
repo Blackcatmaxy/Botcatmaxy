@@ -350,7 +350,7 @@ namespace BotCatMaxy {
         }
 
         [Command("kickwarn")]
-        [Alias("warnkick")]
+        [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason) {
             await user.Warn(1, reason, Context, "Discord");
