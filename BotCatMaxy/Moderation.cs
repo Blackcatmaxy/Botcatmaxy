@@ -34,6 +34,11 @@ namespace BotCatMaxy {
         }
 
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
+            if (!user.CanBeWarned()) {
+                await context.Channel.SendMessageAsync("This person can't be warned");
+                return;
+            }
+
             if (size > 999 || size < 0.01) {
                 await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
                 return;
@@ -448,7 +453,7 @@ namespace BotCatMaxy {
                     List<BadWord> badWords = Guild.LoadBadWords();
 
                     if (modSettings != null) {
-                        if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id)) {
+                        if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || !(message.Author as SocketGuildUser).CanBeWarned()) {
                             return; //Returns if channel is set as not using automod
                         }
                         //Checks if a message contains an invite

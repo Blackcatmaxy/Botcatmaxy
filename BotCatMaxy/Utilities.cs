@@ -71,6 +71,18 @@ namespace BotCatMaxy {
             return false;
         }
 
+        public static bool CanBeWarned(this SocketGuildUser user) {
+            if (HasAdmin(user)) return true;
+
+            ModerationSettings settings = user.Guild.LoadModSettings(false);
+            if (settings != null) {
+                List<SocketRole> rolesAbleToBeWarned = new List<SocketRole>();
+                foreach (ulong roleID in settings.ableToWarn) rolesAbleToBeWarned.Add(user.Guild.GetRole(roleID));
+                if (user.Roles.Intersect(rolesAbleToBeWarned).Any()) return true;
+            }
+            return false;
+        }
+
         public static SocketGuild GetGuild(SocketGuildChannel channel) {
             return channel.Guild;
         }
