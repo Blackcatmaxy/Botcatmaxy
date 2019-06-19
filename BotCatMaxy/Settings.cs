@@ -76,7 +76,7 @@ namespace BotCatMaxy {
         [Command("list")]
         [Alias("info")]
         [RequireContext(ContextType.Guild)]
-        public async Task ListAutoMod(string extension, [Remainder] string whoCaresWhatGoesHere) {
+        public async Task ListAutoMod(string extension, [Remainder] string whoCaresWhatGoesHere = null) {
             ModerationSettings settings = Context.Guild.LoadModSettings(false);
             BadWords badWords = new BadWords(Context.Guild);
 
@@ -93,7 +93,7 @@ namespace BotCatMaxy {
                 }
             }
 
-            if (badWords.all != null && badWords.all.Count > 0) {    
+            if (badWords.all != null && badWords.all.Count > 0) {
                 foreach (BadWord badWord in badWords.all) {
                     if (message != "") {
                         message += "  \n";
@@ -107,7 +107,7 @@ namespace BotCatMaxy {
                 embed.AddField("Badword euphemisms", message, true);
                 message = "The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word";
             }
-            
+
             if (settings != null) {
                 embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
             }
@@ -118,6 +118,23 @@ namespace BotCatMaxy {
             } else {
                 _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
             }
+        }
+
+        [Command("ToggleContainBadWord")]
+        public async Task ToggleContainBadWord(string word) {
+            BadWords badWords = new BadWords(Context.Guild);
+            foreach (BadWord badWord in badWords.all) {
+                if (badWord.word.ToLower() == word.ToLower()) {
+                    badWord.partOfWord = !badWord.partOfWord;
+                    if (badWord.partOfWord) {
+                        await ReplyAsync("Set badword to be filtered even if it's inside of another word");
+                    } else {
+                        await ReplyAsync("Set badword to be filtered even if it's not inside of another word");
+                    }
+                    return;
+                }
+            }
+            await ReplyAsync("Badword not found");
         }
 
         [Command("channeltoggle")]
