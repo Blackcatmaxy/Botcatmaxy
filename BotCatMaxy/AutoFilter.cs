@@ -73,17 +73,33 @@ namespace BotCatMaxy {
 
                     if (File.Exists(guildDir + "/badwords.json")) {
                         foreach (BadWord badWord in badWords) {
-                            if (message.Content.ToLower().Contains(badWord.word.ToLower())) {
-                                if (badWord.euphemism != null && badWord.euphemism != "") {
-                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
-                                } else {
-                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
-                                }
-                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
+                            if (badWord.partOfWord) {
+                                if (message.Content.ToLower().Contains(badWord.word.ToLower())) {
+                                    if (badWord.euphemism != null && badWord.euphemism != "") {
+                                        await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                    } else {
+                                        await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                    }
+                                    await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
 
-                                Logging.LogMessage("Bad word removed", message, Guild);
-                                await message.DeleteAsync();
-                                return;
+                                    Logging.LogMessage("Bad word removed", message, Guild);
+                                    await message.DeleteAsync();
+                                    return;
+                                }
+                            } else {
+                                string[] messageParts = message.Content.Split(' ');
+                                if (message.Content.ToLower() == badWord.word.ToLower()) {
+                                    if (badWord.euphemism != null && badWord.euphemism != "") {
+                                        await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                    } else {
+                                        await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                    }
+                                    await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
+
+                                    Logging.LogMessage("Bad word removed", message, Guild);
+                                    await message.DeleteAsync();
+                                    return;
+                                }
                             }
                         }
                     }
