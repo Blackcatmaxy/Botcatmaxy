@@ -29,34 +29,6 @@ namespace BotCatMaxy {
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("addignoredrole")]
-        [HasAdmin]
-        public async Task AddWarnIgnoredRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-            if (settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
-            else if (settings.cantBeWarned.Contains(role.Id)) {
-                await ReplyAsync($"Role '{role.Name}' is already not able to be warned");
-                return;
-            }
-            settings.cantBeWarned.Add(role.Id);
-            settings.SaveModSettings(Context.Guild);
-            await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
-        }
-
-        [Command("removeignoredrole")]
-        [HasAdmin]
-        public async Task RemovedWarnIgnoredRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(false);
-            if (settings == null || settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
-            else if (settings.cantBeWarned.Contains(role.Id)) {
-                await ReplyAsync($"Role '{role.Name}' is already able to be warned");
-            } else {
-                settings.cantBeWarned.Add(role.Id);
-                settings.SaveModSettings(Context.Guild);
-                await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
-            }
-        }
-
         [Command("ToggleServerID")]
         [HasAdmin]
         public async Task ServerIDCommand() {
@@ -94,61 +66,6 @@ namespace BotCatMaxy {
                 await ReplyAsync("Switching to using server ID to store data");
                 Directory.CreateDirectory(Utilities.BasePath + guild.Id);
             }
-        }
-
-        [Command("allowwarn")]
-        [RequireContext(ContextType.Guild)]
-        [HasAdmin]
-        public async Task AddWarnRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-
-            if (settings == null) {
-                settings = new ModerationSettings();
-            }
-            if (!settings.ableToWarn.Contains(role.Id)) {
-                settings.ableToWarn.Add(role.Id);
-            } else {
-                _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
-            }
-
-            JsonSerializer serializer = new JsonSerializer();
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
-
-            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
-        }
-
-        [Command("removewarnability")]
-        [RequireContext(ContextType.Guild)]
-        [HasAdmin]
-        public async Task RemoveWarnRole(SocketRole role) {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permissions");
-                return;
-            }
-
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-
-            if (settings == null) {
-                settings = new ModerationSettings();
-            }
-            if (settings.ableToWarn.Contains(role.Id)) {
-                settings.ableToWarn.Remove(role.Id);
-            } else {
-                _ = ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
-            }
-
-            JsonSerializer serializer = new JsonSerializer();
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
-
-            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
     }
 
@@ -219,6 +136,34 @@ namespace BotCatMaxy {
             settings.SaveModSettings(Context.Guild);
         }
 
+        [Command("addignoredrole")]
+        [HasAdmin]
+        public async Task AddWarnIgnoredRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            if (settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
+            else if (settings.cantBeWarned.Contains(role.Id)) {
+                await ReplyAsync($"Role '{role.Name}' is already not able to be warned");
+                return;
+            }
+            settings.cantBeWarned.Add(role.Id);
+            settings.SaveModSettings(Context.Guild);
+            await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
+        }
+
+        [Command("removeignoredrole")]
+        [HasAdmin]
+        public async Task RemovedWarnIgnoredRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(false);
+            if (settings == null || settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
+            else if (settings.cantBeWarned.Contains(role.Id)) {
+                await ReplyAsync($"Role '{role.Name}' is already able to be warned");
+            } else {
+                settings.cantBeWarned.Add(role.Id);
+                settings.SaveModSettings(Context.Guild);
+                await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
+            }
+        }
+
         [Command("badwords")]
         public async Task ListBadWords() {
             if (Directory.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId)) {
@@ -244,6 +189,61 @@ namespace BotCatMaxy {
                     await dMChannel.SendMessageAsync(allBadWords);
                 }
             }
+        }
+
+        [Command("allowwarn")]
+        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
+        public async Task AddWarnRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+
+            if (settings == null) {
+                settings = new ModerationSettings();
+            }
+            if (!settings.ableToWarn.Contains(role.Id)) {
+                settings.ableToWarn.Add(role.Id);
+            } else {
+                _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
+            }
+
+            JsonSerializer serializer = new JsonSerializer();
+
+            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
+            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
+                serializer.Serialize(sw, settings);
+            }
+
+            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
+        }
+
+        [Command("removewarnability")]
+        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
+        public async Task RemoveWarnRole(SocketRole role) {
+            if (!((SocketGuildUser)Context.User).HasAdmin()) {
+                await ReplyAsync("You do have administrator permissions");
+                return;
+            }
+
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+
+            if (settings == null) {
+                settings = new ModerationSettings();
+            }
+            if (settings.ableToWarn.Contains(role.Id)) {
+                settings.ableToWarn.Remove(role.Id);
+            } else {
+                _ = ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
+            }
+
+            JsonSerializer serializer = new JsonSerializer();
+
+            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
+            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
+                serializer.Serialize(sw, settings);
+            }
+
+            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
 
         [Command("explicitbadwords")]
