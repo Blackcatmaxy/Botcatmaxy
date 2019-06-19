@@ -96,30 +96,6 @@ namespace BotCatMaxy {
             }
         }
 
-        [Command("addallowedlink")]
-        [HasAdmin]
-        public async Task AddAllowedLink(string link) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-            if (settings.allowedLinks == null) settings.allowedLinks = new List<string>();
-            settings.allowedLinks.Add(link);
-            settings.SaveModSettings(Context.Guild);
-            await ReplyAsync("People will now be allowed to use " + link);
-        }
-
-        [Command("removeallowedlink")]
-        [HasAdmin]
-        public async Task RemoveAllowedLink(string link) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-            if (settings.allowedLinks == null || !settings.allowedLinks.Contains(link)) {
-                await ReplyAsync("Link is already not allowed");
-                return;
-            }
-            settings.allowedLinks.Remove(link);
-            if (settings.allowedLinks.Count == 0) settings.allowedLinks = null;
-            settings.SaveModSettings(Context.Guild);
-            await ReplyAsync("People will no longer be allowed to use " + link);
-        }
-
         [Command("allowwarn")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
@@ -174,32 +150,60 @@ namespace BotCatMaxy {
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
+    }
 
-        [Command("toggleinvitewarn")]
-        [HasAdmin]
-        public async Task ToggleInviteWarn() {
-            IUserMessage message = await ReplyAsync("Trying to toggle");
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+    [Group("automod")]
+    [Alias("auto-mod", "filter")]
+    [RequireContext(ContextType.Guild)]
+    public class FilterSettingCommands : ModuleBase<SocketCommandContext> {
+        [Command("list")]
+        [Alias("info")]
+        [RequireContext(ContextType.Guild)]
+        public async Task ListAutoMod(string extension, [Remainder] string whoCaresWhatGoesHere) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(false);
+            BadWords badWords = new BadWords(Context.Guild);
 
-            if (settings == null) {
-                settings = new ModerationSettings();
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + " Creating new mod settings");
+            var embed = new EmbedBuilder();
+            string message = "";
+
+            bool useExplicit = false;
+            if (extension.ToLower() == "explicit" || extension.ToLower() == "e") {
+                if ((Context.Message.Author as SocketGuildUser).CanWarn()) {
+                    useExplicit = true;
+                } else {
+                    await ReplyAsync("You lack the permissions for viewing explicit bad words");
+                    return;
+                }
             }
-            settings.invitesAllowed = !settings.invitesAllowed;
-            Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
 
-            settings.SaveModSettings(Context.Guild);
+            if (badWords.all != null && badWords.all.Count > 0) {    
+                foreach (BadWord badWord in badWords.all) {
+                    if (message != "") {
+                        message += "  \n";
+                    }
+                    message += badWord.euphemism;
+                    if (badWord.partOfWord) {
+                        message += " ⌝";
+                    }
+                    if (useExplicit) message += "(" + badWord.word + ")";
+                }
+                embed.AddField("Badword euphemisms", message, true);
+                message = "The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word";
+            }
+            
+            if (settings != null) {
+                embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
+            }
 
-            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings")) {
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings saved");
+            IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
+            if (channel != null) {
+                _ = channel.SendMessageAsync(message, embed: embed.Build());
             } else {
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings not found after creation?!");
+                _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
             }
-
-            await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
         }
 
-        [Command("toggleautomod")]
+        [Command("channeltoggle")]
         [HasAdmin]
         public async Task ToggleAutoMod() {
             ModerationSettings settings = Context.Guild.LoadModSettings(true);
@@ -268,7 +272,82 @@ namespace BotCatMaxy {
             }
         }
 
-        [Command("addbadword")]
+        [Command("addallowedlink")]
+        [HasAdmin]
+        public async Task AddAllowedLink(string link) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            if (settings.allowedLinks == null) settings.allowedLinks = new List<string>();
+            settings.allowedLinks.Add(link);
+            settings.SaveModSettings(Context.Guild);
+            await ReplyAsync("People will now be allowed to use " + link);
+        }
+
+        [Command("removeallowedlink")]
+        [HasAdmin]
+        public async Task RemoveAllowedLink(string link) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            if (settings.allowedLinks == null || !settings.allowedLinks.Contains(link)) {
+                await ReplyAsync("Link is already not allowed");
+                return;
+            }
+            settings.allowedLinks.Remove(link);
+            if (settings.allowedLinks.Count == 0) settings.allowedLinks = null;
+            settings.SaveModSettings(Context.Guild);
+            await ReplyAsync("People will no longer be allowed to use " + link);
+        }
+
+        [Command("toggleinvitewarn")]
+        [HasAdmin]
+        public async Task ToggleInviteWarn() {
+            IUserMessage message = await ReplyAsync("Trying to toggle");
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+
+            if (settings == null) {
+                settings = new ModerationSettings();
+                Console.WriteLine(DateTime.Now.ToShortTimeString() + " Creating new mod settings");
+            }
+            settings.invitesAllowed = !settings.invitesAllowed;
+            Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
+
+            settings.SaveModSettings(Context.Guild);
+
+            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings")) {
+                Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings saved");
+            } else {
+                Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings not found after creation?!");
+            }
+
+            await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
+        }
+
+        [Command("removeword")]
+        [Alias("removebadword")]
+        [HasAdmin]
+        public async Task RemoveBadWord(string word) {
+            List<BadWord> badWords = Context.Guild.LoadBadWords(); ;
+
+            if (badWords == null) {
+                await ReplyAsync("Bad words is null");
+                return;
+            }
+            BadWord badToRemove = null;
+            foreach (BadWord badWord in badWords) {
+                if (badWord.word == word) {
+                    badToRemove = badWord;
+                }
+            }
+            if (badToRemove != null) {
+                badWords.Remove(badToRemove);
+                badWords.SaveBadWords(Context.Guild);
+
+                await ReplyAsync("removed " + word + " from bad word list");
+            } else {
+                await ReplyAsync("Bad word list doesn't contain " + word);
+            }
+        }
+
+        [Command("addword")]
+        [Alias("addbadword")]
         [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f) {
             if (!((SocketGuildUser)Context.User).HasAdmin()) {
@@ -292,31 +371,6 @@ namespace BotCatMaxy {
                 await ReplyAsync("added " + badWord.word + " also known as " + euphemism + " to bad word list");
             } else {
                 await ReplyAsync("added " + badWord.word + " to bad word list");
-            }
-        }
-
-        [Command("removebadword")]
-        [HasAdmin]
-        public async Task RemoveBadWord(string word) {
-            List<BadWord> badWords = Context.Guild.LoadBadWords(); ;
-
-            if (badWords == null) {
-                await ReplyAsync("Bad words is null");
-                return;
-            }
-            BadWord badToRemove = null;
-            foreach (BadWord badWord in badWords) {
-                if (badWord.word == word) {
-                    badToRemove = badWord;
-                }
-            }
-            if (badToRemove != null) {
-                badWords.Remove(badToRemove);
-                badWords.SaveBadWords(Context.Guild);
-
-                await ReplyAsync("removed " + word + " from bad word list");
-            } else {
-                await ReplyAsync("Bad word list doesn't contain " + word);
             }
         }
     }
@@ -392,7 +446,7 @@ namespace BotCatMaxy {
         }
     }
 
-    namespace Settings { 
+    namespace Settings {
         //Might replace these with a struct OR make them inherit from a "Saveable" class or make an interface
         //so then we can have a dynamic function to save things?
         public class TempBan {

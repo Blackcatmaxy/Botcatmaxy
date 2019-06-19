@@ -160,4 +160,19 @@ namespace BotCatMaxy.Data {
             }
         }
     }
+
+    public class BadWords {
+        public List<BadWord> all;
+        public List<BadWord> onlyAlone;
+        public List<BadWord> insideWords;
+
+        public BadWords(IGuild guild) {
+            all = guild.LoadBadWords();
+
+            foreach (BadWord badWord in all) {
+                if (badWord.partOfWord) insideWords.Add(badWord);
+                else onlyAlone.Add(badWord); 
+            }
+        }
+    }
 }
