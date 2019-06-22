@@ -283,16 +283,8 @@ namespace BotCatMaxy {
     public class DiscordWarnModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
+        public async Task WarnUserAsync(SocketGuildUser user, float size = 1, [Remainder] string reason = "Unspecified") {
             _ = user.Warn(size, reason, Context);
-
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
-        }
-
-        [Command("warn")]
-        [CanWarn()]
-        public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
-            _ = user.Warn(1, reason, Context);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
@@ -358,8 +350,8 @@ namespace BotCatMaxy {
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason) {
-            await user.Warn(1, reason, Context, "Discord");
+        public async Task KickAndWarn(SocketGuildUser user, float size = 1, [Remainder] string reason = "Unspecified") {
+            await user.Warn(size, reason, Context, "Discord");
 
             var embed = new EmbedBuilder();
             embed.WithTitle("You have been kicked from a discord guild");
