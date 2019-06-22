@@ -168,6 +168,8 @@ namespace BotCatMaxy.Data {
 
         public BadWords(IGuild guild) {
             all = guild.LoadBadWords();
+            onlyAlone = new List<BadWord>();
+            insideWords = new List<BadWord>();
 
             foreach (BadWord badWord in all) {
                 if (badWord.partOfWord) insideWords.Add(badWord);

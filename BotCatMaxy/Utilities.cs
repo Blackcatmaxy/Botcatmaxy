@@ -52,6 +52,11 @@ namespace BotCatMaxy {
                 return true;
             }
 
+            foreach (SocketRole role in user.Roles) {
+                if (role.Permissions.BanMembers) {
+                    return true;
+                }
+            }
             ModerationSettings settings = user.Guild.LoadModSettings(false);
             if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
                 List<SocketRole> rolesAbleToWarn = new List<SocketRole>();
@@ -62,23 +67,17 @@ namespace BotCatMaxy {
                     return true;
                 }
             }
-            foreach (SocketRole role in user.Roles) {
-                if (role.Permissions.BanMembers) {
-                    return true;
-                }
-            }
-
             return false;
         }
 
-        public static bool CanBeWarned(this SocketGuildUser user) {
+        public static bool CantBeWarned(this SocketGuildUser user) {
             if (HasAdmin(user)) return true;
 
             ModerationSettings settings = user.Guild.LoadModSettings(false);
             if (settings != null) {
-                List<SocketRole> rolesAbleToBeWarned = new List<SocketRole>();
-                foreach (ulong roleID in settings.ableToWarn) rolesAbleToBeWarned.Add(user.Guild.GetRole(roleID));
-                if (user.Roles.Intersect(rolesAbleToBeWarned).Any()) return true;
+                List<SocketRole> rolesUnableToBeWarned = new List<SocketRole>();
+                foreach (ulong roleID in settings.cantBeWarned) rolesUnableToBeWarned.Add(user.Guild.GetRole(roleID));
+                if (user.Roles.Intersect(rolesUnableToBeWarned).Any()) return true;
             }
             return false;
         }

@@ -76,61 +76,86 @@ namespace BotCatMaxy {
         [Command("list")]
         [Alias("info")]
         [RequireContext(ContextType.Guild)]
-        public async Task ListAutoMod(string extension, [Remainder] string whoCaresWhatGoesHere = null) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(false);
-            BadWords badWords = new BadWords(Context.Guild);
+        public async Task ListAutoMod(string extension = "", [Remainder] string whoCaresWhatGoesHere = null) {
+            try {
+                ModerationSettings settings = Context.Guild.LoadModSettings(false);
+                BadWords badWords = new BadWords(Context.Guild);
 
-            var embed = new EmbedBuilder();
-            string message = "";
+                var embed = new EmbedBuilder();
+                string message = "";
 
-            bool useExplicit = false;
-            if (extension.ToLower() == "explicit" || extension.ToLower() == "e") {
-                if ((Context.Message.Author as SocketGuildUser).CanWarn()) {
-                    useExplicit = true;
+                bool useExplicit = false;
+                if (extension != null && extension.ToLower() == "explicit" || extension.ToLower() == "e") {
+                    if ((Context.Message.Author as SocketGuildUser).CanWarn()) {
+                        useExplicit = true;
+                    } else {
+                        await ReplyAsync("You lack the permissions for viewing explicit bad words");
+                        return;
+                    }
+                }
+
+                if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
+                    foreach (BadWord badWord in badWords.all) {
+                        if (message != "") {
+                            message += "\n";
+                        }
+                        if (badWord.euphemism != null) message += badWord.euphemism;
+                        if (useExplicit) message += " (" + badWord.word + ")";
+                        if (badWord.partOfWord) {
+                            message += "⌝";
+                        }
+                        message += "  ";
+                    }
+                    embed.AddField("Badword euphemisms", message, true);
+                }
+
+                if (settings == null) {
+                    embed.AddField("Moderation settings  ", "Are null", true);
                 } else {
-                    await ReplyAsync("You lack the permissions for viewing explicit bad words");
-                    return;
-                }
-            }
+                    if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
+                        embed.AddField("Allowed links", "Links aren't moderated  ", true);
+                    } else {
+                        message = "";
+                        foreach (string link in settings.allowedLinks) {
+                            if (message != "") {
+                                message += "  \n";
+                            }
+                            message += "[" + link + "](" + link + ")";
+                        }
 
-            if (badWords.all != null && badWords.all.Count > 0) {
-                foreach (BadWord badWord in badWords.all) {
-                    if (message != "") {
-                        message += "  \n";
+                        embed.AddField("Allowed links", message, true);
                     }
-                    message += badWord.euphemism;
-                    if (badWord.partOfWord) {
-                        message += " ⌝";
-                    }
-                    if (useExplicit) message += "(" + badWord.word + ")";
+                    embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
                 }
-                embed.AddField("Badword euphemisms", message, true);
+
                 message = "The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word";
-            }
-
-            if (settings != null) {
-                embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
-            }
-
-            IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
-            if (channel != null) {
-                _ = channel.SendMessageAsync(message, embed: embed.Build());
-            } else {
-                _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
+                IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
+                if (channel != null) {
+                    _ = channel.SendMessageAsync(message, embed: embed.Build());
+                } else {
+                    _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
+                }
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Settings", "Error", e).Log();
             }
         }
 
         [Command("ToggleContainBadWord")]
+        [Alias("togglecontainword")]
+        [HasAdmin()]
         public async Task ToggleContainBadWord(string word) {
             BadWords badWords = new BadWords(Context.Guild);
             foreach (BadWord badWord in badWords.all) {
                 if (badWord.word.ToLower() == word.ToLower()) {
-                    badWord.partOfWord = !badWord.partOfWord;
                     if (badWord.partOfWord) {
-                        await ReplyAsync("Set badword to be filtered even if it's inside of another word");
+                        badWord.partOfWord = false;
+                        await ReplyAsync("Set badword to not be filtered if it's inside of another word");
                     } else {
-                        await ReplyAsync("Set badword to be filtered even if it's not inside of another word");
+                        badWord.partOfWord = true;
+                        await ReplyAsync("Set badword to be filtered even if it's inside of another word");
                     }
+
+                    badWords.all.SaveBadWords(Context.Guild);
                     return;
                 }
             }

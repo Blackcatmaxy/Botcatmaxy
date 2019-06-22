@@ -62,17 +62,12 @@ namespace BotCatMaxy {
 
                 var embed = new EmbedBuilder();
                 SocketTextChannel channel = message.Channel as SocketTextChannel;
-                if (message.Embeds.Count == 0) {
-                    if (message.Content == null || message.Content == "") {
-                        embed.AddField(reason + " in #" + message.Channel.Name,
-                        "This message had no text", true);
-                    } else {
-                        embed.AddField(reason + " in #" + message.Channel.Name,
-                        message.Content, true);
-                    }
+                if (message.Content == null || message.Content == "") {
+                    embed.AddField(reason + " in #" + message.Channel.Name,
+                    "`This message had no text`", true);
                 } else {
-                    embed.AddField(reason + " in #" + channel.Name,
-                    "`Embed cannot be displayed`", true);
+                    embed.AddField(reason + " in #" + message.Channel.Name,
+                    message.Content, true);
                 }
                 
                 if (addJumpLink) {

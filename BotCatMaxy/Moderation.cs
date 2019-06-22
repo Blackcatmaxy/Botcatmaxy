@@ -30,7 +30,7 @@ namespace BotCatMaxy {
         }
 
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
-            if (!user.CanBeWarned()) {
+            if (user.CantBeWarned()) {
                 await context.Channel.SendMessageAsync("This person can't be warned");
                 return;
             }
