@@ -155,6 +155,7 @@ namespace BotCatMaxy {
                     embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
                 }
 
+                message = "";
                 if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
                     foreach (BadWord badWord in badWords.all) {
                         if (message != "") {
