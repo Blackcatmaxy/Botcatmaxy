@@ -136,6 +136,25 @@ namespace BotCatMaxy {
                     }
                 }
 
+                if (settings == null) {
+                    embed.AddField("Moderation settings", "Are null", true);
+                } else {
+                    if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
+                        embed.AddField("Allowed links", "Links aren't moderated  ", true);
+                    } else {
+                        message = "";
+                        foreach (string link in settings.allowedLinks) {
+                            if (message != "") {
+                                message += "  \n";
+                            }
+                            message += link;
+                        }
+
+                        embed.AddField("Allowed links", message, true);
+                    }
+                    embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
+                }
+
                 if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
                     foreach (BadWord badWord in badWords.all) {
                         if (message != "") {
@@ -148,26 +167,7 @@ namespace BotCatMaxy {
                         }
                         message += "  ";
                     }
-                    embed.AddField("Badword euphemisms", message, true);
-                }
-
-                if (settings == null) {
-                    embed.AddField("Moderation settings  ", "Are null", true);
-                } else {
-                    if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
-                        embed.AddField("Allowed links", "Links aren't moderated  ", true);
-                    } else {
-                        message = "";
-                        foreach (string link in settings.allowedLinks) {
-                            if (message != "") {
-                                message += "  \n";
-                            }
-                            message += "[" + link + "](" + link + ")";
-                        }
-
-                        embed.AddField("Allowed links", message, true);
-                    }
-                    embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
+                    embed.AddField("Badword euphemisms", message, false);
                 }
 
                 message = "The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word";
