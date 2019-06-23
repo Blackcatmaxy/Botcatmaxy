@@ -83,12 +83,7 @@ namespace BotCatMaxy {
                 _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
             }
 
-            JsonSerializer serializer = new JsonSerializer();
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
+            settings.SaveModSettings(Context.Guild);
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
         }
@@ -115,10 +110,7 @@ namespace BotCatMaxy {
 
             JsonSerializer serializer = new JsonSerializer();
 
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
+            settings.SaveModSettings(Context.Guild);
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }

@@ -5,13 +5,13 @@ using BotCatMaxy.Settings;
 using Discord.WebSocket;
 using Discord.Commands;
 using BotCatMaxy.Data;
+using Newtonsoft.Json;
+using System.Text;
 using System.Linq;
 using BotCatMaxy;
 using System.IO;
 using Discord;
 using System;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace BotCatMaxy {
     public class Filter {
@@ -296,12 +296,6 @@ namespace BotCatMaxy {
             Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
 
             settings.SaveModSettings(Context.Guild);
-
-            if (File.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings")) {
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings saved");
-            } else {
-                Console.WriteLine(DateTime.Now.ToShortTimeString() + " mod settings not found after creation?!");
-            }
 
             await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
         }
