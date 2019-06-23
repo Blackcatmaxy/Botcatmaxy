@@ -157,6 +157,20 @@ namespace BotCatMaxy {
                 .WithCurrentTimestamp();
             return embed.Build();
         }
+
+        public static async Task NotifyOfKick(this SocketGuildUser user, string reason, SocketCommandContext context) {
+            var embed = new EmbedBuilder();
+            embed.WithTitle("You have been kicked from a discord guild");
+            embed.AddField("Reason", reason, true);
+            embed.AddField("Guild name", context.Guild.Name, true);
+            embed.WithCurrentTimestamp();
+            embed.WithAuthor(context.Message.Author);
+
+            IDMChannel DMChannel = await user.GetOrCreateDMChannelAsync();
+            if (DMChannel != null) {
+                await DMChannel.SendMessageAsync(embed: embed.Build());
+            }
+        }
     }
 
     [Group("games")]
@@ -283,7 +297,15 @@ namespace BotCatMaxy {
     public class DiscordWarnModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserAsync(SocketGuildUser user, float size = 1, [Remainder] string reason = "Unspecified") {
+        public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
+            _ = user.Warn(1, reason, Context);
+
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+        }
+
+        [Command("warn")]
+        [CanWarn()]
+        public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             _ = user.Warn(size, reason, Context);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
@@ -350,20 +372,21 @@ namespace BotCatMaxy {
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task KickAndWarn(SocketGuildUser user, float size = 1, [Remainder] string reason = "Unspecified") {
+        public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
+            await user.Warn(1, reason, Context, "Discord");
+
+            _ = user.NotifyOfKick(reason, Context);
+            await ReplyAsync(user.Mention + " has been kicked for " + reason);
+            await user.KickAsync(reason);
+        }
+
+        [Command("kickwarn")]
+        [Alias("warnkick", "warnandkick", "kickandwarn")]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task KickAndWarn(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             await user.Warn(size, reason, Context, "Discord");
 
-            var embed = new EmbedBuilder();
-            embed.WithTitle("You have been kicked from a discord guild");
-            embed.AddField("Reason", reason, true);
-            embed.AddField("Guild name", Context.Guild.Name, true);
-            embed.WithCurrentTimestamp();
-            embed.WithAuthor(Context.Message.Author);
-
-            IDMChannel DMChannel = await user.GetOrCreateDMChannelAsync();
-            if (DMChannel != null) {
-                await DMChannel.SendMessageAsync(embed: embed.Build());
-            }
+            _ = user.NotifyOfKick(reason, Context);
             await ReplyAsync(user.Mention + " has been kicked for " + reason);
             await user.KickAsync(reason);
         }
