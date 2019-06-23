@@ -206,33 +206,6 @@ namespace BotCatMaxy {
             }
         }
 
-        [Command("badwords")]
-        public async Task ListBadWords() {
-            if (Directory.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId)) {
-                List<BadWord> badWords = Context.Guild.LoadBadWords();
-
-                IDMChannel dMChannel = await Context.User.GetOrCreateDMChannelAsync();
-                if (dMChannel == null) {
-                    await ReplyAsync("Something has gone wrong, ERROR: DMChannel is null");
-                } else {
-                    if (badWords == null) {
-                        await dMChannel.SendMessageAsync("This server has no bad word filtering enabled");
-                    }
-                    string allBadWords = "";
-                    foreach (BadWord badWord in badWords) {
-                        if (allBadWords == "") {
-                            allBadWords = "Any words that contain or are the following words are not allowed: " + badWord.euphemism;
-                        } else {
-                            if (badWord.euphemism != "") {
-                                allBadWords += ", " + badWord.euphemism;
-                            }
-                        }
-                    }
-                    await dMChannel.SendMessageAsync(allBadWords);
-                }
-            }
-        }
-
         [Command("allowwarn")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
@@ -286,32 +259,6 @@ namespace BotCatMaxy {
             }
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
-        }
-
-        [Command("explicitbadwords")]
-        [CanWarn]
-        public async Task ListExplicitBadWords() {
-            if (Directory.Exists("/home/bob_the_daniel/Data/" + Context.Guild.OwnerId)) {
-                List<BadWord> badWords = Context.Guild.LoadBadWords();
-
-                IDMChannel dMChannel = await Context.User.GetOrCreateDMChannelAsync();
-                if (dMChannel == null) {
-                    await ReplyAsync("Something has gone wrong, ERROR: DMChannel is null");
-                } else {
-                    if (badWords == null) {
-                        await dMChannel.SendMessageAsync("This server has no bad word filtering enabled");
-                    }
-                    string allBadWords = "";
-                    foreach (BadWord badWord in badWords) {
-                        if (allBadWords == "") {
-                            allBadWords = "Any words that contain or are the following words are not allowed: " + badWord.euphemism + "(" + badWord.word + ")";
-                        } else {
-                            allBadWords += ", " + badWord.euphemism + "(" + badWord.word + ")";
-                        }
-                    }
-                    await dMChannel.SendMessageAsync(allBadWords);
-                }
-            }
         }
 
         [Command("addallowedlink")]
