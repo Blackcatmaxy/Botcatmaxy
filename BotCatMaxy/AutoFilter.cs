@@ -249,61 +249,6 @@ namespace BotCatMaxy {
             }
         }
 
-        [Command("allowwarn")]
-        [RequireContext(ContextType.Guild)]
-        [HasAdmin]
-        public async Task AddWarnRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-
-            if (settings == null) {
-                settings = new ModerationSettings();
-            }
-            if (!settings.ableToWarn.Contains(role.Id)) {
-                settings.ableToWarn.Add(role.Id);
-            } else {
-                _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
-            }
-
-            JsonSerializer serializer = new JsonSerializer();
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
-
-            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
-        }
-
-        [Command("removewarnability")]
-        [RequireContext(ContextType.Guild)]
-        [HasAdmin]
-        public async Task RemoveWarnRole(SocketRole role) {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permissions");
-                return;
-            }
-
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
-
-            if (settings == null) {
-                settings = new ModerationSettings();
-            }
-            if (settings.ableToWarn.Contains(role.Id)) {
-                settings.ableToWarn.Remove(role.Id);
-            } else {
-                _ = ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
-            }
-
-            JsonSerializer serializer = new JsonSerializer();
-
-            using (StreamWriter sw = new StreamWriter(@"/home/bob_the_daniel/Data/" + Context.Guild.OwnerId + "/moderationSettings.txt"))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }
-
-            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
-        }
-
         [Command("addallowedlink")]
         [HasAdmin]
         public async Task AddAllowedLink(string link) {
