@@ -35,6 +35,9 @@ namespace BotCatMaxy {
                 await client.SetGameAsync("Restarting");
                 Environment.Exit(0);
             }
+            if (splitInput[0].ToLower() == "stats") {
+                Console.WriteLine("Part of " + client.Guilds.Count + " discord guilds");
+            }
 
             _ = NewInput();
         }
