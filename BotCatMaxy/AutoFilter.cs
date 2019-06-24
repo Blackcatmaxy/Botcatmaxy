@@ -46,13 +46,19 @@ namespace BotCatMaxy {
                         return; //Returns if channel is set as not using automod
 
                     //Checks if a message contains an invite
-                    if (!modSettings.invitesAllowed && message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
-                        _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                        await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
+                    if (!modSettings.invitesAllowed) {
+                        Match match = Regex.Match(message.Content, @"(?:discord\.gg|discordapp\.com\/invite)\/(\w+)");
+                        if (match != null && match.Success) {
+                            IInvite invite = client.GetInviteAsync(match.Value).Result;
+                            if (invite != null && invite.Guild != context.Guild) {
+                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
+                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
 
-                        Logging.LogMessage("Bad word removed", message, Guild);
-                        await message.DeleteAsync();
-                        return;
+                                Logging.LogMessage("Bad word removed", message, Guild);
+                                await message.DeleteAsync();
+                                return;
+                            }
+                        }
                     }
 
                     //Checks for links
