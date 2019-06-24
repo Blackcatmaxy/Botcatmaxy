@@ -36,13 +36,14 @@ namespace BotCatMaxy {
                 var chnl = message.Channel as SocketGuildChannel;
                 var Guild = chnl.Guild;
                 string guildDir = Guild.GetPath();
+                SocketGuildUser gUser = message.Author as SocketGuildUser;
 
                 if (Guild == null || !Directory.Exists(guildDir)) return;
                 ModerationSettings modSettings = Guild.LoadModSettings(false);
                 List<BadWord> badWords = Guild.LoadBadWords();
 
                 if (modSettings != null) {
-                    if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())
+                    if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || gUser.CantBeWarned())
                         return; //Returns if channel is set as not using automod
 
                     //Checks if a message contains an invite
@@ -52,7 +53,7 @@ namespace BotCatMaxy {
                             IInvite invite = client.GetInviteAsync(match.Value).Result;
                             if (invite != null && invite.Guild != context.Guild) {
                                 _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
+                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + gUser.LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
 
                                 Logging.LogMessage("Bad word removed", message, Guild);
                                 await message.DeleteAsync();
@@ -61,50 +62,19 @@ namespace BotCatMaxy {
                         }
                     }
 
-                    //Checks for links
-                    if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) {
-                        const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
-                        MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
-                        if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
-                        foreach (Match match in matches) {
-                            if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
-                                await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
-                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using unauthorized links");
+                    if (CheckForLink(message, context, modSettings).Result) return;
 
-                                Logging.LogMessage("Bad link removed", message, Guild);
-                                await message.DeleteAsync();
-                                return;
-                            }
+                    //Checks for bad words
+                    if (File.Exists(guildDir + "/badwords.json")) {
+                        StringBuilder sb = new StringBuilder();
+                        foreach (char c in message.Content) {
+                            if (!char.IsPunctuation(c) && !char.IsSymbol(c)) sb.Append(c);
                         }
-                    }
-                }
+                        string strippedMessage = sb.ToString().ToLower();
 
-                //Checks for bad words
-                if (File.Exists(guildDir + "/badwords.json")) {
-                    StringBuilder sb = new StringBuilder();
-                    foreach (char c in message.Content) {
-                        if (!char.IsPunctuation(c) && !char.IsSymbol(c)) sb.Append(c);
-                    }
-                    string strippedMessage = sb.ToString().ToLower();
-
-                    foreach (BadWord badWord in badWords) {
-                        if (badWord.partOfWord) {
-                            if (strippedMessage.Contains(badWord.word.ToLower())) {
-                                if (badWord.euphemism != null && badWord.euphemism != "") {
-                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
-                                } else {
-                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
-                                }
-                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
-
-                                Logging.LogMessage("Bad word removed", message, Guild);
-                                await message.DeleteAsync();
-                                return;
-                            }
-                        } else {
-                            string[] messageParts = strippedMessage.Split(' ');
-                            foreach (string word in messageParts) {
-                                if (word == badWord.word.ToLower()) {
+                        foreach (BadWord badWord in badWords) {
+                            if (badWord.partOfWord) {
+                                if (strippedMessage.Contains(badWord.word.ToLower())) {
                                     if (badWord.euphemism != null && badWord.euphemism != "") {
                                         await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
                                     } else {
@@ -116,15 +86,60 @@ namespace BotCatMaxy {
                                     await message.DeleteAsync();
                                     return;
                                 }
+                            } else {
+                                string[] messageParts = strippedMessage.Split(' ');
+                                foreach (string word in messageParts) {
+                                    if (word == badWord.word.ToLower()) {
+                                        if (badWord.euphemism != null && badWord.euphemism != "") {
+                                            await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                        } else {
+                                            await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                        }
+                                        await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
+
+                                        Logging.LogMessage("Bad word removed", message, Guild);
+                                        await message.DeleteAsync();
+                                        return;
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            } catch (Exception e) {
+            }
+             catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the filter", e).Log();
             }
         }
+
+        public async Task<bool> CheckForLink(SocketMessage message, SocketCommandContext context, ModerationSettings settings) {
+            SocketGuildUser user = message.Author as SocketGuildUser;
+
+            if (settings.allowedLinks != null && settings.allowedLinks.Count > 0) {
+                if (settings.allowedToLink != null && settings.allowedToLink.Count > 0 && user.Roles != null && user.Roles.Count > 0) {
+                    if (user.RoleIDs().Intersect(settings.allowedToLink).Any()) {
+                        return false;
+                    }
+                }
+
+                const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
+                MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
+                if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
+                foreach (Match match in matches) {
+                    if (!settings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
+                        await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
+                        await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + user.LoadInfractions("Discord").Count.Suffix() + " infraction because of using unauthorized links");
+
+                        Logging.LogMessage("Bad link removed", message, context.Guild);
+                        await message.DeleteAsync();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
+
 
     [Group("automod")]
     [Alias("auto-mod", "filter")]
@@ -196,6 +211,41 @@ namespace BotCatMaxy {
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Settings", "Error", e).Log();
             }
+        }
+
+        [HasAdmin()]
+        [Command("AddAllowedLinkRole")]
+        public async Task AddAllowedLinkRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+
+            if (settings.allowedToLink == null) settings.allowedToLink = new List<ulong>();
+            if (settings.allowedToLink.Contains(role.Id)) {
+                await ReplyAsync($"Role '{role.Name}' was already exempt from link filtering");
+                return;
+            }
+            settings.allowedToLink.Add(role.Id);
+            settings.SaveModSettings(Context.Guild);
+
+            await ReplyAsync($"Role '{role.Name}' is now exempt from link filtering");
+        }
+
+        [HasAdmin()]
+        [Command("RemoveAllowedLinkRole")]
+        public async Task RemoveAllowedLinkRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadModSettings(false);
+
+            if (settings == null || settings.allowedToLink == null) {
+                await ReplyAsync($"No role is currently excused from posting links");
+                return;
+            }
+            if (settings.allowedToLink.Contains(role.Id)) {
+                settings.allowedToLink.Remove(role.Id);
+                settings.SaveModSettings(Context.Guild);
+                await ReplyAsync($"Role '{role.Name}' is no longer exempt from link filtering");
+                return;
+            }
+
+            await ReplyAsync($"Role '{role.Name}' wasn't exempt from link filtering");
         }
 
         [Command("ToggleContainBadWord")]

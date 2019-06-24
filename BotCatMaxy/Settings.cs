@@ -212,6 +212,7 @@ namespace BotCatMaxy {
             public List<ulong> channelsWithoutAutoMod = new List<ulong>();
             public List<ulong> ableToBan = new List<ulong>();
             public List<string> allowedLinks = new List<string>();
+            public List<ulong> allowedToLink = new List<ulong>();
             public bool useOwnerID = false;
             public bool moderateUsernames = false;
             public bool invitesAllowed = true;

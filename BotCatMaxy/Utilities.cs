@@ -70,6 +70,14 @@ namespace BotCatMaxy {
             return false;
         }
 
+        public static List<ulong> RoleIDs(this SocketGuildUser user) {
+            List<ulong> IDs = new List<ulong>();
+            foreach (SocketRole role in user.Roles) {
+                IDs.Add(role.Id);
+            }
+            return IDs;
+        }
+
         public static bool CantBeWarned(this SocketGuildUser user) {
             if (HasAdmin(user)) return true;
 
