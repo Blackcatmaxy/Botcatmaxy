@@ -50,14 +50,18 @@ namespace BotCatMaxy {
                     if (!modSettings.invitesAllowed) {
                         Match match = Regex.Match(message.Content, @"(?:discord\.gg|discordapp\.com\/invite)\/(\w+)");
                         if (match != null && match.Success) {
+                            new LogMessage(LogSeverity.Info, "Filter", "Invite link detected");
                             IInvite invite = client.GetInviteAsync(match.Value).Result;
-                            if (invite != null && invite.Guild != context.Guild) {
-                                _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                                await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + gUser.LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
+                            if (invite != null) {
+                                new LogMessage(LogSeverity.Info, "Filter", "Invite belongs to " + invite.GuildName + " discord");
+                                if (invite.Guild != context.Guild) {
+                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
+                                    await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + gUser.LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
 
-                                Logging.LogMessage("Bad word removed", message, Guild);
-                                await message.DeleteAsync();
-                                return;
+                                    Logging.LogMessage("Bad word removed", message, Guild);
+                                    await message.DeleteAsync();
+                                    return;
+                                }
                             }
                         }
                     }
