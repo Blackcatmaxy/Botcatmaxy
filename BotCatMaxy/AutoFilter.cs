@@ -15,6 +15,8 @@ using System;
 
 namespace BotCatMaxy {
     public class Filter {
+        const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
+        const string inviteRegex = @"(?:discord\.gg|discordapp\.com\/invite)\/(\w+)";
         readonly DiscordSocketClient client;
         public Filter(DiscordSocketClient client) {
             this.client = client;
@@ -47,24 +49,7 @@ namespace BotCatMaxy {
                         return; //Returns if channel is set as not using automod
 
                     //Checks if a message contains an invite
-                    if (!modSettings.invitesAllowed) {
-                        Match match = Regex.Match(message.Content, @"(?:discord\.gg|discordapp\.com\/invite)\/(\w+)");
-                        if (match != null && match.Success) {
-                            new LogMessage(LogSeverity.Info, "Filter", "Invite link detected");
-                            IInvite invite = client.GetInviteAsync(match.Value).Result;
-                            if (invite != null) {
-                                new LogMessage(LogSeverity.Info, "Filter", "Invite belongs to " + invite.GuildName + " discord");
-                                if (invite.Guild != context.Guild) {
-                                    _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                                    await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + gUser.LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
-
-                                    Logging.LogMessage("Bad word removed", message, Guild);
-                                    await message.DeleteAsync();
-                                    return;
-                                }
-                            }
-                        }
-                    }
+                    if (CheckForInvite(message, context, modSettings).Result) return; 
 
                     if (CheckForLink(message, context, modSettings).Result) return;
 
@@ -110,11 +95,11 @@ namespace BotCatMaxy {
                         }
                     }
                 }
-            }
-             catch (Exception e) {
+            } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the filter", e).Log();
             }
         }
+
 
         public async Task<bool> CheckForLink(SocketMessage message, SocketCommandContext context, ModerationSettings settings) {
             SocketGuildUser user = message.Author as SocketGuildUser;
@@ -126,17 +111,35 @@ namespace BotCatMaxy {
                     }
                 }
 
-                const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
+                
                 MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
                 if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                 foreach (Match match in matches) {
                     if (!settings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
-                        await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
-                        await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + user.LoadInfractions("Discord").Count.Suffix() + " infraction because of using unauthorized links");
+                        if (!CheckForInvite(message, context, settings).Result) {
+                            _ = message.Punish("Using unauthorized links", context);
 
-                        Logging.LogMessage("Bad link removed", message, context.Guild);
-                        await message.DeleteAsync();
-                        return true;
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> CheckForInvite(SocketMessage message, SocketCommandContext context, ModerationSettings settings) {
+            if (!settings.invitesAllowed) {
+                Match match = Regex.Match(message.Content, inviteRegex);
+                if (match != null && match.Success) {
+                    new LogMessage(LogSeverity.Info, "Filter", "Invite link detected with substring " + match.Value);
+                    IInvite invite = client.GetInviteAsync(match.Value).Result;
+                    if (invite != null) {
+                        new LogMessage(LogSeverity.Info, "Filter", "Invite belongs to " + invite.GuildName + " discord");
+                        if (invite.Guild != context.Guild) {
+                            _ = message.Punish("Posted Invite", context);
+
+                            return true;
+                        }
                     }
                 }
             }
@@ -144,6 +147,15 @@ namespace BotCatMaxy {
         }
     }
 
+    public static class FilterStatic {
+        public static async Task Punish(this SocketMessage message, string reason, SocketCommandContext context, float size = 1) {
+            await ((SocketGuildUser)message.Author).Warn(size, reason, context);
+            await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of " + reason.ToLower());
+
+            Logging.LogMessage(reason, message, context.Guild);
+            await message.DeleteAsync();
+        }    
+    }
 
     [Group("automod")]
     [Alias("auto-mod", "filter")]
