@@ -172,8 +172,8 @@ namespace BotCatMaxy {
                                     message += role.Name;
                                 }
                             }
+                            embed.AddField("Roles that can post links", message, true);
                         }
-                        embed.AddField("Roles that can post links", message, true);
                     }
                 }
 
