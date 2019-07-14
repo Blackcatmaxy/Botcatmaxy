@@ -57,7 +57,7 @@ namespace BotCatMaxy {
                     }
 
                     //Checks for links
-                    if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0 && modSettings.allowedToLink == null || gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()) {
+                    if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0 && modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()) {
                         const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
                         MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
                         if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
@@ -149,6 +149,7 @@ namespace BotCatMaxy {
                 if (settings == null) {
                     embed.AddField("Moderation settings", "Are null", true);
                 } else {
+                    embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
                     if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
                         embed.AddField("Allowed links", "Links aren't moderated  ", true);
                     } else {
@@ -161,8 +162,19 @@ namespace BotCatMaxy {
                         }
 
                         embed.AddField("Allowed links", message, true);
+                        if (settings.allowedToLink != null && settings.allowedToLink.Count > 0) {
+                            message = "";
+                            foreach (SocketRole role in Context.Guild.Roles) {
+                                if (role.Permissions.Administrator || settings.allowedToLink.Contains(role.Id) && !role.IsManaged) {
+                                    if (message != "") {
+                                        message += "\n";
+                                    }
+                                    message += role.Name;
+                                }
+                            }
+                        }
+                        embed.AddField("Roles that can post links", message, true);
                     }
-                    embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
                 }
 
                 message = "";
