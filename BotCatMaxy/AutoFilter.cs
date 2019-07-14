@@ -93,6 +93,9 @@ namespace BotCatMaxy {
                             case '0':
                                 sb.Append('o');
                                 break;
+                            case '8':
+                                sb.Append('b');
+                                break;
                             case '3':
                                 sb.Append('e');
                                 break;
