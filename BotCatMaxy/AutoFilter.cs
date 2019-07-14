@@ -86,8 +86,25 @@ namespace BotCatMaxy {
                 if (File.Exists(guildDir + "/badwords.json")) {
                     StringBuilder sb = new StringBuilder();
                     foreach (char c in message.Content) {
-                        if (!char.IsPunctuation(c) && !char.IsSymbol(c)) sb.Append(c);
+                        if (!char.IsPunctuation(c) && !char.IsSymbol(c)) {
+                            switch (c) {
+                                case '1':
+                                    sb.Append('i');
+                                    break;
+                                case '0':
+                                    sb.Append('o');
+                                    break;
+                                case '@':
+                                case '4':
+                                    sb.Append('a');
+                                    break;
+                                default:
+                                    sb.Append(c);
+                                    break;
+                            }
+                        }
                     }
+
                     string strippedMessage = sb.ToString().ToLower();
 
                     foreach (BadWord badWord in badWords) {
