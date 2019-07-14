@@ -61,7 +61,7 @@ namespace BotCatMaxy {
                     }
 
                     //Checks for links
-                    if (modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0 && modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()) {
+                    if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any())) {
                         const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
                         MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
                         if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
