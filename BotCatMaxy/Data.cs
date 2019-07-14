@@ -171,6 +171,9 @@ namespace BotCatMaxy.Data {
             onlyAlone = new List<BadWord>();
             insideWords = new List<BadWord>();
 
+            if (all == null) {
+                return;
+            }
             foreach (BadWord badWord in all) {
                 if (badWord.partOfWord) insideWords.Add(badWord);
                 else onlyAlone.Add(badWord); 
