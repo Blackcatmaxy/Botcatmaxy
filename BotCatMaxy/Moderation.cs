@@ -299,6 +299,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             _ = user.Warn(1, reason, Context);
+            _ = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
@@ -307,6 +308,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             _ = user.Warn(size, reason, Context);
+            _ = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }

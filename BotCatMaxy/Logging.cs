@@ -10,7 +10,7 @@ using BotCatMaxy;
 using BotCatMaxy.Settings;
 using BotCatMaxy.Data;
 
-namespace BotCatMaxy { 
+namespace BotCatMaxy {
     class Logging {
         public static List<ulong> deletedMessagesCache = new List<ulong>();
         private readonly DiscordSocketClient _client;
@@ -69,7 +69,7 @@ namespace BotCatMaxy {
                     embed.AddField(reason + " in #" + message.Channel.Name,
                     message.Content, true);
                 }
-                
+
                 if (addJumpLink) {
                     embed.AddField("Message Link", "[Click Here](" + message.GetJumpUrl() + ")", true);
                 }
@@ -82,6 +82,21 @@ namespace BotCatMaxy {
                 logChannel.SendMessageAsync(embed: embed.Build());
             } catch (Exception exception) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
+            }
+        }
+
+        public static async Task LogWarn(IGuild guild, IUser warner, IUser warnee, string reason) {
+            try {
+                LogSettings settings = guild.LoadLogSettings(false);
+                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
+
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(warner);
+                embed.AddField(warnee.Mention + " has been warned", "For " + reason);
+
+                _ = guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build());
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
         }
 
@@ -102,5 +117,5 @@ namespace BotCatMaxy {
         async Task LogEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
             new LogMessage(LogSeverity.Info, "", oldMessage.GetOrDownloadAsync().Result.Content);
         }
-    }   
+    }
 }
