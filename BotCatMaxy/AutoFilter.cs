@@ -167,6 +167,7 @@ namespace BotCatMaxy {
                 BadWords badWords = new BadWords(Context.Guild);
 
                 var embed = new EmbedBuilder();
+                embed.Author = new EmbedAuthorBuilder().WithName("Automod information for " + Context.Guild.Name + " discord");
                 string message = "";
 
                 bool useExplicit = false;
