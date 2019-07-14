@@ -223,6 +223,7 @@ namespace BotCatMaxy {
 
         [HasAdmin()]
         [Command("AddAllowedLinkRole")]
+        [Alias("addroleallowedtolink")]
         public async Task AddAllowedLinkRole(SocketRole role) {
             ModerationSettings settings = Context.Guild.LoadModSettings(true);
 
@@ -239,6 +240,7 @@ namespace BotCatMaxy {
 
         [HasAdmin()]
         [Command("RemoveAllowedLinkRole")]
+        [Alias("removeroleallowedtolink")]
         public async Task RemoveAllowedLinkRole(SocketRole role) {
             ModerationSettings settings = Context.Guild.LoadModSettings(false);
 
