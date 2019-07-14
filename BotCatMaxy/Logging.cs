@@ -92,7 +92,7 @@ namespace BotCatMaxy {
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
-                embed.AddField(warnee.Mention + " has been warned", "For " + reason);
+                embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
 
                 _ = guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build());
             } catch (Exception e) {
