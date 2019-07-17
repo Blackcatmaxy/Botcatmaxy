@@ -55,7 +55,7 @@ namespace BotCatMaxy {
                         try {
                             await message.DeleteAsync();
                         } catch (Exception e) {
-                            _ = warnMessage.ModifyAsync(msg => msg.Content = message.Content + ", something went wrong removing the message.");
+                            _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
                         }
                         return;
                     }
@@ -74,7 +74,7 @@ namespace BotCatMaxy {
                                 try {
                                     await message.DeleteAsync();
                                 } catch (Exception e) {
-                                    _ = warnMessage.ModifyAsync(msg => msg.Content = message.Content + ", something went wrong removing the message.");
+                                    _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
                                 }
                                 return;
                             }
@@ -128,7 +128,7 @@ namespace BotCatMaxy {
                                 try {
                                     await message.DeleteAsync();
                                 } catch (Exception e) {
-                                    _ = warnMessage.ModifyAsync(msg => msg.Content = message.Content + ", something went wrong removing the message.");
+                                    _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
                                 }
                                 return;
                             }
