@@ -226,7 +226,7 @@ namespace BotCatMaxy {
                         }
                         if (badWord.euphemism != null) message += badWord.euphemism;
                         if (useExplicit) message += " (" + badWord.word + ")";
-                        if (badWord.partOfWord) {
+                        if (badWord.partOfWord && (useExplicit || !badWord.euphemism.IsNullOrEmpty())) {
                             message += "⌝";
                         }
                         message += "  ";

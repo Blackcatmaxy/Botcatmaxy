@@ -142,5 +142,11 @@ namespace BotCatMaxy {
                 await Log(new LogMessage(LogSeverity.Warning, "Assert", message));
             }
         }
+
+        public static bool IsNullOrEmpty(this string s) {
+            if (s == null || s == "")
+                return true;
+            return false;
+        }
     }
 }
