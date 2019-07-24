@@ -148,5 +148,16 @@ namespace BotCatMaxy {
                 return true;
             return false;
         }
+
+        public static string StrippedOfPing(this string s) {
+            StringBuilder sb = new StringBuilder();
+            foreach (char c in s) {
+                if (c == '@') {
+                    if (s.ToArray()[sb.Length] != ' ') sb.Append('a');
+                } else sb.Append(c);
+            }
+
+            return sb.ToString();
+        }
     }
 }

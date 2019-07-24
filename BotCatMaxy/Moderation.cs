@@ -320,11 +320,21 @@ namespace BotCatMaxy {
             if (user == null) {
                 user = Context.Message.Author as SocketGuildUser;
             }
+            string username;
+            if (!user.Nickname.IsNullOrEmpty()) username = user.Nickname.StrippedOfPing();
+            else username = user.Username.StrippedOfPing();
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
                 await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
             } else {
-                await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(user.Mention + " has no warns");
+                await ReplyAsync(username + " has no warns");
+                return;
             }
+
+            List<Infraction> infractions = user.LoadInfractions();
+            string plural = "";
+            if (infractions.Count == 1) plural = "s";
+
+            await ReplyAsync($"DMing you {username}'s {infractions} infraction{plural}");
         }
 
         [Command("warns")]
