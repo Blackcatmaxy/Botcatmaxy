@@ -334,7 +334,7 @@ namespace BotCatMaxy {
             string plural = "";
             if (infractions.Count == 1) plural = "s";
 
-            await ReplyAsync($"DMing you {username}'s {infractions} infraction{plural}");
+            await ReplyAsync($"DMing you {username}'s {infractions.Count} infraction{plural}");
         }
 
         [Command("warns")]
