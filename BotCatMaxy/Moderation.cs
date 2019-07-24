@@ -332,7 +332,7 @@ namespace BotCatMaxy {
 
             List<Infraction> infractions = user.LoadInfractions();
             string plural = "";
-            if (infractions.Count == 1) plural = "s";
+            if (infractions.Count > 1) plural = "s";
 
             await ReplyAsync($"DMing you {username}'s {infractions.Count} infraction{plural}");
         }
