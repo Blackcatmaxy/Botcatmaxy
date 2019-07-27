@@ -159,5 +159,14 @@ namespace BotCatMaxy {
 
             return sb.ToString();
         }
+
+        public static string NickOrUsername(this SocketGuildUser user) {
+            if (user == null) {
+                new LogMessage(LogSeverity.Critical, "Utility", "User is null");
+                return null;
+            }
+            if (user.Nickname.IsNullOrEmpty()) return user.Username;
+            else return user.Nickname;
+        }
     }
 }
