@@ -85,20 +85,24 @@ namespace BotCatMaxy {
             }
         }
 
-        public static async Task LogWarn(IGuild guild, IUser warner, IUser warnee, string reason) {
+        public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason) {
             try {
                 LogSettings settings = guild.LoadLogSettings(false);
-                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
+                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return null;
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
-                embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                if (warnee.Nickname.IsNullOrEmpty()) 
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                else
+                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 embed.WithColor(Color.Gold);
 
-                _ = guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build());
+                return guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
+            return null;
         }
 
         private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
