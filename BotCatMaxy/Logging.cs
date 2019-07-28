@@ -34,13 +34,13 @@ namespace BotCatMaxy {
             }
         }
 
-        public static void LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
+        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
             try {
                 if (deletedMessagesCache == null) {
                     deletedMessagesCache = new List<ulong>();
                 }
                 if (deletedMessagesCache.Contains(message.Id)) {
-                    return;
+                    return null;
                 }
                 if (deletedMessagesCache.Count == 5) {
                     deletedMessagesCache.RemoveAt(4);
@@ -50,14 +50,14 @@ namespace BotCatMaxy {
                 if (guild == null) {
                     guild = Utilities.GetGuild(message.Channel as SocketGuildChannel);
                     if (guild == null) {
-                        return;
+                        return null;
                     }
                 }
 
                 LogSettings settings = guild.LoadLogSettings();
                 SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (settings == null || logChannel == null || !settings.logDeletes) {
-                    return;
+                    return null;
                 }
 
                 var embed = new EmbedBuilder();
@@ -79,10 +79,11 @@ namespace BotCatMaxy {
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp();
 
-                logChannel.SendMessageAsync(embed: embed.Build());
+                return logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
             } catch (Exception exception) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
             }
+            return null;
         }
 
         public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason) {
