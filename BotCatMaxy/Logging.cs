@@ -22,6 +22,7 @@ namespace BotCatMaxy {
 
         public async Task SetUpAsync() {
             _client.MessageDeleted += LogDelete;
+            _client.MessageUpdated += LogEdit;
             _client.MessageReceived += LogNew;
 
             await new LogMessage(LogSeverity.Info, "Logs", "Logging set up").Log();
@@ -32,6 +33,10 @@ namespace BotCatMaxy {
             if (guild != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0) {
                 LogMessage("Role ping", message, guild, true);
             }
+        }
+
+        async Task LogEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
+            if (!newMessage.Author.IsBot && channel is SocketGuildChannel) LogMessage("Message was edited from", oldMessage.GetOrDownloadAsync().Result, addJumpLink: true);
         }
 
         public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
@@ -118,10 +123,6 @@ namespace BotCatMaxy {
                 Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", "Error", exception));
             }
             //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
-        }
-
-        async Task LogEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
-            new LogMessage(LogSeverity.Info, "", oldMessage.GetOrDownloadAsync().Result.Content);
         }
     }
 }
