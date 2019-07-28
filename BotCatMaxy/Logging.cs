@@ -35,8 +35,44 @@ namespace BotCatMaxy {
             }
         }
 
-        async Task LogEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
-            if (!newMessage.Author.IsBot && channel is SocketGuildChannel) LogMessage("Message was edited from", oldMessage.GetOrDownloadAsync().Result, addJumpLink: true);
+        async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
+            try {
+                //Just makes sure that it's not logged when it shouldn't be
+                SocketGuild guild = (channel as SocketGuildChannel).Guild;
+                IMessage oldMessage = cachedMessage.GetOrDownloadAsync().Result;
+                if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
+                LogSettings settings = guild.LoadLogSettings(false);
+                if (settings == null || !settings.logEdits) return;
+                SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
+                if (logChannel == null) return;
+
+                var embed = new EmbedBuilder();
+                if (oldMessage.Content == null || oldMessage.Content == "") {
+                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
+                    "`This message had no text`");
+                } else {
+                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
+                    oldMessage.Content);
+                }
+                if (newMessage.Content == null || newMessage.Content == "") {
+                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
+                    "`This message had no text`");
+                } else {
+                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
+                    newMessage.Content);
+                }
+
+                embed.AddField("Message Link", "[Click Here](" + newMessage.GetJumpUrl() + ")", false);
+
+                embed.WithFooter("ID: " + newMessage.Id)
+                    .WithAuthor(newMessage.Author)
+                    .WithColor(Color.Teal)
+                    .WithCurrentTimestamp();
+
+                logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+            } catch (Exception exception) {
+                _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
+            }
         }
 
         public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
@@ -98,7 +134,7 @@ namespace BotCatMaxy {
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
-                if (warnee.Nickname.IsNullOrEmpty()) 
+                if (warnee.Nickname.IsNullOrEmpty())
                     embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 else
                     embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);

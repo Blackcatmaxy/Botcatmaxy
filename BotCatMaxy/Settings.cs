@@ -175,9 +175,6 @@ namespace BotCatMaxy {
 
             settings.logDeletes = !settings.logDeletes;
 
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Include;
-
             settings.SaveLogSettings(Context.Guild);
             if (settings.logDeletes) {
                 await message.ModifyAsync(msg => msg.Content = "Deleted messages will now be logged in the logging channel");
@@ -196,10 +193,8 @@ namespace BotCatMaxy {
 
             settings.logEdits = !settings.logEdits;
 
-            JsonSerializer serializer = new JsonSerializer();
-
             settings.SaveLogSettings(Context.Guild);
-            if (settings.logDeletes) {
+            if (settings.logEdits) {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages will now be logged in the logging channel");
             } else {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages won't be logged now");
