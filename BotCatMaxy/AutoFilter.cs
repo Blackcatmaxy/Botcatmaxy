@@ -48,15 +48,7 @@ namespace BotCatMaxy {
 
                     //Checks if a message contains an invite
                     if (!modSettings.invitesAllowed && message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
-                        _ = ((SocketGuildUser)message.Author).Warn(0.5f, "Posted Invite", context);
-                        IUserMessage warnMessage = await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of posting a discord invite");
-
-                        Logging.LogMessage("Bad word removed", message, Guild);
-                        try {
-                            await message.DeleteAsync();
-                        } catch (Exception e) {
-                            _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
-                        }
+                        await context.Punish("Posted Invite");
                         return;
                     }
 
@@ -67,15 +59,7 @@ namespace BotCatMaxy {
                         if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                         foreach (Match match in matches) {
                             if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
-                                await ((SocketGuildUser)message.Author).Warn(1, "Using unauthorized links", context);
-                                IUserMessage warnMessage = await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using unauthorized links");
-
-                                Logging.LogMessage("Bad link removed", message, Guild);
-                                try {
-                                    await message.DeleteAsync();
-                                } catch (Exception e) {
-                                    _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
-                                }
+                                await context.Punish("Using unauthorized links", 1);
                                 return;
                             }
                         }
@@ -118,18 +102,11 @@ namespace BotCatMaxy {
                         if (badWord.partOfWord) {
                             if (strippedMessage.Contains(badWord.word.ToLower())) {
                                 if (badWord.euphemism != null && badWord.euphemism != "") {
-                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                    await context.Punish("Bad word used (" + badWord.euphemism + ")");
                                 } else {
-                                    await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                    await context.Punish("Bad word used");
                                 }
-                                IUserMessage warnMessage = await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
 
-                                Logging.LogMessage("Bad word removed", message, Guild);
-                                try {
-                                    await message.DeleteAsync();
-                                } catch (Exception e) {
-                                    _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
-                                }
                                 return;
                             }
                         } else {
@@ -137,18 +114,11 @@ namespace BotCatMaxy {
                             foreach (string word in messageParts) {
                                 if (word == badWord.word.ToLower()) {
                                     if (badWord.euphemism != null && badWord.euphemism != "") {
-                                        await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word used (" + badWord.euphemism + ")", context);
+                                        await context.Punish("Bad word used (" + badWord.euphemism + ")");
                                     } else {
-                                        await ((SocketGuildUser)message.Author).Warn(0.5f, "Bad word usage", context);
+                                        await context.Punish("Bad word used");
                                     }
-                                    IUserMessage warnMessage = await message.Channel.SendMessageAsync(message.Author.Mention + " has been given their " + (message.Author as SocketGuildUser).LoadInfractions("Discord").Count.Suffix() + " infraction because of using a bad word");
-
-                                    Logging.LogMessage("Bad word removed", message, Guild);
-                                    try {
-                                        await message.DeleteAsync();
-                                    } catch (Exception e) {
-                                        _ = warnMessage.ModifyAsync(msg => msg.Content = message.Content + ", something went wrong removing the message.");
-                                    }
+                                    
                                     return;
                                 }
                             }
@@ -157,6 +127,22 @@ namespace BotCatMaxy {
                 }
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the filter", e).Log();
+            }
+        }
+    }
+
+    public static class FilterActions {
+        public static async Task Punish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
+            string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
+            string newReason = reason;
+            if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
+            await ((SocketGuildUser)context.User).Warn(warnSize, newReason, context);
+            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix()} infraction because of {reason}");
+            
+            try {
+                await context.Message.DeleteAsync();
+            } catch (Exception e) {
+                _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
             }
         }
     }
