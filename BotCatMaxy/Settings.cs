@@ -185,6 +185,26 @@ namespace BotCatMaxy {
                 await message.ModifyAsync(msg => msg.Content = "Deleted messages won't be logged now");
             }
         }
+
+        [Command("toggleLogEdited")]
+        [HasAdmin]
+        public async Task ToggleLoggingEdited() {
+            IUserMessage message = await ReplyAsync("Setting...");
+            LogSettings settings = null;
+
+            settings = Context.Guild.LoadLogSettings(true);
+
+            settings.logEdits = !settings.logEdits;
+
+            JsonSerializer serializer = new JsonSerializer();
+
+            settings.SaveLogSettings(Context.Guild);
+            if (settings.logDeletes) {
+                await message.ModifyAsync(msg => msg.Content = "Edited messages will now be logged in the logging channel");
+            } else {
+                await message.ModifyAsync(msg => msg.Content = "Edited messages won't be logged now");
+            }
+        }
     }
 
     namespace Settings {
