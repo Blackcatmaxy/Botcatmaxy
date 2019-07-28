@@ -298,18 +298,22 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
-            _ = user.Warn(1, reason, Context);
+            string newReason = reason;
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
-            if (!jumpLink.IsNullOrEmpty()) reason += $"[Logged Here]({jumpLink})";
+            if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
+            _ = user.Warn(1, newReason, Context);
+
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
-            _ = user.Warn(size, reason, Context);
+            string newReason = reason;
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
-            if (!jumpLink.IsNullOrEmpty()) reason += $"[Logged Here]({jumpLink})";
+            if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
+            _ = user.Warn(size, newReason, Context);
+            
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
