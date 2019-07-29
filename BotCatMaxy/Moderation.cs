@@ -70,8 +70,9 @@ namespace BotCatMaxy {
 
         public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
             List<Infraction> infractions = user.LoadInfractions(dir, false);
+            List<string> infractionStrings = new List<string>();
+            infractionStrings.Add("");
 
-            string infractionList = "";
             InfractionsInDays infractionsToday = new InfractionsInDays(0, 0);
             InfractionsInDays infractions30Days = new InfractionsInDays(0, 0);
             InfractionsInDays totalInfractions = new InfractionsInDays(0, 0);
@@ -83,9 +84,6 @@ namespace BotCatMaxy {
             }
             int n = 0;
             for (int i = 0; i < infractions.Count; i++) {
-                if (i != 0) { //Creates new line if it's not the first infraction
-                    infractionList += "\n";
-                }
                 Infraction infraction = infractions[i];
 
                 //Gets how long ago all the infractions were
@@ -113,8 +111,15 @@ namespace BotCatMaxy {
                 }
 
                 if (n < amount) {
-                    infractionList += "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + " - " + timeAgo;
+                    string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + " - " + timeAgo;
                     n++;
+
+                    if ((infractionStrings.LastOrDefault() + s).Length < 1024) {
+                        if (infractionStrings.LastOrDefault() != "") infractionStrings[infractionStrings.Count - 1] += "\n";
+                        infractionStrings[infractionStrings.Count - 1] += s;
+                    } else {
+                        infractionStrings.Add(s);
+                    }
                 }
             }
 
@@ -133,8 +138,13 @@ namespace BotCatMaxy {
             embed.AddField("Last 30 days",
                 $"{infractions30Days.sum} sum|{infractions30Days.count} count", true);
             embed.AddField("Warning" + plural + " (total " + totalInfractions.sum + " sum of size & " + infractions.Count + " individual)",
-                infractionList)
-                .WithAuthor(user)
+                infractionStrings[0]);
+            infractionStrings.RemoveAt(0);
+            foreach (string s in infractionStrings) {
+                embed.AddField("\n", s);
+            }
+            embed.WithAuthor(user)
+                .WithFooter("ID: " + user.Id)
                 .WithColor(Color.Blue)
                 .WithCurrentTimestamp();
             return embed.Build();
