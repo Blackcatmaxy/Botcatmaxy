@@ -7,6 +7,7 @@ using Discord.Commands;
 using BotCatMaxy.Data;
 using System.Linq;
 using BotCatMaxy;
+using Humanizer;
 using System.IO;
 using Discord;
 using System;
@@ -54,7 +55,7 @@ namespace BotCatMaxy {
             if (!users.Contains(user)) {
                 IDMChannel DM = await user.GetOrCreateDMChannelAsync();
                 if (DM != null)
-                _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+                    _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
             }
         }
         struct InfractionsInDays {
@@ -69,7 +70,7 @@ namespace BotCatMaxy {
 
         public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
             List<Infraction> infractions = user.LoadInfractions(dir, false);
-            
+
             string infractionList = "";
             InfractionsInDays infractionsToday = new InfractionsInDays(0, 0);
             InfractionsInDays infractions30Days = new InfractionsInDays(0, 0);
@@ -91,50 +92,18 @@ namespace BotCatMaxy {
                 TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
                 totalInfractions.sum += infraction.size;
                 totalInfractions.count++;
-                string timeAgo = MathF.Round(dateAgo.Days / 30) + " months ago";
+                string timeAgo = dateAgo.Humanize(2);
 
                 if (dateAgo.Days <= 7) {
                     infractions7Days.sum += infraction.size;
                     infractions7Days.count++;
                 }
                 if (dateAgo.Days <= 30) {
-                    if (dateAgo.Days == 1) {
-                        plural = "";
-                    } else {
-                        plural = "s";
-                    }
                     infractions30Days.sum += infraction.size;
                     infractions30Days.count++;
-                    timeAgo = dateAgo.Days + " day" + plural + " ago";
                     if (dateAgo.Days < 1) {
                         infractionsToday.sum += infraction.size;
                         infractionsToday.count++;
-                        if (dateAgo.Hours == 1) {
-                            plural = "";
-                        } else {
-                            plural = "s";
-                        }
-                        timeAgo = dateAgo.Hours + " hour" + plural + " ago";
-                        if (dateAgo.Hours < 1) {
-                            if (dateAgo.Minutes == 1) {
-                                plural = "";
-                            } else {
-                                plural = "s";
-                            }
-                            timeAgo = dateAgo.Minutes + " minute" + plural + " ago";
-                            if (dateAgo.Minutes < 1) {
-                                if (dateAgo.Seconds == 1) {
-                                    plural = "";
-                                } else {
-                                    plural = "s";
-                                }
-                                if (dateAgo.Seconds == 0) {
-                                    timeAgo = dateAgo.TotalSeconds + " second" + plural + " ago";
-                                } else {
-                                    timeAgo = dateAgo.Seconds + " second" + plural + " ago";
-                                }
-                            }
-                        }
                     }
                 }
 
@@ -326,7 +295,7 @@ namespace BotCatMaxy {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
             if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
             _ = user.Warn(size, newReason, Context);
-            
+
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
@@ -334,6 +303,11 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         [Alias("dminfractions", "dmwarnings")]
         public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 10) {
+            if (amount < 1) {
+                await ReplyAsync("Why would you want to see that many infractions?");
+                return;
+            }
+
             if (user == null) {
                 user = Context.Message.Author as SocketGuildUser;
             }
@@ -341,17 +315,22 @@ namespace BotCatMaxy {
             if (!user.Nickname.IsNullOrEmpty()) username = user.Nickname.StrippedOfPing();
             else username = user.Username.StrippedOfPing();
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
-                await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
+                try {
+                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
+                } catch {
+                    await ReplyAsync("Something went wrong DMing you their infractions. Check your privacy settings and make sure the amount isn't too high");
+                    return;
+                }
             } else {
                 await ReplyAsync(username + " has no warns");
                 return;
             }
 
             List<Infraction> infractions = user.LoadInfractions();
-            string plural = "";
-            if (infractions.Count > 1) plural = "s";
-
-            await ReplyAsync($"DMing you {username}'s {infractions.Count} infraction{plural}");
+            string quantity = "infraction".ToQuantity(infractions.Count);
+            if (amount >= infractions.Count)
+                await ReplyAsync($"DMed you {username}'s {quantity}");
+            else await ReplyAsync($"DMed you {username}'s last {amount} out of {quantity}");
         }
 
         [Command("warns")]
