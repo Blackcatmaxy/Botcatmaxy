@@ -163,7 +163,7 @@ namespace BotCatMaxy {
                 $"{infractions7Days.sum} sum|{infractions7Days.count} count", true);
             embed.AddField("Last 30 days",
                 $"{infractions30Days.sum} sum|{infractions30Days.count} count", true);
-            embed.AddField("Warning" + plural + " (total " + totalInfractions + " sum of size & " + infractions.Count + " individual)",
+            embed.AddField("Warning" + plural + " (total " + totalInfractions.sum + " sum of size & " + infractions.Count + " individual)",
                 infractionList)
                 .WithAuthor(user)
                 .WithColor(Color.Blue)
