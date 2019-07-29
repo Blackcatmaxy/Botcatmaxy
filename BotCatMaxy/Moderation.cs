@@ -132,16 +132,16 @@ namespace BotCatMaxy {
             //Builds infraction embed
             var embed = new EmbedBuilder();
             embed.AddField("Today",
-                $"{infractionsToday.sum} sum|{infractionsToday.count} count", true);
+                $"{infractionsToday.sum} sum**|**{infractionsToday.count} count", true);
             embed.AddField("Last 7 days",
-                $"{infractions7Days.sum} sum|{infractions7Days.count} count", true);
+                $"{infractions7Days.sum} sum**|**{infractions7Days.count} count", true);
             embed.AddField("Last 30 days",
-                $"{infractions30Days.sum} sum|{infractions30Days.count} count", true);
+                $"{infractions30Days.sum} sum**|**{infractions30Days.count} count", true);
             embed.AddField("Warning" + plural + " (total " + totalInfractions.sum + " sum of size & " + infractions.Count + " individual)",
                 infractionStrings[0]);
             infractionStrings.RemoveAt(0);
             foreach (string s in infractionStrings) {
-                embed.AddField("\n", s);
+                embed.AddField("------------------------------------------------------------", s);
             }
             embed.WithAuthor(user)
                 .WithFooter("ID: " + user.Id)
