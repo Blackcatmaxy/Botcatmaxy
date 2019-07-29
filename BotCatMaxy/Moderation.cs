@@ -57,15 +57,24 @@ namespace BotCatMaxy {
                 _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
             }
         }
+        struct InfractionsInDays {
+            public float sum;
+            public int count;
+
+            public InfractionsInDays(int x, float y) {
+                sum = y;
+                count = x;
+            }
+        }
 
         public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
             List<Infraction> infractions = user.LoadInfractions(dir, false);
-
+            
             string infractionList = "";
-            float infractionsToday = 0;
-            float infractions30Days = 0;
-            float totalInfractions = 0;
-            float last7Days = 0;
+            InfractionsInDays infractionsToday = new InfractionsInDays(0, 0);
+            InfractionsInDays infractions30Days = new InfractionsInDays(0, 0);
+            InfractionsInDays totalInfractions = new InfractionsInDays(0, 0);
+            InfractionsInDays infractions7Days = new InfractionsInDays(0, 0);
             string plural = "";
             infractions.Reverse();
             if (infractions.Count < amount) {
@@ -80,11 +89,13 @@ namespace BotCatMaxy {
 
                 //Gets how long ago all the infractions were
                 TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
-                totalInfractions += infraction.size;
+                totalInfractions.sum += infraction.size;
+                totalInfractions.count++;
                 string timeAgo = MathF.Round(dateAgo.Days / 30) + " months ago";
 
                 if (dateAgo.Days <= 7) {
-                    last7Days += infraction.size;
+                    infractions7Days.sum += infraction.size;
+                    infractions7Days.count++;
                 }
                 if (dateAgo.Days <= 30) {
                     if (dateAgo.Days == 1) {
@@ -92,10 +103,12 @@ namespace BotCatMaxy {
                     } else {
                         plural = "s";
                     }
-                    infractions30Days += infraction.size;
+                    infractions30Days.sum += infraction.size;
+                    infractions30Days.count++;
                     timeAgo = dateAgo.Days + " day" + plural + " ago";
                     if (dateAgo.Days < 1) {
-                        infractionsToday += infraction.size;
+                        infractionsToday.sum += infraction.size;
+                        infractionsToday.count++;
                         if (dateAgo.Hours == 1) {
                             plural = "";
                         } else {
@@ -145,11 +158,11 @@ namespace BotCatMaxy {
             //Builds infraction embed
             var embed = new EmbedBuilder();
             embed.AddField("Today",
-                infractionsToday, true);
+                $"{infractionsToday.sum} sum|{infractionsToday.count} count", true);
             embed.AddField("Last 7 days",
-                last7Days, true);
+                $"{infractions7Days.sum} sum|{infractions7Days.count} count", true);
             embed.AddField("Last 30 days",
-                infractions30Days, true);
+                $"{infractions30Days.sum} sum|{infractions30Days.count} count", true);
             embed.AddField("Warning" + plural + " (total " + totalInfractions + " sum of size & " + infractions.Count + " individual)",
                 infractionList)
                 .WithAuthor(user)
