@@ -1,14 +1,15 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Text;
-using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using BotCatMaxy;
 using BotCatMaxy.Settings;
+using Discord.WebSocket;
 using BotCatMaxy.Data;
+using Discord.Rest;
+using System.Text;
+using BotCatMaxy;
+using Humanizer;
+using Discord;
+using System;
 
 namespace BotCatMaxy {
     class Logging {
@@ -52,14 +53,14 @@ namespace BotCatMaxy {
                     "`This message had no text`");
                 } else {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
-                    oldMessage.Content);
+                    oldMessage.Content.Truncate(1020));
                 }
                 if (newMessage.Content == null || newMessage.Content == "") {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
                     "`This message had no text`");
                 } else {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
-                    newMessage.Content);
+                    newMessage.Content.Truncate(1020));
                 }
 
                 embed.AddField("Message Link", "[Click Here](" + newMessage.GetJumpUrl() + ")", false);
@@ -108,7 +109,7 @@ namespace BotCatMaxy {
                     "`This message had no text`", true);
                 } else {
                     embed.AddField(reason + " in #" + message.Channel.Name,
-                    message.Content, true);
+                    message.Content.Truncate(1020), true);
                 }
 
                 if (addJumpLink) {
