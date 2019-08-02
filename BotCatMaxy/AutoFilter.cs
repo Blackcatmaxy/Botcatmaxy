@@ -207,17 +207,17 @@ namespace BotCatMaxy {
                 message = "";
                 if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
                     foreach (BadWord badWord in badWords.all) {
-                        if (message != "") {
+                        if (message != "" && !badWord.euphemism.IsNullOrEmpty() || useExplicit) {
                             message += "\n";
                         }
-                        if (badWord.euphemism != null) message += badWord.euphemism;
+                        if (!badWord.euphemism.IsNullOrEmpty()) message += badWord.euphemism;
                         if (useExplicit) message += " (" + badWord.word + ")";
                         if (badWord.partOfWord && (useExplicit || !badWord.euphemism.IsNullOrEmpty())) {
                             message += "⌝";
                         }
                         message += "  ";
                     }
-                    embed.AddField("Badword euphemisms", message, false);
+                    embed.AddField("Badword euphemisms (not an exhaustive list)", message, false);
                 }
 
                 message = "The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word";
