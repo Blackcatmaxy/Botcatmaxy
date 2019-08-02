@@ -233,7 +233,7 @@ namespace BotCatMaxy {
     public class ModerationCommands : ModuleBase<SocketCommandContext> {
         [Command("moderationInfo")]
         public async Task ModerationInfo() {
-            ModerationSettings settings = Context.Guild.LoadModSettings(false);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
             if (settings == null) {
                 _ = ReplyAsync("Moderation settings are null");
                 return;
@@ -444,9 +444,9 @@ namespace BotCatMaxy {
 
             IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + hours + " " + timeUnit + plural + " because of " + reason);
             TempBan tempBan = new TempBan(user.Id, hours);
-            List<TempBan> tempBans = Context.Guild.LoadTempBans(true);
+            List<TempBan> tempBans = Context.Guild.LoadFromFile<List<TempBan>>("tempActions.json", true);
             tempBans.Add(tempBan);
-            tempBans.SaveTempBans(Context.Guild);
+            tempBans.SaveToFile("tempActions", Context.Guild);
             await Context.Guild.AddBanAsync(user, reason: reason);
             _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + hours + " " + timeUnit + plural + " because of " + reason);
             IDMChannel DM = await user.GetOrCreateDMChannelAsync();

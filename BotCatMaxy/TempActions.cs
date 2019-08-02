@@ -30,7 +30,7 @@ namespace BotCatMaxy {
                     string guildDir = guild.GetPath(false);
                     checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
-                        List<TempBan> tempBans = guild.LoadTempBans(false);
+                        List<TempBan> tempBans = guild.LoadFromFile<List<TempBan>>("tempActions.json");
                         if (tempBans != null && tempBans.Count > 0) {
                             bannedPeople += tempBans.Count;
                             bool needSave = false;
@@ -51,7 +51,7 @@ namespace BotCatMaxy {
                             }
 
                             if (needSave) {
-                                tempBans.SaveTempBans(guild);
+                                tempBans.SaveToFile("tempActions", guild);
                             }
                         }
                     }

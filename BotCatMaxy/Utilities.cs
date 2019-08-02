@@ -57,7 +57,7 @@ namespace BotCatMaxy {
                     return true;
                 }
             }
-            ModerationSettings settings = user.Guild.LoadModSettings(false);
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
             if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
                 List<SocketRole> rolesAbleToWarn = new List<SocketRole>();
                 foreach (ulong roleID in settings.ableToWarn) {
@@ -81,7 +81,7 @@ namespace BotCatMaxy {
         public static bool CantBeWarned(this SocketGuildUser user) {
             if (HasAdmin(user)) return true;
 
-            ModerationSettings settings = user.Guild.LoadModSettings(false);
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
             if (settings != null) {
                 List<SocketRole> rolesUnableToBeWarned = new List<SocketRole>();
                 foreach (ulong roleID in settings.cantBeWarned) rolesUnableToBeWarned.Add(user.Guild.GetRole(roleID));

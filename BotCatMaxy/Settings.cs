@@ -72,7 +72,7 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task AddWarnRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -83,7 +83,7 @@ namespace BotCatMaxy {
                 _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
             }
 
-            settings.SaveModSettings(Context.Guild);
+            settings.SaveToFile("moderationSettings.txt", Context.Guild);
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
         }
@@ -97,7 +97,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            ModerationSettings settings = Context.Guild.LoadModSettings(true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -110,7 +110,7 @@ namespace BotCatMaxy {
 
             JsonSerializer serializer = new JsonSerializer();
 
-            settings.SaveModSettings(Context.Guild);
+            settings.SaveToFile("moderationSettings.txt", Context.Guild);
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
@@ -123,9 +123,7 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task SetLogChannel() {
             IUserMessage message = await ReplyAsync("Setting...");
-            LogSettings settings = null;
-
-            settings = Context.Guild.LoadLogSettings(true);
+            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt", true);
 
             if (settings == null) {
                 await ReplyAsync("Settings is null");
@@ -139,13 +137,13 @@ namespace BotCatMaxy {
                 settings.logChannel = Context.Channel.Id;
             }
 
-            settings.SaveLogSettings(Context.Guild);
+            settings.SaveToFile("logSettings.txt", Context.Guild);
             await message.ModifyAsync(msg => msg.Content = "Set log channel");
         }
 
         [Command("info")]
         public async Task DebugLogSettings() {
-            LogSettings settings = Context.Guild.LoadLogSettings(false);
+            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt");
 
             if (settings == null) {
                 await ReplyAsync("Settings is null");
@@ -160,7 +158,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            embed.AddField("Log channel", logChannel, true);
+            embed.AddField("Log channel", logChannel.Mention, true);
             embed.AddField("Log deleted messages", settings.logDeletes, true);
             await ReplyAsync(embed: embed.Build());
         }
@@ -171,11 +169,11 @@ namespace BotCatMaxy {
             IUserMessage message = await ReplyAsync("Setting...");
             LogSettings settings = null;
 
-            settings = Context.Guild.LoadLogSettings(true);
+            settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt", true);
 
             settings.logDeletes = !settings.logDeletes;
 
-            settings.SaveLogSettings(Context.Guild);
+            settings.SaveToFile("logSettings.txt", Context.Guild);
             if (settings.logDeletes) {
                 await message.ModifyAsync(msg => msg.Content = "Deleted messages will now be logged in the logging channel");
             } else {
@@ -189,11 +187,11 @@ namespace BotCatMaxy {
             IUserMessage message = await ReplyAsync("Setting...");
             LogSettings settings = null;
 
-            settings = Context.Guild.LoadLogSettings(true);
+            settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt", true); 
 
             settings.logEdits = !settings.logEdits;
 
-            settings.SaveLogSettings(Context.Guild);
+            settings.SaveToFile("logSettings.txt", Context.Guild);
             if (settings.logEdits) {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages will now be logged in the logging channel");
             } else {

@@ -42,7 +42,7 @@ namespace BotCatMaxy {
                 SocketGuild guild = (channel as SocketGuildChannel).Guild;
                 IMessage oldMessage = cachedMessage.GetOrDownloadAsync().Result;
                 if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
-                LogSettings settings = guild.LoadLogSettings(false);
+                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 if (settings == null || !settings.logEdits) return;
                 SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (logChannel == null) return;
@@ -96,7 +96,7 @@ namespace BotCatMaxy {
                     }
                 }
 
-                LogSettings settings = guild.LoadLogSettings();
+                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (settings == null || logChannel == null || !settings.logDeletes) {
                     return null;
@@ -130,7 +130,7 @@ namespace BotCatMaxy {
 
         public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason) {
             try {
-                LogSettings settings = guild.LoadLogSettings(false);
+                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return null;
 
                 var embed = new EmbedBuilder();
