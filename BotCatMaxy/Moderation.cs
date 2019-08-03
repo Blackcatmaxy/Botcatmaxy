@@ -41,7 +41,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            List<Infraction> infractions = user.LoadInfractions(dir, true);
+            List<Infraction> infractions = user.LoadInfractions(context.Guild, dir, true);
 
             Infraction newInfraction = new Infraction {
                 reason = reason,
@@ -49,7 +49,7 @@ namespace BotCatMaxy {
                 size = size
             };
             infractions.Add(newInfraction);
-            user.SaveInfractions(infractions, dir);
+            infractions.SaveInfractions(user, context.Guild, dir);
 
             IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
             if (!users.Contains(user)) {
@@ -68,8 +68,8 @@ namespace BotCatMaxy {
             }
         }
 
-        public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
-            List<Infraction> infractions = user.LoadInfractions(dir, false);
+        public static Embed CheckInfractions(this IUser user, IGuild guild, string dir = "Discord", int amount = 5) {
+            List<Infraction> infractions = user.LoadInfractions(guild, dir, false);
             List<string> infractionStrings = new List<string>();
             infractionStrings.Add("");
 
@@ -174,7 +174,7 @@ namespace BotCatMaxy {
         public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
             await user.Warn(size, reason, Context, "Games");
 
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions(Context.Guild, "Games").Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
@@ -182,7 +182,7 @@ namespace BotCatMaxy {
         public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
             await user.Warn(1, reason, Context, "Games");
 
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions(Context.Guild, "Games").Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warns")]
@@ -196,7 +196,7 @@ namespace BotCatMaxy {
             string guildDir = Context.Guild.GetPath(false);
 
             if (Directory.Exists(guildDir) && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions("Games", amount));
+                await ReplyAsync(embed: user.CheckInfractions(Context.Guild, "Games", amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }
@@ -208,7 +208,7 @@ namespace BotCatMaxy {
         public async Task RemooveWarnAsync(SocketGuildUser user, int index) {
             string guildDir = user.Guild.GetPath(true);
             if (guildDir != null && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
-                List<Infraction> infractions = user.LoadInfractions();
+                List<Infraction> infractions = user.LoadInfractions(Context.Guild);
 
                 if (infractions.Count < index || index <= 0) {
                     await ReplyAsync("invalid infraction number");
@@ -219,7 +219,7 @@ namespace BotCatMaxy {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
 
-                    user.SaveInfractions(infractions, "Games");
+                    infractions.SaveInfractions(user, Context.Guild, "Games");
 
                     await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
                 }
@@ -295,7 +295,7 @@ namespace BotCatMaxy {
             if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
             _ = user.Warn(1, newReason, Context);
 
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions(Context.Guild).Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("warn")]
@@ -306,13 +306,13 @@ namespace BotCatMaxy {
             if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
             _ = user.Warn(size, newReason, Context);
 
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions(Context.Guild).Count.Suffix() + " infraction for " + reason);
         }
 
         [Command("dmwarns")]
         [RequireContext(ContextType.Guild)]
         [Alias("dminfractions", "dmwarnings")]
-        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 10) {
+        public async Task DMUserWarnsAsync(IUser user = null, int amount = 10) {
             if (amount < 1) {
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
@@ -322,11 +322,11 @@ namespace BotCatMaxy {
                 user = Context.Message.Author as SocketGuildUser;
             }
             string username;
-            if (!user.Nickname.IsNullOrEmpty()) username = user.Nickname.StrippedOfPing();
+            if (!((SocketGuildUser)user).Nickname.IsNullOrEmpty()) username = ((SocketGuildUser)user).Nickname.StrippedOfPing();
             else username = user.Username.StrippedOfPing();
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
                 try {
-                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
+                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(Context.Guild, amount: amount));
                 } catch {
                     await ReplyAsync("Something went wrong DMing you their infractions. Check your privacy settings and make sure the amount isn't too high");
                     return;
@@ -336,7 +336,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            List<Infraction> infractions = user.LoadInfractions();
+            List<Infraction> infractions = user.LoadInfractions(Context.Guild);
             string quantity = "infraction".ToQuantity(infractions.Count);
             if (amount >= infractions.Count)
                 await ReplyAsync($"DMed you {username}'s {quantity}");
@@ -346,7 +346,7 @@ namespace BotCatMaxy {
         [Command("warns")]
         [RequireContext(ContextType.Guild)]
         [Alias("infractions", "warnings")]
-        public async Task CheckUserWarnsAsync(SocketGuildUser user = null, int amount = 5) {
+        public async Task CheckUserWarnsAsync(IUser user = null, int amount = 5) {
             if (user == null) {
                 user = Context.Message.Author as SocketGuildUser;
             }
@@ -355,7 +355,7 @@ namespace BotCatMaxy {
                 return;
             }
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions(amount: amount));
+                await ReplyAsync(embed: user.CheckInfractions(Context.Guild, amount: amount));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }
@@ -364,10 +364,10 @@ namespace BotCatMaxy {
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
-            string guildDir = user.Guild.GetPath(false);
+        public async Task RemoveWarnAsync(SocketUser user, int index) {
+            string guildDir = Context.Guild.GetPath(false);
             if (guildDir != null && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
-                List<Infraction> infractions = user.LoadInfractions();
+                List<Infraction> infractions = user.LoadInfractions(Context.Guild);
 
                 if (infractions.Count < index || index <= 0) {
                     await ReplyAsync("invalid infraction number");
@@ -378,7 +378,7 @@ namespace BotCatMaxy {
                     string reason = infractions[index - 1].reason;
                     infractions.RemoveAt(index - 1);
 
-                    user.SaveInfractions(infractions, "Discord");
+                    infractions.SaveInfractions(user, Context.Guild, "Discord");
 
                     await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
                 }
@@ -411,7 +411,7 @@ namespace BotCatMaxy {
 
         [Command("testtempban")]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task TempBan(SocketUser user, string time, [Remainder] string reason) {
+        public async Task TempBan(SocketGuildUser user, string time, [Remainder] string reason) {
             string timeUnit = "";
             string plural = "";
             int hours = 0;
