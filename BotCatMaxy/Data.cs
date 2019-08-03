@@ -12,6 +12,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace BotCatMaxy.Data {
     public static class SettingsData {
         public static T LoadFromFile<T>(this IGuild guild, string fileName, bool createFile = false) {
+            Type typeParameterType = typeof(T);
             string guildDir = guild.GetPath(createFile);
             T settings = default(T);
             JsonSerializer serializer = new JsonSerializer();
@@ -43,9 +44,9 @@ namespace BotCatMaxy.Data {
             }
         }
 
-        public static List<Infraction> LoadInfractions(this IUser user, IGuild guild, string dir = "Discord", bool createDir = false) {
+        public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord", bool createDir = false) {
             List<Infraction> infractions = new List<Infraction>();
-            string guildDir = guild.GetPath(createDir);
+            string guildDir = user.Guild.GetPath(createDir);
 
             if (Directory.Exists(guildDir + "/Infractions/" + dir) && File.Exists(guildDir + "/Infractions/" + dir + "/" + user.Id)) {
                 BinaryFormatter newbf = new BinaryFormatter();
@@ -60,9 +61,9 @@ namespace BotCatMaxy.Data {
             return infractions;
         }
 
-        public static void SaveInfractions(this List<Infraction> infractions, IUser user, IGuild guild,  string dir = "Discord") {
+        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
             BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
+            FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
             bf.Serialize(file, infractions.ToArray());
             file.Close();
         }

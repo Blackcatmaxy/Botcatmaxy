@@ -137,7 +137,7 @@ namespace BotCatMaxy {
             string newReason = reason;
             if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
             await ((SocketGuildUser)context.User).Warn(warnSize, newReason, context);
-            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions(context.Guild, "Discord").Count.Suffix()} infraction because of {reason}");
+            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix()} infraction because of {reason}");
             
             try {
                 await context.Message.DeleteAsync();
