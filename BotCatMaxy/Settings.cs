@@ -226,6 +226,7 @@ namespace BotCatMaxy {
             public List<ulong> ableToBan = new List<ulong>();
             public List<string> allowedLinks = new List<string>();
             public List<ulong> allowedToLink = new List<ulong>();
+            public ushort allowedCaps = 0;
             public bool useOwnerID = false;
             public bool moderateUsernames = false;
             public bool invitesAllowed = true;

@@ -12,7 +12,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace BotCatMaxy.Data {
     public static class SettingsData {
         public static T LoadFromFile<T>(this IGuild guild, string fileName, bool createFile = false) {
-            Type typeParameterType = typeof(T);
             string guildDir = guild.GetPath(createFile);
             T settings = default(T);
             JsonSerializer serializer = new JsonSerializer();

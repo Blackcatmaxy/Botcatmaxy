@@ -64,6 +64,19 @@ namespace BotCatMaxy {
                             }
                         }
                     }
+
+                    if (modSettings.allowedCaps > 0 && message.Content.Length > 5) {
+                        uint amountCaps = 0;
+                        foreach (char c in message.Content) {
+                            if (char.IsUpper(c)) {
+                                amountCaps++;
+                            }
+                        }
+                        if (((amountCaps / (float)message.Content.Length) * 100) >= modSettings.allowedCaps) {
+                            await context.Punish("Excessive caps", 0.3f);
+                            return;
+                        }
+                    }
                 }
 
                 //Checks for bad words
@@ -141,7 +154,7 @@ namespace BotCatMaxy {
             
             try {
                 await context.Message.DeleteAsync();
-            } catch (Exception e) {
+            } catch {
                 _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
             }
         }
@@ -202,6 +215,11 @@ namespace BotCatMaxy {
                             embed.AddField("Roles that can post links", message, true);
                         }
                     }
+                    if (settings.allowedCaps > 0) {
+                        embed.AddField("Allowed caps", $"{settings.allowedCaps}% in msgs more than 5 long");
+                    } else {
+                        embed.AddField("Allowed caps", "Capitalization is not filtered");
+                    }
                 }
 
                 message = "";
@@ -230,6 +248,29 @@ namespace BotCatMaxy {
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Settings", "Error", e).Log();
             }
+        }
+
+        [HasAdmin]
+        [Command("SetAllowedCaps")]
+        public async Task SetCapFilter(ushort percent) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+
+            if (percent == settings.allowedCaps) {
+                await ReplyAsync("That's the current setting");
+                return;
+            }
+            if (percent > 100) {
+                await ReplyAsync("How do you expect that to work genius?");
+                return;
+            }
+            settings.allowedCaps = percent;
+            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+
+            if (percent == 0) {
+                await ReplyAsync("Disabled capitalization filtering");
+                return;
+            }
+            await ReplyAsync($"Set messages to filtered if they are longer than 5 characters and {percent}% of letters are capitalized");
         }
 
         [HasAdmin()]
