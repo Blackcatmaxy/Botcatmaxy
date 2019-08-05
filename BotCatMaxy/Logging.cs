@@ -140,6 +140,7 @@ namespace BotCatMaxy {
                 else
                     embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 embed.WithColor(Color.Gold);
+                embed.WithCurrentTimestamp();
 
                 return guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
             } catch (Exception e) {
