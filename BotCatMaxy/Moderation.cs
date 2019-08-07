@@ -291,7 +291,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             string newReason = reason;
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
+            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason, Context.Message.GetJumpUrl());
             if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
             _ = user.Warn(1, newReason, Context);
 
@@ -302,7 +302,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             string newReason = reason;
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason);
+            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason, Context.Message.GetJumpUrl());
             if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
             _ = user.Warn(size, newReason, Context);
 

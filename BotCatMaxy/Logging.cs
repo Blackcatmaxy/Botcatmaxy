@@ -128,7 +128,7 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason) {
+        public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason, string warnLink) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return null;
@@ -139,6 +139,7 @@ namespace BotCatMaxy {
                     embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 else
                     embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
                 embed.WithColor(Color.Gold);
                 embed.WithCurrentTimestamp();
 
