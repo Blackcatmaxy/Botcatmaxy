@@ -147,11 +147,9 @@ namespace BotCatMaxy {
     public static class FilterActions {
         public static async Task Punish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
             string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
-            string newReason = reason;
-            if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
-            await ((SocketGuildUser)context.User).Warn(warnSize, newReason, context);
-            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix()} infraction because of {reason}");
             
+            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix()} infraction because of {reason}");
+            await ((SocketGuildUser)context.User).Warn(warnSize, reason, context, logLink: jumpLink);
             try {
                 await context.Message.DeleteAsync();
             } catch {

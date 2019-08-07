@@ -16,6 +16,7 @@ namespace BotCatMaxy {
     [Serializable]
     public struct Infraction {
         public DateTime time;
+        public string logLink;
         public string reason;
         public float size;
     }
@@ -30,32 +31,36 @@ namespace BotCatMaxy {
             }
         }
 
-        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord") {
-            if (user.CantBeWarned()) {
-                await context.Channel.SendMessageAsync("This person can't be warned");
-                return;
-            }
+        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord", string logLink = null) {
+            try {
+                if (user.CantBeWarned()) {
+                    await context.Channel.SendMessageAsync("This person can't be warned");
+                    return;
+                }
 
-            if (size > 999 || size < 0.01) {
-                await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
-                return;
-            }
+                if (size > 999 || size < 0.01) {
+                    await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                    return;
+                }
 
-            List<Infraction> infractions = user.LoadInfractions(dir, true);
+                List<Infraction> infractions = user.LoadInfractions(dir, true);
+                Infraction newInfraction = new Infraction {
+                    reason = reason,
+                    time = DateTime.Now,
+                    size = size
+                };
+                if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
+                infractions.Add(newInfraction);
+                user.SaveInfractions(infractions, dir);
 
-            Infraction newInfraction = new Infraction {
-                reason = reason,
-                time = DateTime.Now,
-                size = size
-            };
-            infractions.Add(newInfraction);
-            user.SaveInfractions(infractions, dir);
-
-            IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
-            if (!users.Contains(user)) {
-                IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-                if (DM != null)
-                    _ = DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+                IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
+                if (!users.Contains(user)) {
+                    IDMChannel DM = await user.GetOrCreateDMChannelAsync();
+                    if (DM != null)
+                        await DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+                }
+            } catch (Exception e) {
+                await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
             }
         }
         struct InfractionsInDays {
@@ -68,7 +73,7 @@ namespace BotCatMaxy {
             }
         }
 
-        public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5) {
+        public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5, bool showLinks = false) {
             List<Infraction> infractions = user.LoadInfractions(dir, false);
             List<string> infractionStrings = new List<string>();
             infractionStrings.Add("");
@@ -111,7 +116,9 @@ namespace BotCatMaxy {
                 }
 
                 if (n < amount) {
-                    string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + " - " + timeAgo;
+                    string jumpLink = "";
+                    if (showLinks && !infraction.logLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.logLink})]";
+                    string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + jumpLink + " - " + timeAgo;
                     n++;
 
                     if ((infractionStrings.LastOrDefault() + s).Length < 1024) {
@@ -290,10 +297,8 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
-            string newReason = reason;
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason, Context.Message.GetJumpUrl());
-            if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
-            _ = user.Warn(1, newReason, Context);
+            await user.Warn(1, reason, Context, logLink: jumpLink);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
@@ -301,10 +306,8 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
-            string newReason = reason;
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason, Context.Message.GetJumpUrl());
-            if (!jumpLink.IsNullOrEmpty()) newReason += $" [[Logged Here]({jumpLink})]";
-            _ = user.Warn(size, newReason, Context);
+            await user.Warn(size, reason, Context, logLink: jumpLink);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
@@ -355,7 +358,7 @@ namespace BotCatMaxy {
                 return;
             }
             if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions(amount: amount));
+                await ReplyAsync(embed: user.CheckInfractions(amount: amount, showLinks: true));
             } else {
                 await ReplyAsync(user.Username + " has no warns");
             }

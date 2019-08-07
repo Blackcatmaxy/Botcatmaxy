@@ -10,6 +10,10 @@ namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
         public static void Main(string[] args) {
+#if DEBUG
+            Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
+            new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
+#endif
             new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
         }
 
@@ -19,7 +23,7 @@ namespace BotCatMaxy {
                 MessageCacheSize = 120
             };
 
-            File.CreateText(Utilities.BasePath + "log.txt");
+            File.CreateText(Utilities.BasePath + "log.txt").Close();
            
             //Sets up the events
             _client = new DiscordSocketClient(config);
