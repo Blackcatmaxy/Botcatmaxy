@@ -85,6 +85,7 @@ namespace BotCatMaxy {
                     foreach (char c in message.Content) {
                         switch (c) {
                             case '1':
+                            case '!':
                                 sb.Append('i');
                                 break;
                             case '0':
