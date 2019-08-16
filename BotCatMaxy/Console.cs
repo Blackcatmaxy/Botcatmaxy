@@ -46,9 +46,9 @@ namespace BotCatMaxy {
 
                     if (!guildDir.IsNullOrEmpty()) {
                         foreach (SocketUser user in guild.Users) {
-                            if (Directory.Exists(guildDir + "/Infractions/Discord") && File.Exists(guildDir + "/Infractions/discord/" + user.Id)) {
+                            if (Directory.Exists(guildDir + "/Infractions/Discord") && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
                                 BinaryFormatter newbf = new BinaryFormatter();
-                                FileStream newFile = File.Open(guildDir + "/Infractions/discord/" + user.Id, FileMode.Open);
+                                FileStream newFile = File.Open(guildDir + "/Infractions/Discord/" + user.Id, FileMode.Open);
                                 Infraction[] oldInfractions;
                                 oldInfractions = (Infraction[])newbf.Deserialize(newFile);
                                 newFile.Close();

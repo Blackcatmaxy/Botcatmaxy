@@ -157,9 +157,19 @@ namespace BotCatMaxy {
             return embed.Build();
         }
 
-        public static async Task NotifyOfKick(this SocketGuildUser user, string reason, SocketCommandContext context) {
+        public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context) {
+            TempBan tempBan = new TempBan(user.Id, DateTime.Now + time, reason);
+            List<TempBan> tempBans = context.Guild.LoadFromFile<List<TempBan>>("tempActions.json", true);
+            tempBans.Add(tempBan);
+            tempBans.SaveToFile("tempActions.json", context.Guild);
+            //await Context.Guild.AddBanAsync(user, reason: reason);
+            Logging.LogTempAct(context.Guild, context.User, user, "bann", reason, context.Message.GetJumpUrl(), time);
+            await user.Notify($"tempbanned for {time.Humanize()}", reason, context);
+        }
+
+        public static async Task Notify(this SocketGuildUser user, string action, string reason, SocketCommandContext context) {
             var embed = new EmbedBuilder();
-            embed.WithTitle("You have been kicked from a discord guild");
+            embed.WithTitle($"You have been {action} from a discord guild");
             embed.AddField("Reason", reason, true);
             embed.AddField("Guild name", context.Guild.Name, true);
             embed.WithCurrentTimestamp();
@@ -396,7 +406,7 @@ namespace BotCatMaxy {
         public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             await user.Warn(1, reason, Context, "Discord");
 
-            _ = user.NotifyOfKick(reason, Context);
+            _ = user.Notify("kicked", reason, Context);
             await ReplyAsync(user.Mention + " has been kicked for " + reason);
             await user.KickAsync(reason);
         }
@@ -407,7 +417,7 @@ namespace BotCatMaxy {
         public async Task KickAndWarn(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             await user.Warn(size, reason, Context, "Discord");
 
-            _ = user.NotifyOfKick(reason, Context);
+            _ = user.Notify("kicked", reason, Context);
             await ReplyAsync(user.Mention + " has been kicked for " + reason);
             await user.KickAsync(reason);
         }
@@ -437,14 +447,7 @@ namespace BotCatMaxy {
                 return;
             }
             IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Humanize()} because of {reason}");
-            TempBan tempBan = new TempBan(user.Id, DateTime.Now + amount, reason);
-            List<TempBan> tempBans = Context.Guild.LoadFromFile<List<TempBan>>("tempActions.json", true);
-            tempBans.Add(tempBan);
-            tempBans.SaveToFile("tempActions.json", Context.Guild);
-            //await Context.Guild.AddBanAsync(user, reason: reason);
-            Logging.LogTempAct(Context.Guild, Context.User, user, "bann", reason, Context.Message.GetJumpUrl(), amount);
-            IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-            _ = DM.SendMessageAsync($"You have been temp banned in {Context.Guild.Name} discord for {amount.Humanize()} because of {reason}");
+            await user.TempBan(amount, reason, Context);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Humanize()} because of {reason}");
         }
     }
