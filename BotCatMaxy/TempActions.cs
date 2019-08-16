@@ -31,27 +31,31 @@ namespace BotCatMaxy {
                     checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
                         List<TempBan> tempBans = guild.LoadFromFile<List<TempBan>>("tempActions.json");
+                        List<TempBan> editedBans = new List<TempBan>(tempBans);
                         if (tempBans != null && tempBans.Count > 0) {
                             bannedPeople += tempBans.Count;
-                            bool needSave = false;
 
                             foreach (TempBan tempBan in tempBans) {
-                                if (client.GetUser(tempBan.personBanned) == null) {
-                                    _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
-                                } else if (await guild.GetBanAsync(tempBan.personBanned) == null) {
-                                    _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
-                                    tempBans.Remove(tempBan);
-                                    needSave = true;
-                                } else if (DateTime.Now.Subtract(tempBan.dateBanned).Hours >= tempBan.length) {
-                                    await guild.RemoveBanAsync(tempBan.personBanned);
-                                    tempBans.Remove(tempBan);
-                                    needSave = true;
-                                    unbannedPeople++;
+                                try {
+                                    if (client.GetUser(tempBan.user) == null) {
+                                        _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
+                                    /*} else if (!guild.ContainsBan(tempBan.user)) {
+                                        _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
+                                        editedBans.Remove(tempBan);*/
+                                    } else if (DateTime.Now >= tempBan.timeUnbanned) {
+                                        _ = guild.RemoveBanAsync(tempBan.user);
+                                        editedBans.Remove(tempBan);
+                                        Logging.LogEndTempAct(guild, guild.GetUser(tempBan.user), "ban", tempBan.reason, (tempBan.timeUnbanned - tempBan.dateBanned));
+                                        unbannedPeople++;
+                                    }
+                                } catch (Exception e) {
+                                    _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
                                 }
+                                
                             }
 
-                            if (needSave) {
-                                tempBans.SaveToFile("tempActions", guild);
+                            if (editedBans != tempBans) {
+                                editedBans.SaveToFile("tempActions.json", guild);
                             }
                         }
                     }
@@ -67,7 +71,7 @@ namespace BotCatMaxy {
         public async Task Timer() {
             _ = TempBanChecker(client);
 
-            await Task.Delay(3600000);
+            await Task.Delay(600000);
             _ = Timer();
         }
     }

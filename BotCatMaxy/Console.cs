@@ -60,7 +60,7 @@ namespace BotCatMaxy {
                     }
                 }
 
-                Console.WriteLine($"Part of {client.Guilds.Count} discord guilds with a total of {members} users");
+                Console.WriteLine($"Part of {client.Guilds.Count} discord guilds with a total of {members} users. There are {infractions} total infractions");
             }
 
             _ = NewInput();

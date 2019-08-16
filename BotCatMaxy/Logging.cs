@@ -150,6 +150,52 @@ namespace BotCatMaxy {
             return null;
         }
 
+        public static void LogTempAct(IGuild guild, IUser warner, SocketGuildUser warnee, string actType, string reason, string warnLink, TimeSpan length) {
+            try {
+                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
+                
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(warner);
+                if (warnee.Nickname.IsNullOrEmpty())
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been temp-{actType}ed", $"For {length.Humanize()}, because of {reason}");
+                else
+                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                embed.WithColor(Color.Red);
+                embed.WithCurrentTimestamp();
+
+                guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build());
+                return;
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
+            }
+            return;
+        }
+
+        public static void LogEndTempAct(IGuild guild, SocketGuildUser warnee, string actType, string reason,TimeSpan length) {
+            try {
+                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
+
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(warnee);
+                if (warnee.Nickname.IsNullOrEmpty())
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.Humanize(2)}, because of {reason}");
+                else
+                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                embed.WithColor(Color.Green);
+                embed.WithCurrentTimestamp();
+
+                guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                return;
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
+            }
+            return;
+        }
+
         private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
             try {
                 SocketGuild guild = Utilities.GetGuild(channel as SocketTextChannel);

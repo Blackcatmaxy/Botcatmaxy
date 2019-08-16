@@ -413,47 +413,39 @@ namespace BotCatMaxy {
         }
 
         [Command("testtempban")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task TempBan(SocketUser user, string time, [Remainder] string reason) {
-            string timeUnit = "";
-            string plural = "";
-            int hours = 0;
+        public async Task TempBan(SocketGuildUser user, string time, [Remainder] string reason) {
+            TimeSpan amount = new TimeSpan();
             try {
                 string intString = time.Remove(time.Length - 1);
                 if (time.ToLower().EndsWith('d')) {
-                    timeUnit = "day";
-                    hours = int.Parse(intString) * 24;
-                    if (hours / 24 > 1) {
-                        plural = "s";
-                    }
+                    amount = TimeSpan.FromDays(double.Parse(intString));
                 } else if (time.ToLower().EndsWith('h')) {
-                    timeUnit = "hour";
-                    hours = int.Parse(intString);
-                    if (hours > 1) {
-                        plural = "s";
-                    }
+                    amount = TimeSpan.FromHours(double.Parse(intString));
                 } else {
                     await ReplyAsync("Time unit not recognized, please use \'d\' or \'h\'");
                     return;
                 }
             } catch (FormatException) {
-                await ReplyAsync($"Unable to parse '{time}' don't use decimals");
-            }
-
-            if (hours < 1) {
-                await ReplyAsync("Can't warn for less than an hour");
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
                 return;
             }
 
-            IUserMessage message = await ReplyAsync("Banning " + user.Mention + " for " + hours + " " + timeUnit + plural + " because of " + reason);
-            TempBan tempBan = new TempBan(user.Id, hours);
+            if (amount.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-ban for less than a minute");
+                return;
+            }
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Humanize()} because of {reason}");
+            TempBan tempBan = new TempBan(user.Id, DateTime.Now + amount, reason);
             List<TempBan> tempBans = Context.Guild.LoadFromFile<List<TempBan>>("tempActions.json", true);
             tempBans.Add(tempBan);
-            tempBans.SaveToFile("tempActions", Context.Guild);
-            await Context.Guild.AddBanAsync(user, reason: reason);
-            _ = message.ModifyAsync(msg => msg.Content = "Banned " + user.Mention + " for " + hours + " " + timeUnit + plural + " because of " + reason);
+            tempBans.SaveToFile("tempActions.json", Context.Guild);
+            //await Context.Guild.AddBanAsync(user, reason: reason);
+            Logging.LogTempAct(Context.Guild, Context.User, user, "bann", reason, Context.Message.GetJumpUrl(), amount);
             IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-            _ = DM.SendMessageAsync("You have been temp banned in " + Context.Guild.Name + " discord for \"" + reason + "\" for " + hours + " " + timeUnit + plural);
+            _ = DM.SendMessageAsync($"You have been temp banned in {Context.Guild.Name} discord for {amount.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Humanize()} because of {reason}");
         }
     }
 }

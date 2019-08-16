@@ -7,6 +7,7 @@ using BotCatMaxy.Data;
 using BotCatMaxy.Settings;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.Rest;
 using System.IO;
 using System.Collections;
 
@@ -167,6 +168,17 @@ namespace BotCatMaxy {
             }
             if (user.Nickname.IsNullOrEmpty()) return user.Username;
             else return user.Nickname;
+        }
+
+        public static bool ContainsBan(this IGuild guild, ulong userID) {
+            try {
+                foreach (RestBan ban in guild.GetBansAsync().Result) {
+                    if (ban.User.Id == userID) return true;
+                }
+                return false;
+            } catch {
+                return false;
+            }
         }
     }
 }
