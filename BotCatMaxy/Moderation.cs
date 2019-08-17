@@ -157,14 +157,24 @@ namespace BotCatMaxy {
             return embed.Build();
         }
 
-        public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context) {
-            TempBan tempBan = new TempBan(user.Id, DateTime.Now + time, reason);
-            List<TempBan> tempBans = context.Guild.LoadFromFile<List<TempBan>>("tempActions.json", true);
+        public static async Task TempAct(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context) {
+            TempAct tempBan = new TempAct(user.Id, time, reason);
+            List<TempAct> tempBans = context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
             tempBans.Add(tempBan);
-            tempBans.SaveToFile("tempActions.json", context.Guild);
+            tempBans.SaveToFile("tempBans.json", context.Guild);
             //await Context.Guild.AddBanAsync(user, reason: reason);
             Logging.LogTempAct(context.Guild, context.User, user, "bann", reason, context.Message.GetJumpUrl(), time);
             await user.Notify($"tempbanned for {time.Humanize()}", reason, context);
+        }
+
+        public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings) {
+            TempAct tempMute = new TempAct(user.Id, time, reason);
+            List<TempAct> tempMutes = context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            tempMutes.Add(tempMute);
+            tempMutes.SaveToFile("tempMutes.json", context.Guild);
+            await user.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
+            Logging.LogTempAct(context.Guild, context.User, user, "mut", reason, context.Message.GetJumpUrl(), time);
+            await user.Notify($"tempmuted for {time.Humanize()}", reason, context);
         }
 
         public static async Task Notify(this SocketGuildUser user, string action, string reason, SocketCommandContext context) {
@@ -425,30 +435,43 @@ namespace BotCatMaxy {
         [Command("testtempban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task TempBan(SocketGuildUser user, string time, [Remainder] string reason) {
-            TimeSpan amount = new TimeSpan();
-            try {
-                string intString = time.Remove(time.Length - 1);
-                if (time.ToLower().EndsWith('d')) {
-                    amount = TimeSpan.FromDays(double.Parse(intString));
-                } else if (time.ToLower().EndsWith('h')) {
-                    amount = TimeSpan.FromHours(double.Parse(intString));
-                } else {
-                    await ReplyAsync("Time unit not recognized, please use \'d\' or \'h\'");
-                    return;
-                }
-            } catch (FormatException) {
+        public async Task TempBanUser(SocketGuildUser user, string time, [Remainder] string reason) {
+            var amount = time.ToTime();
+            if (time == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
                 return;
             }
-
-            if (amount.TotalMinutes < 1) {
+            if (amount.Value.TotalMinutes < 1) {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Humanize()} because of {reason}");
-            await user.TempBan(amount, reason, Context);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            await user.TempAct(amount.Value, reason, Context);
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+        }
+
+        [Command("tempmute")]
+        [RequireBotPermission(GuildPermission.ManageRoles)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task TempMuteUser(SocketGuildUser user, string time, [Remainder] string reason) {
+            var amount = time.ToTime();
+            if (time == null) {
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                return;
+            }
+            if (amount.Value.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-mute for less than a minute");
+                return;
+            }
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
+                await ReplyAsync("Muted role is null or invalid");
+                return;
+            }
+
+            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            await user.TempMute(amount.Value, reason, Context, settings);
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
     }
 }

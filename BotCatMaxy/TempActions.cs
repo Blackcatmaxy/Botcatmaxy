@@ -21,7 +21,7 @@ namespace BotCatMaxy {
             _ = Timer();
         }
 
-        public static async Task TempBanChecker(DiscordSocketClient client) {
+        public static async Task TempActChecker(DiscordSocketClient client) {
             try {
                 int unbannedPeople = 0;
                 int bannedPeople = 0;
@@ -29,39 +29,62 @@ namespace BotCatMaxy {
                 foreach (SocketGuild guild in client.Guilds) {
                     string guildDir = guild.GetPath(false);
                     checkedGuilds++;
-                    if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempActions.json")) {
-                        List<TempBan> tempBans = guild.LoadFromFile<List<TempBan>>("tempActions.json");
-                        List<TempBan> editedBans = new List<TempBan>(tempBans);
+                    if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempBans.json")) {
+                        List<TempAct> tempBans = guild.LoadFromFile<List<TempAct>>("tempBans.json");
+                        List<TempAct> editedBans = new List<TempAct>(tempBans);
                         if (tempBans != null && tempBans.Count > 0) {
                             bannedPeople += tempBans.Count;
 
-                            foreach (TempBan tempBan in tempBans) {
+                            foreach (TempAct tempBan in tempBans) {
                                 try {
                                     if (client.GetUser(tempBan.user) == null) {
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
-                                    /*} else if (!guild.ContainsBan(tempBan.user)) {
+                                    } else if (!guild.ContainsBan(tempBan.user)) { //Need to add an embed for when this happens that's distinct
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
-                                        editedBans.Remove(tempBan);*/
-                                    } else if (DateTime.Now >= tempBan.timeUnbanned) {
+                                        editedBans.Remove(tempBan);
+                                    } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
                                         _ = guild.RemoveBanAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
-                                        Logging.LogEndTempAct(guild, guild.GetUser(tempBan.user), "ban", tempBan.reason, (tempBan.timeUnbanned - tempBan.dateBanned));
+                                        Logging.LogEndTempAct(guild, guild.GetUser(tempBan.user), "ban", tempBan.reason, tempBan.length);
                                         unbannedPeople++;
                                     }
                                 } catch (Exception e) {
                                     _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
                                 }
-                                
                             }
 
                             if (editedBans != tempBans) {
-                                editedBans.SaveToFile("tempActions.json", guild);
+                                editedBans.SaveToFile("tempBans.json", guild);
+                            }
+                        }
+
+                        ModerationSettings settings = guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+                        if (settings != null && guild.GetRole(settings.mutedRole) != null) {
+                            List<TempAct> tempMutes = guild.LoadFromFile<List<TempAct>>("tempMutes.json");
+                            List<TempAct> editedMutes = new List<TempAct>(tempMutes);
+                            if (tempMutes != null && tempMutes.Count > 0) {
+                                foreach (TempAct tempMute in tempMutes) {
+                                    try {
+                                        if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
+                                            if (guild.GetUser(tempMute.user) != null) {
+                                                _ = guild.GetUser(tempMute.user).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                            }
+                                            editedMutes.Remove(tempMute);
+                                            Logging.LogEndTempAct(guild, guild.GetUser(tempMute.user), "mut", tempMute.reason, tempMute.length);
+                                        }
+                                    } catch (Exception e) {
+                                        _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unmuting someone, continuing", e).Log();
+                                    }
+                                }
+
+                                if (editedMutes != tempMutes) {
+                                    editedMutes.SaveToFile("tempMutes.json", guild);
+                                }
                             }
                         }
                     }
                 }
                 _ = (checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
-                _ = new LogMessage(LogSeverity.Debug, "TempAction", "Unbanned " + unbannedPeople + " people out of " + bannedPeople + " banned people").Log();
 
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
@@ -69,7 +92,7 @@ namespace BotCatMaxy {
         }
 
         public async Task Timer() {
-            _ = TempBanChecker(client);
+            _ = TempActChecker(client);
 
             await Task.Delay(600000);
             _ = Timer();

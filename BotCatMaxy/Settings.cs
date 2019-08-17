@@ -85,7 +85,27 @@ namespace BotCatMaxy {
 
             settings.SaveToFile("moderationSettings.txt", Context.Guild);
 
-            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
+            await ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
+        }
+
+        [Command("setmutedrole")]
+        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
+        public async Task SetMutedRole(SocketRole role) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+
+            if (settings == null) {
+                settings = new ModerationSettings();
+            }
+            if (settings.mutedRole != role.Id) {
+                settings.mutedRole = role.Id;
+            } else {
+                _ = ReplyAsync("The role \"" + role.Name + "\" is already the muted role");
+            }
+
+            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+
+            await ReplyAsync("The role \"" + role.Name + "\" is now the muted role");
         }
 
         [Command("removewarnability")]
@@ -203,16 +223,16 @@ namespace BotCatMaxy {
     namespace Settings {
         //Might replace these with a struct OR make them inherit from a "Saveable" class or make an interface
         //so then we can have a dynamic function to save things?
-        public class TempBan {
-            public TempBan(ulong userID, DateTime length, string reason) {
+        public class TempAct {
+            public TempAct(ulong userID, TimeSpan length, string reason) {
                 user = userID;
                 this.reason = reason;
                 dateBanned = DateTime.Now;
-                timeUnbanned = length;
+                this.length = length;
             }
             public string reason;
             public ulong user;
-            public DateTime timeUnbanned;
+            public TimeSpan length;
             public DateTime dateBanned;
         }
         public class BadWord {
@@ -228,6 +248,7 @@ namespace BotCatMaxy {
             public List<ulong> ableToBan = new List<ulong>();
             public List<string> allowedLinks = new List<string>();
             public List<ulong> allowedToLink = new List<ulong>();
+            public ulong mutedRole = 0;
             public ushort allowedCaps = 0;
             public bool useOwnerID = false;
             public bool moderateUsernames = false;

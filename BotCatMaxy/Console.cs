@@ -31,7 +31,7 @@ namespace BotCatMaxy {
                 await new LogMessage(LogSeverity.Info, "Console", "Messaging guild owners:" + message).Log();
             }
             if (splitInput[0].ToLower() == "checktempbans") {
-                await TempActions.TempBanChecker(client);
+                await TempActions.TempActChecker(client);
             }
             if (splitInput[0].ToLower() == "shutdown" || input.ToLower() == "shut down") {
                 await client.SetGameAsync("Restarting");

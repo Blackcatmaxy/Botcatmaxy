@@ -180,5 +180,18 @@ namespace BotCatMaxy {
                 return false;
             }
         }
+
+        public static TimeSpan? ToTime(this string s) {
+            try {
+                string intString = s.Remove(s.Length - 1);
+                if (s.ToLower().EndsWith('d')) {
+                    return TimeSpan.FromDays(double.Parse(intString));
+                } else if (s.ToLower().EndsWith('h')) {
+                    return TimeSpan.FromHours(double.Parse(intString));
+                }
+            } catch {
+            }
+            return null;
+        }
     }
 }
