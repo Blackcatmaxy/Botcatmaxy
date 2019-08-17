@@ -28,10 +28,22 @@ namespace BotCatMaxy {
                 foreach (string word in splitInput) {
                     message += " " + word;
                 }
-                await new LogMessage(LogSeverity.Info, "Console", "Messaging guild owners:" + message).Log();
+                List<SocketUser> owners = new List<SocketUser>();
+                foreach (SocketGuild guild in client.Guilds) {
+                    if (!owners.Contains(guild.Owner)) owners.Add(guild.Owner);
+                }
+                foreach (SocketUser owner in owners) {
+                    try {
+                        await owner.GetOrCreateDMChannelAsync().Result.SendMessageAsync(message);
+                    } catch (Exception e) {
+                        if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "Console", "Something went wrong notifying person", e).Log();
+                    }
+                }
+                await new LogMessage(LogSeverity.Info, "Console", "Messaged guild owners:" + message).Log();
             }
             if (splitInput[0].ToLower() == "checktempbans") {
                 await TempActions.TempActChecker(client);
+                await (new LogMessage(LogSeverity.Info, "Console", "Checked temp-actions")).Log();
             }
             if (splitInput[0].ToLower() == "shutdown" || input.ToLower() == "shut down") {
                 await client.SetGameAsync("Restarting");
@@ -59,8 +71,7 @@ namespace BotCatMaxy {
                         }
                     }
                 }
-
-                Console.WriteLine($"Part of {client.Guilds.Count} discord guilds with a total of {members} users. There are {infractions} total infractions");
+                await (new LogMessage(LogSeverity.Info, "Console", $"Part of {client.Guilds.Count} discord guilds with a total of {members} users. There are {infractions} total infractions")).Log();
             }
 
             _ = NewInput();
