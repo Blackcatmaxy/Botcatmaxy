@@ -170,17 +170,6 @@ namespace BotCatMaxy {
             else return user.Nickname;
         }
 
-        public static bool ContainsBan(this IGuild guild, ulong userID) {
-            try {
-                foreach (RestBan ban in guild.GetBansAsync().Result) {
-                    if (ban.User.Id == userID) return true;
-                }
-                return false;
-            } catch {
-                return false;
-            }
-        }
-
         public static TimeSpan? ToTime(this string s) {
             try {
                 string intString = s.Remove(s.Length - 1);
@@ -192,6 +181,11 @@ namespace BotCatMaxy {
             } catch {
             }
             return null;
+        }
+
+        public static bool IsNullOrEmpty(this IList list) {
+            if (list == null || list.Count == 0) return true;
+            else return false;
         }
     }
 }

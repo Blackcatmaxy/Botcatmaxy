@@ -157,9 +157,9 @@ namespace BotCatMaxy {
             return embed.Build();
         }
 
-        public static async Task TempAct(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context) {
+        public static async Task TempAct(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, List<TempAct> tempBans = null) {
             TempAct tempBan = new TempAct(user.Id, time, reason);
-            List<TempAct> tempBans = context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            if (tempBans == null) tempBans = context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
             tempBans.Add(tempBan);
             tempBans.SaveToFile("tempBans.json", context.Guild);
             //await Context.Guild.AddBanAsync(user, reason: reason);
@@ -167,9 +167,9 @@ namespace BotCatMaxy {
             await user.Notify($"tempbanned for {time.Humanize()}", reason, context);
         }
 
-        public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings) {
+        public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, List<TempAct> tempMutes = null) {
             TempAct tempMute = new TempAct(user.Id, time, reason);
-            List<TempAct> tempMutes = context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            if (tempMutes == null) tempMutes = context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
             tempMutes.Add(tempMute);
             tempMutes.SaveToFile("tempMutes.json", context.Guild);
             await user.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
@@ -437,7 +437,7 @@ namespace BotCatMaxy {
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task TempBanUser(SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
-            if (time == null) {
+            if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
                 return;
             }
@@ -445,8 +445,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
+            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
+                return;
+            }
             IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempAct(amount.Value, reason, Context);
+            await user.TempAct(amount.Value, reason, Context, tempBans);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
@@ -455,7 +460,7 @@ namespace BotCatMaxy {
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempMuteUser(SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
-            if (time == null) {
+            if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
                 return;
             }
@@ -466,6 +471,11 @@ namespace BotCatMaxy {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
+                return;
+            }
+            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted");
                 return;
             }
 

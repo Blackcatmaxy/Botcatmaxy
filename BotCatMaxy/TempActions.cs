@@ -7,7 +7,9 @@ using BotCatMaxy;
 using System.Text;
 using Discord;
 using System.IO;
+using Discord.Rest;
 using BotCatMaxy.Settings;
+using System.Linq;
 
 namespace BotCatMaxy {
     public class TempActions {
@@ -39,7 +41,7 @@ namespace BotCatMaxy {
                                 try {
                                     if (client.GetUser(tempBan.user) == null) {
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
-                                    } else if (!guild.ContainsBan(tempBan.user)) { //Need to add an embed for when this happens that's distinct
+                                    } else if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         editedBans.Remove(tempBan);
                                     } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
