@@ -17,16 +17,23 @@ namespace BotCatMaxy {
         public TempActions(DiscordSocketClient client) {
             this.client = client;
             client.Ready += Ready;
+            client.UserJoined += CheckNewUser;
         }
 
         public async Task Ready() {
             _ = Timer();
         }
 
+        async Task CheckNewUser(SocketGuildUser user) {
+            string guildDir = user.Guild.GetPath(false);
+            if (guildDir == null || !Directory.Exists(guildDir) || !File.Exists(guildDir + "/tempMutes.json")) return;
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            if (settings == null || user.Guild.GetRole(settings.mutedRole) == null) return;
+            if (user.Guild.LoadFromFile<List<TempAct>>("tempMutes.json").Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
+        }
+
         public static async Task TempActChecker(DiscordSocketClient client) {
             try {
-                int unbannedPeople = 0;
-                int bannedPeople = 0;
                 int checkedGuilds = 0;
                 foreach (SocketGuild guild in client.Guilds) {
                     string guildDir = guild.GetPath(false);
@@ -35,12 +42,11 @@ namespace BotCatMaxy {
                         List<TempAct> tempBans = guild.LoadFromFile<List<TempAct>>("tempBans.json");
                         List<TempAct> editedBans = new List<TempAct>(tempBans);
                         if (tempBans != null && tempBans.Count > 0) {
-                            bannedPeople += tempBans.Count;
-
                             foreach (TempAct tempBan in tempBans) {
                                 try {
                                     if (client.GetUser(tempBan.user) == null) {
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
+                                        editedBans.Remove(tempBan);
                                     } else if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         editedBans.Remove(tempBan);
@@ -48,7 +54,6 @@ namespace BotCatMaxy {
                                         _ = guild.RemoveBanAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
                                         Logging.LogEndTempAct(guild, guild.GetUser(tempBan.user), "ban", tempBan.reason, tempBan.length);
-                                        unbannedPeople++;
                                     }
                                 } catch (Exception e) {
                                     _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
@@ -68,8 +73,10 @@ namespace BotCatMaxy {
                                 foreach (TempAct tempMute in tempMutes) {
                                     try {
                                         if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
-                                            if (guild.GetUser(tempMute.user) != null) {
-                                                _ = guild.GetUser(tempMute.user).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                            SocketGuildUser user = guild.GetUser(tempMute.user);
+                                            if (user != null) {
+                                                await guild.GetUser(tempMute.user).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                                _ = user.Notify($"untemp-muted", tempMute.reason, guild);
                                             }
                                             editedMutes.Remove(tempMute);
                                             Logging.LogEndTempAct(guild, guild.GetUser(tempMute.user), "mut", tempMute.reason, tempMute.length);

@@ -139,7 +139,7 @@ namespace BotCatMaxy {
                     embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 else
                     embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
-                if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Gold);
                 embed.WithCurrentTimestamp();
 
@@ -158,10 +158,10 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
                 if (warnee.Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been temp-{actType}ed", $"For {length.Humanize()}, because of {reason}");
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.Humanize()}", $"Because of {reason}");
                 else
-                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
-                if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.Humanize()}", $"Because of {reason}");
+                if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Red);
                 embed.WithCurrentTimestamp();
 
