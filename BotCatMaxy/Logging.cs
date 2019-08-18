@@ -39,6 +39,7 @@ namespace BotCatMaxy {
         async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
             try {
                 //Just makes sure that it's not logged when it shouldn't be
+                if (!(channel is SocketGuildChannel)) return;
                 SocketGuild guild = (channel as SocketGuildChannel).Guild;
                 IMessage oldMessage = cachedMessage.GetOrDownloadAsync().Result;
                 if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
@@ -78,10 +79,11 @@ namespace BotCatMaxy {
 
         public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
             try {
+                if (message == null) return null;
                 if (deletedMessagesCache == null) {
                     deletedMessagesCache = new List<ulong>();
                 }
-                if (deletedMessagesCache.Contains(message.Id)) {
+                if (deletedMessagesCache.Count > 0 && deletedMessagesCache.Contains(message.Id)) {
                     return null;
                 }
                 if (deletedMessagesCache.Count == 5) {
@@ -173,17 +175,17 @@ namespace BotCatMaxy {
             return;
         }
 
-        public static void LogEndTempAct(IGuild guild, SocketGuildUser warnee, string actType, string reason,TimeSpan length) {
+        public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason,TimeSpan length) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warnee);
-                if (warnee.Nickname.IsNullOrEmpty())
+                if (!(warnee is SocketGuildUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
                     embed.AddField($"{warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.Humanize(2)}, because of {reason}");
                 else
-                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
                 embed.WithColor(Color.Green);
                 embed.WithCurrentTimestamp();
@@ -200,7 +202,7 @@ namespace BotCatMaxy {
             try {
                 SocketGuild guild = Utilities.GetGuild(channel as SocketTextChannel);
 
-                LogMessage("Deleted message", message.Value, guild);
+                LogMessage("Deleted message", message.GetOrDownloadAsync().Result, guild);
                 if (message.Value.Attachments != null) {
 
                 }

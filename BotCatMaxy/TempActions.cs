@@ -51,7 +51,7 @@ namespace BotCatMaxy {
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         editedBans.Remove(tempBan);
                                     } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
-                                        _ = guild.RemoveBanAsync(tempBan.user);
+                                        await guild.RemoveBanAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
                                         Logging.LogEndTempAct(guild, guild.GetUser(tempBan.user), "ban", tempBan.reason, tempBan.length);
                                     }
