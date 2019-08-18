@@ -54,10 +54,12 @@ namespace BotCatMaxy {
             ConsoleReader consoleReader = new ConsoleReader(_client);
 
             //Debug info
-            _ = new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
+            await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
             if (!Directory.Exists(Utilities.BasePath)) {
-                Console.WriteLine(DateTime.Now.TimeOfDay + " No data folder");
+                await new LogMessage(LogSeverity.Error, "Main", "Data Folder not found").Log();
             }
+
+            await Task.Delay(-1);
         }
 
         private async Task Ready() {

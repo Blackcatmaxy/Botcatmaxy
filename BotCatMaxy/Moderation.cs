@@ -441,6 +441,7 @@ namespace BotCatMaxy {
         }
 
         [Command("tempban")]
+        [Alias("tban", "temp-ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task TempBanUser(SocketGuildUser user, string time, [Remainder] string reason) {
@@ -463,7 +464,60 @@ namespace BotCatMaxy {
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
+        [Command("tempbanwarn")]
+        [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task TempBanWarnUser(SocketGuildUser user, string time, [Remainder] string reason) {
+            var amount = time.ToTime();
+            if (amount == null) {
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                return;
+            }
+            if (amount.Value.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-ban for less than a minute");
+                return;
+            }
+
+            await user.Warn(1, reason, Context, "Discord");
+            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
+                return;
+            }
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            await user.TempBan(amount.Value, reason, Context, tempBans);
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+        }
+
+        [Command("tempbanwarn")]
+        [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task TempBanWarnUser(SocketGuildUser user, string time, float size, [Remainder] string reason) {
+            var amount = time.ToTime();
+            if (amount == null) {
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                return;
+            }
+            if (amount.Value.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-ban for less than a minute");
+                return;
+            }
+
+            await user.Warn(size, reason, Context, "Discord");
+            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
+                return;
+            }
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            await user.TempBan(amount.Value, reason, Context, tempBans);
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+        }
+
         [Command("tempmute")]
+        [Alias("tmute", "temp-mute")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempMuteUser(SocketGuildUser user, string time, [Remainder] string reason) {
@@ -484,6 +538,68 @@ namespace BotCatMaxy {
             List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
             if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted");
+                return;
+            }
+
+            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            await user.TempMute(amount.Value, reason, Context, settings);
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+        }
+
+        [Command("tempmutewarn")]
+        [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
+        [RequireBotPermission(GuildPermission.ManageRoles)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task TempMuteWarnUser(SocketGuildUser user, string time, [Remainder] string reason) {
+            var amount = time.ToTime();
+            if (amount == null) {
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                return;
+            }
+            if (amount.Value.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-mute for less than a minute");
+                return;
+            }
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
+                await ReplyAsync("Muted role is null or invalid");
+                return;
+            }
+            await user.Warn(1, reason, Context, "Discord");
+            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
+                return;
+            }
+
+            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            await user.TempMute(amount.Value, reason, Context, settings);
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+        }
+
+        [Command("tempmutewarn")]
+        [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
+        [RequireBotPermission(GuildPermission.ManageRoles)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task TempMuteWarnUser(SocketGuildUser user, string time, float size, [Remainder] string reason) {
+            var amount = time.ToTime();
+            if (amount == null) {
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                return;
+            }
+            if (amount.Value.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-mute for less than a minute");
+                return;
+            }
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
+                await ReplyAsync("Muted role is null or invalid");
+                return;
+            }
+            await user.Warn(size, reason, Context, "Discord");
+            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
                 return;
             }
 
