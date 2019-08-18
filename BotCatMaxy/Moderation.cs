@@ -185,7 +185,7 @@ namespace BotCatMaxy {
             Logging.LogTempAct(context.Guild, context.User, user, "mut", reason, context.Message.GetJumpUrl(), time);
         }
 
-        public static async Task Notify(this SocketGuildUser user, string action, string reason, SocketGuild guild, SocketUser author = null) {
+        public static async Task Notify(this IUser user, string action, string reason, SocketGuild guild, SocketUser author = null) {
             var embed = new EmbedBuilder();
             embed.WithTitle($"You have been {action} from a discord guild");
             embed.AddField("Reason", reason, true);

@@ -48,10 +48,10 @@ namespace BotCatMaxy {
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         editedBans.Remove(tempBan);
                                     } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
+                                        RestUser rUser = guild.GetBansAsync().Result.First(ban => ban.User.Id == tempBan.user).User;
                                         await guild.RemoveBanAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
-                                        if (client.GetUser(tempBan.user) != null) //stop-gap for now
-                                            Logging.LogEndTempAct(guild, client.GetUser(tempBan.user), "ban", tempBan.reason, tempBan.length);
+                                        Logging.LogEndTempAct(guild, rUser, "ban", tempBan.reason, tempBan.length);
                                     }
                                 } catch (Exception e) {
                                     _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
@@ -71,13 +71,16 @@ namespace BotCatMaxy {
                                 foreach (TempAct tempMute in tempMutes) {
                                     try {
                                         if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
-                                            SocketGuildUser user = guild.GetUser(tempMute.user);
+                                            SocketUser user = guild.GetUser(tempMute.user);
                                             if (user != null) {
-                                                await guild.GetUser(tempMute.user).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                                await (user as SocketGuildUser).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                            }
+                                            user = client.GetUser(tempMute.user);
+                                            if (user != null) {
+                                                Logging.LogEndTempAct(guild, user, "mut", tempMute.reason, tempMute.length);
                                                 _ = user.Notify($"untemp-muted", tempMute.reason, guild);
                                             }
                                             editedMutes.Remove(tempMute);
-                                            Logging.LogEndTempAct(guild, guild.GetUser(tempMute.user), "mut", tempMute.reason, tempMute.length);
                                         }
                                     } catch (Exception e) {
                                         _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unmuting someone, continuing", e).Log();
