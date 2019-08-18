@@ -30,8 +30,8 @@ namespace BotCatMaxy {
         }
 
         async Task LogNew(IMessage message) {
-            SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
-            if (guild != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0) {
+            if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0) {
+                SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
                 LogMessage("Role ping", message, guild, true);
             }
         }
