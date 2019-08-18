@@ -73,6 +73,8 @@ namespace BotCatMaxy {
                             }
                         }
                     }
+
+                    await (new LogMessage(LogSeverity.Info, "Console", $"Part of {client.Guilds.Count} discord guilds with a total of {members} users. There are {infractions} total infractions")).Log();
                     break;
                 default:
                     await new LogMessage(LogSeverity.Warning, "Console", "Command not recognized").Log();
