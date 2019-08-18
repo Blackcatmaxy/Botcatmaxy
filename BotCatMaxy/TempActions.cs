@@ -44,16 +44,14 @@ namespace BotCatMaxy {
                         if (tempBans != null && tempBans.Count > 0) {
                             foreach (TempAct tempBan in tempBans) {
                                 try {
-                                    if (client.GetUser(tempBan.user) == null) {
-                                        _ = new LogMessage(LogSeverity.Warning, "TempAction", "User is null").Log();
-                                        editedBans.Remove(tempBan);
-                                    } else if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
+                                    if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
                                         _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         editedBans.Remove(tempBan);
                                     } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
                                         await guild.RemoveBanAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
-                                        Logging.LogEndTempAct(guild, guild.GetUser(tempBan.user), "ban", tempBan.reason, tempBan.length);
+                                        if (client.GetUser(tempBan.user) != null) //stop-gap for now
+                                            Logging.LogEndTempAct(guild, client.GetUser(tempBan.user), "ban", tempBan.reason, tempBan.length);
                                     }
                                 } catch (Exception e) {
                                     _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
