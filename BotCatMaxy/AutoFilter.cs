@@ -29,7 +29,7 @@ namespace BotCatMaxy {
 
         public async Task CheckMessage(SocketMessage message) {
             try {
-                if (message.Author.IsBot || !(message.Channel is SocketGuildChannel)) {
+                if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage)) {
                     return; //Makes sure it's not logging a message from a bot and that it's in a discord server
                 }
                 SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
