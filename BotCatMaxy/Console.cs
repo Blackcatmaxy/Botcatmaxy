@@ -51,7 +51,29 @@ namespace BotCatMaxy {
                     await client.SetGameAsync("restarting");
                     Environment.Exit(0);
                     break;
-                case "stats":   
+                case "stats":
+                    ulong infractions = 0;
+                    ulong members = 0;
+                    foreach (SocketGuild guild in client.Guilds) {
+                        members += (ulong)guild.MemberCount;
+                        string guildDir = guild.GetPath(false);
+
+                        if (!guildDir.IsNullOrEmpty()) {
+                            foreach (SocketUser user in guild.Users) {
+                                if (Directory.Exists(guildDir + "/Infractions/Discord") && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
+                                    BinaryFormatter newbf = new BinaryFormatter();
+                                    FileStream newFile = File.Open(guildDir + "/Infractions/Discord/" + user.Id, FileMode.Open);
+                                    Infraction[] oldInfractions;
+                                    oldInfractions = (Infraction[])newbf.Deserialize(newFile);
+                                    newFile.Close();
+                                    foreach (Infraction infraction in oldInfractions) {
+                                        infractions++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
                 default:
                     await new LogMessage(LogSeverity.Warning, "Console", "Command not recognized").Log();
                     break;
