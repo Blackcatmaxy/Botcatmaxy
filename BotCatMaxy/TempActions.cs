@@ -40,8 +40,8 @@ namespace BotCatMaxy {
                     checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && (File.Exists(guildDir + "/tempBans.json") || File.Exists(guildDir + "/tempMutes.json"))) {
                         List<TempAct> tempBans = guild.LoadFromFile<List<TempAct>>("tempBans.json");
-                        List<TempAct> editedBans = new List<TempAct>(tempBans);
                         if (!tempBans.IsNullOrEmpty()) {
+                            List<TempAct> editedBans = new List<TempAct>(tempBans);
                             foreach (TempAct tempBan in tempBans) {
                                 try {
                                     if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
@@ -66,8 +66,8 @@ namespace BotCatMaxy {
                         ModerationSettings settings = guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
                         if (settings != null && guild.GetRole(settings.mutedRole) != null) {
                             List<TempAct> tempMutes = guild.LoadFromFile<List<TempAct>>("tempMutes.json");
-                            List<TempAct> editedMutes = new List<TempAct>(tempMutes);
                             if (!tempMutes.IsNullOrEmpty()) {
+                                List<TempAct> editedMutes = new List<TempAct>(tempMutes);
                                 uint checkedMutes = 0;
                                 foreach (TempAct tempMute in tempMutes) {
                                     checkedMutes++;
