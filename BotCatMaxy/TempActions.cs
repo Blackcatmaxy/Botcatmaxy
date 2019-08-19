@@ -38,10 +38,10 @@ namespace BotCatMaxy {
                 foreach (SocketGuild guild in client.Guilds) {
                     string guildDir = guild.GetPath(false);
                     checkedGuilds++;
-                    if (guildDir != null && Directory.Exists(guildDir) && File.Exists(guildDir + "/tempBans.json")) {
+                    if (guildDir != null && Directory.Exists(guildDir) && (File.Exists(guildDir + "/tempBans.json") || File.Exists(guildDir + "/tempMutes.json"))) {
                         List<TempAct> tempBans = guild.LoadFromFile<List<TempAct>>("tempBans.json");
                         List<TempAct> editedBans = new List<TempAct>(tempBans);
-                        if (tempBans != null && tempBans.Count > 0) {
+                        if (!tempBans.IsNullOrEmpty()) {
                             foreach (TempAct tempBan in tempBans) {
                                 try {
                                     if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
@@ -67,8 +67,10 @@ namespace BotCatMaxy {
                         if (settings != null && guild.GetRole(settings.mutedRole) != null) {
                             List<TempAct> tempMutes = guild.LoadFromFile<List<TempAct>>("tempMutes.json");
                             List<TempAct> editedMutes = new List<TempAct>(tempMutes);
-                            if (tempMutes != null && tempMutes.Count > 0) {
+                            if (!tempMutes.IsNullOrEmpty()) {
+                                uint checkedMutes = 0;
                                 foreach (TempAct tempMute in tempMutes) {
+                                    checkedMutes++;
                                     try {
                                         if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
                                             SocketUser user = guild.GetUser(tempMute.user);
@@ -87,6 +89,7 @@ namespace BotCatMaxy {
                                     }
                                 }
 
+                                _ = (checkedMutes == tempMutes.Count || checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
                                 if (editedMutes != tempMutes) {
                                     editedMutes.SaveToFile("tempMutes.json", guild);
                                 }

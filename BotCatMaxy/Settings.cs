@@ -101,6 +101,7 @@ namespace BotCatMaxy {
                 settings.mutedRole = role.Id;
             } else {
                 _ = ReplyAsync("The role \"" + role.Name + "\" is already the muted role");
+                return;
             }
 
             settings.SaveToFile("moderationSettings.txt", Context.Guild);
