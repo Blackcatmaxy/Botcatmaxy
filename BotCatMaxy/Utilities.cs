@@ -183,8 +183,8 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static bool IsNullOrEmpty(this IList list) {
-            if (list == null || list.Count == 0) return true;
+        public static bool IsNullOrEmpty(this IEnumerable<object> list) {
+            if (list == null || list.ToArray().Length > 0) return true;
             else return false;
         }
     }

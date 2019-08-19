@@ -118,12 +118,20 @@ namespace BotCatMaxy {
                     embed.AddField("Message Link", "[Click Here](" + message.GetJumpUrl() + ")", true);
                 }
 
+                string links = "";
+                if (!message.Attachments.IsNullOrEmpty()) {
+                    foreach (IAttachment attachment in message.Attachments) {
+                        links += " " + attachment.ProxyUrl;
+                    }
+                }
+
                 embed.WithFooter("ID: " + message.Id)
                     .WithAuthor(message.Author)
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp();
-
-                return logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                string link = logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                if (!links.IsNullOrEmpty()) logChannel.SendMessageAsync("The message above had these attachments:" + links);
+                return link;
             } catch (Exception exception) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
             }
@@ -156,7 +164,7 @@ namespace BotCatMaxy {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
-                
+
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
                 if (warnee.Nickname.IsNullOrEmpty())
@@ -175,7 +183,7 @@ namespace BotCatMaxy {
             return;
         }
 
-        public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason,TimeSpan length) {
+        public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason, TimeSpan length) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
@@ -200,12 +208,8 @@ namespace BotCatMaxy {
 
         private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
             try {
-                SocketGuild guild = Utilities.GetGuild(channel as SocketTextChannel);
-
-                LogMessage("Deleted message", message.GetOrDownloadAsync().Result, guild);
-                if (message.Value.Attachments != null) {
-
-                }
+                if (!(channel is SocketGuildChannel)) return;
+                LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
             } catch (Exception exception) {
                 Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", "Error", exception));
             }
