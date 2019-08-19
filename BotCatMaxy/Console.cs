@@ -43,7 +43,7 @@ namespace BotCatMaxy {
                     await new LogMessage(LogSeverity.Info, "Console", "Messaged guild owners:" + message).Log();
                     break;
                 case "checktempbans":
-                    await TempActions.TempActChecker(client);
+                    await TempActions.TempActChecker(client, true);
                     await (new LogMessage(LogSeverity.Info, "Console", "Checked temp-actions")).Log();
                     break;
                 case "shutdown":

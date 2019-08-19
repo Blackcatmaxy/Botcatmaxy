@@ -32,10 +32,11 @@ namespace BotCatMaxy {
             if (user.Guild.LoadFromFile<List<TempAct>>("tempMutes.json").Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
-        public static async Task TempActChecker(DiscordSocketClient client) {
+        public static async Task TempActChecker(DiscordSocketClient client, bool debug = false) {
             try {
                 int checkedGuilds = 0;
                 foreach (SocketGuild guild in client.Guilds) {
+                    if (debug) Console.Write($"\nChecking {guild.Name} discord ");
                     string guildDir = guild.GetPath(false);
                     checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && (File.Exists(guildDir + "/tempBans.json") || File.Exists(guildDir + "/tempMutes.json"))) {
@@ -60,8 +61,9 @@ namespace BotCatMaxy {
 
                             if (editedBans != tempBans) {
                                 editedBans.SaveToFile("tempBans.json", guild);
-                            }
-                        }
+                                if (debug) Console.Write($"{tempBans.Count - editedBans.Count} tempbans are over, ");
+                            } else if (debug) Console.Write($"tempbans checked, none over, ");
+                        } else if (debug) Console.Write($"no tempbans, ");
 
                         ModerationSettings settings = guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
                         if (settings != null && guild.GetRole(settings.mutedRole) != null) {
@@ -90,11 +92,13 @@ namespace BotCatMaxy {
                                 }
 
                                 _ = (checkedMutes == tempMutes.Count || checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
+                                
                                 if (editedMutes != tempMutes) {
                                     editedMutes.SaveToFile("tempMutes.json", guild);
-                                }
-                            }
-                        }
+                                    if (debug) Console.Write($"{tempMutes.Count - editedMutes.Count} tempmutes are over");
+                                } else if (debug) Console.Write($"no tempmute changes");
+                            } else if (debug) Console.Write($"no tempmutes to check");
+                        } else if (debug) Console.Write($"can't check tempmutes");
                     }
                 }
                 _ = (checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
