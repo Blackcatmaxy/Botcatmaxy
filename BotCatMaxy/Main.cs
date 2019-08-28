@@ -5,10 +5,15 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
 using System.IO;
+using MongoDB;
+using MongoDB.Driver;
+using BotCatMaxy.Settings;
+using MongoDB.Bson.Serialization;
 
 namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
+        public static MongoClient dbClient;
         public static void Main(string[] args) {
 #if DEBUG
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
@@ -24,7 +29,19 @@ namespace BotCatMaxy {
             };
 
             File.CreateText(Utilities.BasePath + "log.txt").Close();
-           
+            
+            //Maps all the classes
+            try {
+                BsonClassMap.RegisterClassMap<ModerationSettings>();
+                BsonClassMap.RegisterClassMap<LogSettings>();
+                BsonClassMap.RegisterClassMap<Infraction>();
+                BsonClassMap.RegisterClassMap<TempAct>();
+                BsonClassMap.RegisterClassMap<BadWord>();
+            } catch (Exception e) {
+                await (new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e)).Log();
+            }
+            dbClient = new MongoClient($"mongodb+srv://blackcatmaxy:{HiddenInfo.debugDB}@debug-1mymg.gcp.mongodb.net/test?retryWrites=true&w=majority");
+
             //Sets up the events
             _client = new DiscordSocketClient(config);
             _client.Log += Utilities.Log;

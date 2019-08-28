@@ -27,9 +27,9 @@ namespace BotCatMaxy {
         async Task CheckNewUser(SocketGuildUser user) {
             string guildDir = user.Guild.GetPath(false);
             if (guildDir == null || !Directory.Exists(guildDir) || !File.Exists(guildDir + "/tempMutes.json")) return;
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null || user.Guild.GetRole(settings.mutedRole) == null) return;
-            if (user.Guild.LoadFromFile<List<TempAct>>("tempMutes.json").Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
+            if (user.Guild.LoadFromFile<List<TempAct>>().Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
         public static async Task TempActChecker(DiscordSocketClient client, bool debug = false) {
@@ -40,7 +40,7 @@ namespace BotCatMaxy {
                     string guildDir = guild.GetPath(false);
                     checkedGuilds++;
                     if (guildDir != null && Directory.Exists(guildDir) && (File.Exists(guildDir + "/tempBans.json") || File.Exists(guildDir + "/tempMutes.json"))) {
-                        List<TempAct> tempBans = guild.LoadFromFile<List<TempAct>>("tempBans.json");
+                        List<TempAct> tempBans = guild.LoadFromFile<List<TempAct>>();
                         if (!tempBans.IsNullOrEmpty()) {
                             List<TempAct> editedBans = new List<TempAct>(tempBans);
                             foreach (TempAct tempBan in tempBans) {
@@ -60,14 +60,14 @@ namespace BotCatMaxy {
                             }
 
                             if (editedBans != tempBans) {
-                                editedBans.SaveToFile("tempBans.json", guild);
+                                editedBans.SaveToFile(guild);
                                 if (debug) Console.Write($"{tempBans.Count - editedBans.Count} tempbans are over, ");
                             } else if (debug) Console.Write($"tempbans checked, none over, ");
                         } else if (debug) Console.Write($"no tempbans, ");
 
-                        ModerationSettings settings = guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+                        ModerationSettings settings = guild.LoadFromFile<ModerationSettings>();
                         if (settings != null && guild.GetRole(settings.mutedRole) != null) {
-                            List<TempAct> tempMutes = guild.LoadFromFile<List<TempAct>>("tempMutes.json");
+                            List<TempAct> tempMutes = guild.LoadFromFile<List<TempAct>>();
                             if (!tempMutes.IsNullOrEmpty()) {
                                 List<TempAct> editedMutes = new List<TempAct>(tempMutes);
                                 uint checkedMutes = 0;
@@ -94,7 +94,7 @@ namespace BotCatMaxy {
                                 _ = (checkedMutes == tempMutes.Count || checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
                                 
                                 if (editedMutes != tempMutes) {
-                                    editedMutes.SaveToFile("tempMutes.json", guild);
+                                    editedMutes.SaveToFile(guild);
                                     if (debug) Console.Write($"{tempMutes.Count - editedMutes.Count} tempmutes are over");
                                 } else if (debug) Console.Write($"no tempmute changes");
                             } else if (debug) Console.Write($"no tempmutes to check");

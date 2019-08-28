@@ -43,7 +43,7 @@ namespace BotCatMaxy {
                 SocketGuild guild = (channel as SocketGuildChannel).Guild;
                 IMessage oldMessage = cachedMessage.GetOrDownloadAsync().Result;
                 if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
-                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || !settings.logEdits) return;
                 SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (logChannel == null) return;
@@ -98,7 +98,7 @@ namespace BotCatMaxy {
                     }
                 }
 
-                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
                 SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (settings == null || logChannel == null || !settings.logDeletes) {
                     return null;
@@ -140,7 +140,7 @@ namespace BotCatMaxy {
 
         public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason, string warnLink) {
             try {
-                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return null;
 
                 var embed = new EmbedBuilder();
@@ -162,7 +162,7 @@ namespace BotCatMaxy {
 
         public static void LogTempAct(IGuild guild, IUser warner, SocketGuildUser warnee, string actType, string reason, string warnLink, TimeSpan length) {
             try {
-                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
 
                 var embed = new EmbedBuilder();
@@ -185,7 +185,7 @@ namespace BotCatMaxy {
 
         public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason, TimeSpan length) {
             try {
-                LogSettings settings = guild.LoadFromFile<LogSettings>("logSettings.txt");
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
 
                 var embed = new EmbedBuilder();

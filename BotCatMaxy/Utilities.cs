@@ -9,28 +9,45 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord.Rest;
 using System.IO;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using System.Collections;
 
 namespace BotCatMaxy {
     public static class Utilities {
         public static string BasePath = "/home/bob_the_daniel/Data/";
 
-        public static string GetPath (this IGuild guild, bool createDir = true) {
-            string ownerPath = BasePath + guild.OwnerId;
-            string guildPath = BasePath + guild.Id;
-            if (Directory.Exists(guildPath)) {
-                if (createDir) guildPath.CheckDirectories();
-                return guildPath;
-            } else if (Directory.Exists(ownerPath)) {
-                if (createDir) ownerPath.CheckDirectories();
-                return ownerPath;
-            } else {
-                if (createDir) {
-                    Directory.CreateDirectory(ownerPath);
-                    ownerPath.CheckDirectories();
-                    return ownerPath;
-                } else return null;
+        public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true) {
+            var db = MainClass.dbClient.GetDatabase("Settings");
+            var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
+            var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
+            if (guildCollection.CountDocuments(new BsonDocument()) > 0) {
+                return guildCollection;
+            } else if (ownerCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
+                return ownerCollection;
             }
+
+            return null;
+        }
+
+        public static string GetPath(this IGuild guild, bool createDir = true) {
+            /*string ownerPath = guild.OwnerId.ToString();
+            string guildPath = guild.Id.ToString();
+            using (LiteRepository guildRep = new LiteRepository(guildPath))
+            using (LiteRepository ownerRep = new LiteRepository(guildPath)) {
+                if (guildRep.SingleOrDefault<object>() != null) {
+                    return guildPath;
+                } else if (ownerRep.SingleOrDefault<object>() != null) {
+                    return ownerPath;
+                } else {
+                    if (createDir) {
+                        return ownerPath;
+                    } else return null;
+                }
+            }*/
+            return null;
         }
 
         public static bool HasAdmin(this SocketGuildUser user) {
@@ -47,7 +64,7 @@ namespace BotCatMaxy {
 
             return hasAdmin;
         }
-        
+
         public static bool CanWarn(this SocketGuildUser user) {
             if (HasAdmin(user)) {
                 return true;
@@ -58,7 +75,7 @@ namespace BotCatMaxy {
                     return true;
                 }
             }
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
             if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
                 List<SocketRole> rolesAbleToWarn = new List<SocketRole>();
                 foreach (ulong roleID in settings.ableToWarn) {
@@ -82,7 +99,7 @@ namespace BotCatMaxy {
         public static bool CantBeWarned(this SocketGuildUser user) {
             if (HasAdmin(user)) return true;
 
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
             if (settings != null) {
                 List<SocketRole> rolesUnableToBeWarned = new List<SocketRole>();
                 foreach (ulong roleID in settings.cantBeWarned) rolesUnableToBeWarned.Add(user.Guild.GetRole(roleID));

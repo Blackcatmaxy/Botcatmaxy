@@ -1,8 +1,11 @@
 ﻿using System;
 using Discord;
 using Discord.WebSocket;
-using Newtonsoft.Json;
 using BotCatMaxy;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using BotCatMaxy.Settings;
 using System.Collections.Generic;
 using System.Text;
@@ -11,40 +14,37 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace BotCatMaxy.Data {
     public static class SettingsData {
-        public static T LoadFromFile<T>(this IGuild guild, string fileName, bool createFile = false) {
-            string guildDir = guild.GetPath(createFile);
-            T settings = default(T);
-            JsonSerializer serializer = new JsonSerializer();
-            fileName = "/" + fileName;
-
-            if (guildDir != null && Directory.Exists(guildDir)) {
-                if (File.Exists(guildDir + fileName)) {
-                    using (StreamReader sr = new StreamReader(guildDir + fileName))
-                    using (JsonTextReader reader = new JsonTextReader(sr)) {
-                        settings = serializer.Deserialize<T>(reader);
-                    }
-                } else if (createFile) {
-                    object newSettings = (T)Activator.CreateInstance(typeof(T));
-                    newSettings.SaveToFile(fileName, guild);
-                    return (T)newSettings;
+        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) {
+            var file = default(T);
+            var collection = guild.GetCollection(createFile);
+            
+            if (collection != null) {
+                //var newFileDoc = Activator.CreateInstance(typeof(T)).ToBsonDocument();
+                var filter = Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name);
+                using (var cursor = collection.Find(filter).ToCursor()) {
+                    var doc = cursor.FirstOrDefault();
+                    //var options = new BsonTypeMapperOptions { MapBsonDocumentTo = typeof(T) };
+                    if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
+                if (createFile && file == null) return (T)Activator.CreateInstance(typeof(T));
             }
 
-            return settings;
+            return file;
         }
 
-        public static void SaveToFile(this object settings, string fileName, IGuild Guild) {
-            JsonSerializer serializer = new JsonSerializer();
-            fileName = "/" + fileName;
+        public static void SaveToFile<T>(this T file, IGuild guild) {
+            var collection = guild.GetCollection(true);
+            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name));
+            collection.InsertOne(file.ToBsonDocument());
 
-            using (StreamWriter sw = new StreamWriter(Guild.GetPath(true) + fileName))
+            /*using (StreamWriter sw = new StreamWriter(Guild.GetPath(true) + fileName))
             using (JsonTextWriter writer = new JsonTextWriter(sw)) {
                 serializer.Serialize(sw, settings);
-            }
+            }*/
         }
 
         public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord", bool createDir = false) {
-            List<Infraction> infractions = new List<Infraction>();
+            /*List<Infraction> infractions = new List<Infraction>();
             string guildDir = user.Guild.GetPath(createDir);
 
             if (Directory.Exists(guildDir + "/Infractions/" + dir) && File.Exists(guildDir + "/Infractions/" + dir + "/" + user.Id)) {
@@ -56,15 +56,15 @@ namespace BotCatMaxy.Data {
                 foreach (Infraction infraction in oldInfractions) {
                     infractions.Add(infraction);
                 }
-            }
-            return infractions;
+            }*/
+            return null;
         }
 
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
-            BinaryFormatter bf = new BinaryFormatter();
+            /*BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
             bf.Serialize(file, infractions.ToArray());
-            file.Close();
+            file.Close();*/
         }
     }
 
@@ -74,7 +74,7 @@ namespace BotCatMaxy.Data {
         public List<BadWord> insideWords;
 
         public BadWords(IGuild guild) {
-            all = guild.LoadFromFile<List<BadWord>>("badwords.json");         
+            all = guild.LoadFromFile<BadWordList>().badWords ?? new List<BadWord>();
             onlyAlone = new List<BadWord>();
             insideWords = new List<BadWord>();
 

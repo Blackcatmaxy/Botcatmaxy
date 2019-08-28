@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +8,8 @@ using System.Threading.Tasks;
 using BotCatMaxy;
 using BotCatMaxy.Data;
 using BotCatMaxy.Settings;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace BotCatMaxy {
     public class SettingsModule : ModuleBase<SocketCommandContext> {
@@ -72,7 +73,7 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task AddWarnRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -83,7 +84,7 @@ namespace BotCatMaxy {
                 _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
             }
 
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
 
             await ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
         }
@@ -92,7 +93,7 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task SetMutedRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -104,7 +105,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
 
             await ReplyAsync("The role \"" + role.Name + "\" is now the muted role");
         }
@@ -118,7 +119,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -128,10 +129,7 @@ namespace BotCatMaxy {
             } else {
                 _ = ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
             }
-
-            JsonSerializer serializer = new JsonSerializer();
-
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
@@ -144,7 +142,7 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task SetLogChannel() {
             IUserMessage message = await ReplyAsync("Setting...");
-            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt", true);
+            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
 
             if (settings == null) {
                 await ReplyAsync("Settings is null");
@@ -158,13 +156,13 @@ namespace BotCatMaxy {
                 settings.logChannel = Context.Channel.Id;
             }
 
-            settings.SaveToFile("logSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
             await message.ModifyAsync(msg => msg.Content = "Set log channel");
         }
 
         [Command("info")]
         public async Task DebugLogSettings() {
-            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt");
+            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>();
 
             if (settings == null) {
                 await ReplyAsync("Settings is null");
@@ -190,11 +188,11 @@ namespace BotCatMaxy {
             IUserMessage message = await ReplyAsync("Setting...");
             LogSettings settings = null;
 
-            settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt", true);
+            settings = Context.Guild.LoadFromFile<LogSettings>(true);
 
             settings.logDeletes = !settings.logDeletes;
 
-            settings.SaveToFile("logSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
             if (settings.logDeletes) {
                 await message.ModifyAsync(msg => msg.Content = "Deleted messages will now be logged in the logging channel");
             } else {
@@ -208,11 +206,11 @@ namespace BotCatMaxy {
             IUserMessage message = await ReplyAsync("Setting...");
             LogSettings settings = null;
 
-            settings = Context.Guild.LoadFromFile<LogSettings>("logSettings.txt", true); 
+            settings = Context.Guild.LoadFromFile<LogSettings>(true); 
 
             settings.logEdits = !settings.logEdits;
 
-            settings.SaveToFile("logSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
             if (settings.logEdits) {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages will now be logged in the logging channel");
             } else {
@@ -222,8 +220,6 @@ namespace BotCatMaxy {
     }
 
     namespace Settings {
-        //Might replace these with a struct OR make them inherit from a "Saveable" class or make an interface
-        //so then we can have a dynamic function to save things?
         public class TempAct {
             public TempAct(ulong userID, TimeSpan length, string reason) {
                 user = userID;
@@ -234,15 +230,31 @@ namespace BotCatMaxy {
             public string reason;
             public ulong user;
             public TimeSpan length;
+            [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
             public DateTime dateBanned;
         }
+
+        public class TempActions {
+            public List<TempAct> tempBans = new List<TempAct>();
+            public List<TempAct> tempMutes = new List<TempAct>();
+        }
+
         public class BadWord {
             public string word;
             public string euphemism;
             public float size;
             public bool partOfWord = true;
         }
+
+        public class BadWordList {
+            [BsonId]
+            public string Id = "BadWordList";
+            public List<BadWord> badWords = new List<BadWord>();
+        }
+
         public class ModerationSettings {
+            [BsonId]
+            public string Id = "ModerationSettings";
             public List<ulong> ableToWarn = new List<ulong>();
             public List<ulong> cantBeWarned = new List<ulong>();
             public List<ulong> channelsWithoutAutoMod = new List<ulong>();
@@ -254,12 +266,16 @@ namespace BotCatMaxy {
             public bool useOwnerID = false;
             public bool moderateUsernames = false;
             public bool invitesAllowed = true;
+            public BsonDocument CatchAll { get; set; }
         }
 
         public class LogSettings {
+            [BsonId]
+            public BsonString Id = "LogSettings";
             public ulong logChannel;
             public bool logDeletes = true;
             public bool logEdits = false;
+            public BsonDocument CatchAll { get; set; }
         }
     }
 }

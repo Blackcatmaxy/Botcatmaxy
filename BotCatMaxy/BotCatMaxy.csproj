@@ -12,6 +12,7 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
     <PackageReference Include="Humanizer" Version="2.6.2" />
     <PackageReference Include="Microsoft.Web.WebJobs.Publish" Version="2.0.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.9.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
 </Project>

@@ -26,7 +26,7 @@ namespace BotCatMaxy {
         [RequireOwner()]
         [Command("bottest")]
         public async Task TestCommand([Remainder] string s) {
-            ModerationSettings modSettings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings modSettings = Context.Guild.LoadFromFile<ModerationSettings>();
 
             if (modSettings.allowedCaps > 0 && s.Length > 5) {
                 uint amountCaps = 0;

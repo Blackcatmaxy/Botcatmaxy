@@ -159,9 +159,9 @@ namespace BotCatMaxy {
 
         public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, List<TempAct> tempBans = null) {
             TempAct tempBan = new TempAct(user.Id, time, reason);
-            if (tempBans == null) tempBans = context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            if (tempBans == null) tempBans = context.Guild.LoadFromFile<List<TempAct>>(true);
             tempBans.Add(tempBan);
-            tempBans.SaveToFile("tempBans.json", context.Guild);
+            tempBans.SaveToFile(context.Guild);
             try {
                 await user.Notify($"tempbanned for {time.Humanize()}", reason, context.Guild, context.Message.Author);
             } catch  (Exception e) {
@@ -173,9 +173,9 @@ namespace BotCatMaxy {
 
         public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, List<TempAct> tempMutes = null) {
             TempAct tempMute = new TempAct(user.Id, time, reason);
-            if (tempMutes == null) tempMutes = context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            if (tempMutes == null) tempMutes = context.Guild.LoadFromFile<List<TempAct>>(true);
             tempMutes.Add(tempMute);
-            tempMutes.SaveToFile("tempMutes.json", context.Guild);
+            tempMutes.SaveToFile(context.Guild);
             try {
                 await user.Notify($"tempmuted for {time.Humanize()}", reason, context.Guild, context.Message.Author);
             } catch (Exception e) {
@@ -268,7 +268,7 @@ namespace BotCatMaxy {
     public class ModerationCommands : ModuleBase<SocketCommandContext> {
         [Command("moderationInfo")]
         public async Task ModerationInfo() {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null) {
                 _ = ReplyAsync("Moderation settings are null");
                 return;
@@ -454,7 +454,7 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>(true);
             if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
                 return;
@@ -480,7 +480,7 @@ namespace BotCatMaxy {
             }
 
             await user.Warn(1, reason, Context, "Discord");
-            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>(true);
             if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
                 return;
@@ -506,7 +506,7 @@ namespace BotCatMaxy {
             }
 
             await user.Warn(size, reason, Context, "Discord");
-            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>("tempBans.json", true);
+            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>(true);
             if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
                 return;
@@ -530,12 +530,12 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-mute for less than a minute");
                 return;
             }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>(true);
             if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted");
                 return;
@@ -560,13 +560,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-mute for less than a minute");
                 return;
             }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
             await user.Warn(1, reason, Context, "Discord");
-            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>(true);
             if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
                 return;
@@ -591,13 +591,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-mute for less than a minute");
                 return;
             }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
             await user.Warn(size, reason, Context, "Discord");
-            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>("tempMutes.json", true);
+            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>(true);
             if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
                 return;

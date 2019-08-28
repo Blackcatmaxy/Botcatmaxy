@@ -38,9 +38,9 @@ namespace BotCatMaxy {
                 string guildDir = Guild.GetPath();
 
                 if (Guild == null || !Directory.Exists(guildDir)) return;
-                ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+                ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>();
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
-                List<BadWord> badWords = Guild.LoadFromFile<List<BadWord>>("badwords.json");
+                List<BadWord> badWords = Guild.LoadFromFile<List<BadWord>>();
 
                 if (modSettings != null) {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())
@@ -132,7 +132,7 @@ namespace BotCatMaxy {
                                     } else {
                                         await context.Punish("Bad word used");
                                     }
-                                    
+
                                     return;
                                 }
                             }
@@ -149,7 +149,7 @@ namespace BotCatMaxy {
         public static async Task Punish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
             string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
             await ((SocketGuildUser)context.User).Warn(warnSize, reason, context, logLink: jumpLink);
-            
+
             IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix()} infraction because of {reason}");
             try {
                 await context.Message.DeleteAsync();
@@ -168,7 +168,7 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         public async Task ListAutoMod(string extension = "", [Remainder] string whoCaresWhatGoesHere = null) {
             try {
-                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
                 BadWords badWords = new BadWords(Context.Guild);
 
                 var embed = new EmbedBuilder();
@@ -252,7 +252,7 @@ namespace BotCatMaxy {
         [HasAdmin]
         [Command("SetAllowedCaps")]
         public async Task SetCapFilter(ushort percent) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (percent == settings.allowedCaps) {
                 await ReplyAsync("That's the current setting");
@@ -263,7 +263,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.allowedCaps = percent;
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
 
             if (percent == 0) {
                 await ReplyAsync("Disabled capitalization filtering");
@@ -276,7 +276,7 @@ namespace BotCatMaxy {
         [Command("AddAllowedLinkRole")]
         [Alias("addroleallowedtolink")]
         public async Task AddAllowedLinkRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (settings.allowedToLink == null) settings.allowedToLink = new List<ulong>();
             if (settings.allowedToLink.Contains(role.Id)) {
@@ -284,7 +284,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.allowedToLink.Add(role.Id);
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
 
             await ReplyAsync($"Role '{role.Name}' is now exempt from link filtering");
         }
@@ -293,7 +293,7 @@ namespace BotCatMaxy {
         [Command("RemoveAllowedLinkRole")]
         [Alias("removeroleallowedtolink")]
         public async Task RemoveAllowedLinkRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
 
             if (settings == null || settings.allowedToLink == null) {
                 await ReplyAsync($"No role is currently excused from posting links");
@@ -301,7 +301,7 @@ namespace BotCatMaxy {
             }
             if (settings.allowedToLink.Contains(role.Id)) {
                 settings.allowedToLink.Remove(role.Id);
-                settings.SaveToFile("moderationSettings.txt", Context.Guild);
+                settings.SaveToFile(Context.Guild);
                 await ReplyAsync($"Role '{role.Name}' is no longer exempt from link filtering");
                 return;
             }
@@ -310,7 +310,7 @@ namespace BotCatMaxy {
         }
 
         [Command("ToggleContainBadWord")]
-        [Alias("togglecontainword")]
+        [Alias("togglecontainword", "togglecontainword")]
         [HasAdmin()]
         public async Task ToggleContainBadWord(string word) {
             BadWords badWords = new BadWords(Context.Guild);
@@ -323,8 +323,8 @@ namespace BotCatMaxy {
                         badWord.partOfWord = true;
                         await ReplyAsync("Set badword to be filtered even if it's inside of another word");
                     }
-
-                    badWords.all.SaveToFile("badwords.json", Context.Guild);
+                    BadWordList badWordList = new BadWordList { badWords = badWords.all };
+                    badWordList.SaveToFile(Context.Guild);
                     return;
                 }
             }
@@ -334,7 +334,7 @@ namespace BotCatMaxy {
         [Command("channeltoggle")]
         [HasAdmin]
         public async Task ToggleAutoMod() {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (settings.channelsWithoutAutoMod.Contains(Context.Channel.Id)) {
                 settings.channelsWithoutAutoMod.Remove(Context.Channel.Id);
@@ -344,33 +344,33 @@ namespace BotCatMaxy {
                 await ReplyAsync("Disabled automod in this channel");
             }
 
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
         }
 
         [Command("addignoredrole")]
         [HasAdmin]
         public async Task AddWarnIgnoredRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             if (settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
             else if (settings.cantBeWarned.Contains(role.Id)) {
                 await ReplyAsync($"Role '{role.Name}' is already not able to be warned");
                 return;
             }
             settings.cantBeWarned.Add(role.Id);
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
             await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
         }
 
         [Command("removeignoredrole")]
         [HasAdmin]
         public async Task RemovedWarnIgnoredRole(SocketRole role) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt");
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null || settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
             else if (settings.cantBeWarned.Contains(role.Id)) {
                 await ReplyAsync($"Role '{role.Name}' is already able to be warned");
             } else {
                 settings.cantBeWarned.Add(role.Id);
-                settings.SaveToFile("moderationSettings.txt", Context.Guild);
+                settings.SaveToFile(Context.Guild);
                 await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
             }
         }
@@ -378,24 +378,24 @@ namespace BotCatMaxy {
         [Command("addallowedlink")]
         [HasAdmin]
         public async Task AddAllowedLink(string link) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             if (settings.allowedLinks == null) settings.allowedLinks = new List<string>();
             settings.allowedLinks.Add(link);
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
             await ReplyAsync("People will now be allowed to use " + link);
         }
 
         [Command("removeallowedlink")]
         [HasAdmin]
         public async Task RemoveAllowedLink(string link) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             if (settings.allowedLinks == null || !settings.allowedLinks.Contains(link)) {
                 await ReplyAsync("Link is already not allowed");
                 return;
             }
             settings.allowedLinks.Remove(link);
             if (settings.allowedLinks.Count == 0) settings.allowedLinks = null;
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
             await ReplyAsync("People will no longer be allowed to use " + link);
         }
 
@@ -403,7 +403,7 @@ namespace BotCatMaxy {
         [HasAdmin]
         public async Task ToggleInviteWarn() {
             IUserMessage message = await ReplyAsync("Trying to toggle");
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>("moderationSettings.txt", true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
             if (settings == null) {
                 settings = new ModerationSettings();
@@ -412,7 +412,7 @@ namespace BotCatMaxy {
             settings.invitesAllowed = !settings.invitesAllowed;
             Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
 
-            settings.SaveToFile("moderationSettings.txt", Context.Guild);
+            settings.SaveToFile(Context.Guild);
 
             await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
         }
@@ -421,21 +421,21 @@ namespace BotCatMaxy {
         [Alias("removebadword")]
         [HasAdmin]
         public async Task RemoveBadWord(string word) {
-            List<BadWord> badWords = Context.Guild.LoadFromFile<List<BadWord>>("badwords.json");
+            BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(true);
 
-            if (badWords == null) {
+            if (badWordsClass == null) {
                 await ReplyAsync("Bad words is null");
                 return;
             }
             BadWord badToRemove = null;
-            foreach (BadWord badWord in badWords) {
+            foreach (BadWord badWord in badWordsClass.badWords) {
                 if (badWord.word == word) {
                     badToRemove = badWord;
                 }
             }
             if (badToRemove != null) {
-                badWords.Remove(badToRemove);
-                badWords.SaveToFile("badwords.json", Context.Guild);
+                badWordsClass.badWords.Remove(badToRemove);
+                badWordsClass.SaveToFile(Context.Guild);
 
                 await ReplyAsync("removed " + word + " from bad word list");
             } else {
@@ -456,13 +456,10 @@ namespace BotCatMaxy {
                 euphemism = euphemism,
                 size = size
             };
-            List<BadWord> badWords = Context.Guild.LoadFromFile<List<BadWord>>("badwords.json");
-
-            if (badWords == null) {
-                badWords = new List<BadWord>();
-            }
-            badWords.Add(badWord);
-            badWords.SaveToFile("badwords.json", Context.Guild);
+            //List<BadWord> badWords = Context.Guild.LoadFromFile<BadWordList>().badWords ?? new List<BadWord>();
+            BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(true);
+            badWordsClass.badWords.Add(badWord);
+            badWordsClass.SaveToFile(Context.Guild);
 
             if (euphemism != null) {
                 await ReplyAsync("added " + badWord.word + " also known as " + euphemism + " to bad word list");
