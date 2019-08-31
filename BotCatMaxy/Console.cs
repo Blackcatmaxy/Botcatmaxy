@@ -44,6 +44,7 @@ namespace BotCatMaxy {
                     break;
                 case "checktempbans":
                     await TempActions.TempActChecker(client, true);
+                    Console.WriteLine("");
                     await (new LogMessage(LogSeverity.Info, "Console", "Checked temp-actions")).Log();
                     break;
                 case "shutdown":

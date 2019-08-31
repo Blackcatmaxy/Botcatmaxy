@@ -180,8 +180,8 @@ namespace BotCatMaxy {
 
         public static string NickOrUsername(this SocketGuildUser user) {
             if (user == null) {
-                new LogMessage(LogSeverity.Critical, "Utility", "User is null");
-                return null;
+                new LogMessage(LogSeverity.Error, "Utility", "User is null");
+                return "``NULL USER``";
             }
             if (user.Nickname.IsNullOrEmpty()) return user.Username;
             else return user.Nickname;

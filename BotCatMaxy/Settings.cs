@@ -234,11 +234,6 @@ namespace BotCatMaxy {
             public DateTime dateBanned;
         }
 
-        public class TempActions {
-            public List<TempAct> tempBans = new List<TempAct>();
-            public List<TempAct> tempMutes = new List<TempAct>();
-        }
-
         public class BadWord {
             public string word;
             public string euphemism;

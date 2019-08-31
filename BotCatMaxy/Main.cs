@@ -8,7 +8,9 @@ using System.IO;
 using MongoDB;
 using MongoDB.Driver;
 using BotCatMaxy.Settings;
+using BotCatMaxy.Data;
 using MongoDB.Bson.Serialization;
+using System.Collections.Generic;
 
 namespace BotCatMaxy {
     public class MainClass {
@@ -32,7 +34,9 @@ namespace BotCatMaxy {
             
             //Maps all the classes
             try {
+                BsonClassMap.RegisterClassMap<List<Infraction>>();
                 BsonClassMap.RegisterClassMap<ModerationSettings>();
+                BsonClassMap.RegisterClassMap<UserInfractions>();
                 BsonClassMap.RegisterClassMap<LogSettings>();
                 BsonClassMap.RegisterClassMap<Infraction>();
                 BsonClassMap.RegisterClassMap<TempAct>();

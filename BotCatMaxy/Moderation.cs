@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BotCatMaxy.Settings;
@@ -13,8 +14,8 @@ using Discord;
 using System;
 
 namespace BotCatMaxy {
-    [Serializable]
-    public struct Infraction {
+    public class Infraction {
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime time;
         public string logLink;
         public string reason;
@@ -31,7 +32,7 @@ namespace BotCatMaxy {
             }
         }
 
-        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string dir = "Discord", string logLink = null) {
+        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string logLink = null) {
             try {
                 if (user.CantBeWarned()) {
                     await context.Channel.SendMessageAsync("This person can't be warned");
@@ -43,7 +44,7 @@ namespace BotCatMaxy {
                     return;
                 }
 
-                List<Infraction> infractions = user.LoadInfractions(dir, true);
+                List<Infraction> infractions = user.LoadInfractions(true);
                 Infraction newInfraction = new Infraction {
                     reason = reason,
                     time = DateTime.Now,
@@ -51,7 +52,7 @@ namespace BotCatMaxy {
                 };
                 if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
                 infractions.Add(newInfraction);
-                user.SaveInfractions(infractions, dir);
+                user.SaveInfractions(infractions);
 
                 IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
                 if (!users.Contains(user)) {
@@ -73,8 +74,7 @@ namespace BotCatMaxy {
             }
         }
 
-        public static Embed CheckInfractions(this SocketGuildUser user, string dir = "Discord", int amount = 5, bool showLinks = false) {
-            List<Infraction> infractions = user.LoadInfractions(dir, false);
+        public static Embed GetEmbed(this List<Infraction> infractions, SocketGuildUser user, string dir = "Discord", int amount = 5, bool showLinks = false) {
             List<string> infractionStrings = new List<string>();
             infractionStrings.Add("");
 
@@ -157,25 +157,25 @@ namespace BotCatMaxy {
             return embed.Build();
         }
 
-        public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, List<TempAct> tempBans = null) {
+        public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) {
             TempAct tempBan = new TempAct(user.Id, time, reason);
-            if (tempBans == null) tempBans = context.Guild.LoadFromFile<List<TempAct>>(true);
-            tempBans.Add(tempBan);
-            tempBans.SaveToFile(context.Guild);
+            if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
+            actions.tempBans.Add(tempBan);
+            actions.SaveToFile(context.Guild);
             try {
                 await user.Notify($"tempbanned for {time.Humanize()}", reason, context.Guild, context.Message.Author);
-            } catch  (Exception e) {
+            } catch (Exception e) {
                 if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
             }
             await context.Guild.AddBanAsync(user, reason: reason);
             Logging.LogTempAct(context.Guild, context.User, user, "bann", reason, context.Message.GetJumpUrl(), time);
         }
 
-        public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, List<TempAct> tempMutes = null) {
+        public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, TempActionList actions = null) {
             TempAct tempMute = new TempAct(user.Id, time, reason);
-            if (tempMutes == null) tempMutes = context.Guild.LoadFromFile<List<TempAct>>(true);
-            tempMutes.Add(tempMute);
-            tempMutes.SaveToFile(context.Guild);
+            if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
+            actions.tempMutes.Add(tempMute);
+            actions.SaveToFile(context.Guild);
             try {
                 await user.Notify($"tempmuted for {time.Humanize()}", reason, context.Guild, context.Message.Author);
             } catch (Exception e) {
@@ -200,128 +200,8 @@ namespace BotCatMaxy {
         }
     }
 
-    [Group("games")]
-    [Alias("game")]
     [RequireContext(ContextType.Guild)]
-    public class GameWarnModule : ModuleBase<SocketCommandContext> {
-        [Command("warn")]
-        [CanWarn()]
-        public async Task WarnUserAsync(SocketGuildUser user, float size, [Remainder] string reason) {
-            await user.Warn(size, reason, Context, "Games");
-
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
-        }
-
-        [Command("warn")]
-        [CanWarn()]
-        public async Task WarnUserSmallSizeAsync(SocketGuildUser user, [Remainder] string reason) {
-            await user.Warn(1, reason, Context, "Games");
-
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions("Games").Count.Suffix() + " infraction for " + reason);
-        }
-
-        [Command("warns")]
-        [RequireContext(ContextType.Guild)]
-        [Alias("infractions", "warnings")]
-        public async Task CheckUserWarnsAsync(SocketGuildUser user = null, int amount = 5) {
-            if (user == null) {
-                user = Context.Message.Author as SocketGuildUser;
-            }
-
-            string guildDir = Context.Guild.GetPath(false);
-
-            if (Directory.Exists(guildDir) && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions("Games", amount));
-            } else {
-                await ReplyAsync(user.Username + " has no warns");
-            }
-        }
-
-        [Command("removewarn")]
-        [Alias("warnremove", "removewarning")]
-        [HasAdmin()]
-        public async Task RemooveWarnAsync(SocketGuildUser user, int index) {
-            string guildDir = user.Guild.GetPath(true);
-            if (guildDir != null && File.Exists(guildDir + "/Infractions/Games/" + user.Id)) {
-                List<Infraction> infractions = user.LoadInfractions();
-
-                if (infractions.Count < index || index <= 0) {
-                    await ReplyAsync("invalid infraction number");
-                } else if (infractions.Count == 1) {
-                    await ReplyAsync("removed " + user.Username + "'s warning for " + infractions[0]);
-                    File.Delete(guildDir + "/Infractions/Games/" + user.Id);
-                } else {
-                    string reason = infractions[index - 1].reason;
-                    infractions.RemoveAt(index - 1);
-
-                    user.SaveInfractions(infractions, "Games");
-
-                    await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
-                }
-            } else {
-                await ReplyAsync(user.Username + " has no warns");
-            }
-        }
-    }
-
-    [RequireContext(ContextType.Guild)]
-    public class ModerationCommands : ModuleBase<SocketCommandContext> {
-        [Command("moderationInfo")]
-        public async Task ModerationInfo() {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (settings == null) {
-                _ = ReplyAsync("Moderation settings are null");
-                return;
-            }
-
-            var embed = new EmbedBuilder();
-            string rolesAbleToWarn = "";
-            foreach (SocketRole role in Context.Guild.Roles) {
-                if (role.Permissions.KickMembers && !role.IsManaged) {
-                    if (rolesAbleToWarn != "") {
-                        rolesAbleToWarn += "\n";
-                    }
-                    if (role.IsMentionable) {
-                        rolesAbleToWarn += role.Mention;
-                    } else {
-                        rolesAbleToWarn += role.Name;
-                    }
-                }
-            }
-
-            if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
-                embed.AddField("Are links allowed?", "Links are not auto-moderated  ", true);
-            } else {
-                embed.AddField("Are links allowed?", "Links are auto-moderated  ", true);
-            }
-
-            if (settings.ableToWarn != null && settings.ableToWarn.Count > 0) {
-                foreach (ulong roleID in settings.ableToWarn) {
-                    SocketRole role = Context.Guild.GetRole(roleID);
-                    if (role != null) {
-                        if (rolesAbleToWarn != "") {
-                            rolesAbleToWarn += "\n";
-                        }
-                        if (role.IsMentionable) {
-                            rolesAbleToWarn += role.Mention;
-                        } else {
-                            rolesAbleToWarn += role.Name;
-                        }
-                    } else {
-                        settings.ableToWarn.Remove(roleID);
-                    }
-                }
-            }
-            embed.AddField("Roles that can warn", rolesAbleToWarn, true);
-            embed.AddField("Will invites lead to warn", !settings.invitesAllowed, true);
-            await ReplyAsync(embed: embed.Build());
-        }
-    }
-
-    [Group("discord")]
-    [Alias("general", "chat", "")]
-    [RequireContext(ContextType.Guild)]
-    public class DiscordWarnModule : ModuleBase<SocketCommandContext> {
+    public class DiscordModModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
@@ -355,22 +235,21 @@ namespace BotCatMaxy {
             string username;
             if (!user.Nickname.IsNullOrEmpty()) username = user.Nickname.StrippedOfPing();
             else username = user.Username.StrippedOfPing();
-            if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
+
+            List<Infraction> infractions = user.LoadInfractions(false);
+            if (!infractions.IsNullOrEmpty()) {
                 try {
-                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: user.CheckInfractions(amount: amount));
+                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: infractions.GetEmbed(user, amount: amount));
                 } catch {
                     await ReplyAsync("Something went wrong DMing you their infractions. Check your privacy settings and make sure the amount isn't too high");
                     return;
                 }
             } else {
-                await ReplyAsync(username + " has no warns");
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} has no infractions");
                 return;
             }
-
-            List<Infraction> infractions = user.LoadInfractions();
             string quantity = "infraction".ToQuantity(infractions.Count);
-            if (amount >= infractions.Count)
-                await ReplyAsync($"DMed you {username}'s {quantity}");
+            if (amount >= infractions.Count) await ReplyAsync($"DMed you {username}'s {quantity}");
             else await ReplyAsync($"DMed you {username}'s last {amount} out of {quantity}");
         }
 
@@ -385,11 +264,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead");
                 return;
             }
-            if (Directory.Exists(Context.Guild.GetPath(false)) && File.Exists(Context.Guild.GetPath(false) + "/Infractions/Discord/" + user.Id)) {
-                await ReplyAsync(embed: user.CheckInfractions(amount: amount, showLinks: true));
-            } else {
-                await ReplyAsync(user.Username + " has no warns");
+
+            List<Infraction> infractions = user.LoadInfractions(false);
+            if (infractions.IsNullOrEmpty()) {
+                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} has no infractions");
+                return;
             }
+            await ReplyAsync(embed: infractions.GetEmbed(user, amount: amount, showLinks: true));
         }
 
         [Command("removewarn")]
@@ -397,25 +278,22 @@ namespace BotCatMaxy {
         [HasAdmin()]
         public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
             string guildDir = user.Guild.GetPath(false);
-            if (guildDir != null && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
-                List<Infraction> infractions = user.LoadInfractions();
-
-                if (infractions.Count < index || index <= 0) {
-                    await ReplyAsync("invalid infraction number");
-                } else if (infractions.Count == 1) {
-                    await ReplyAsync("removed " + user.Username + "'s warning for " + infractions[index - 1].reason);
-                    File.Delete(guildDir + "/Infractions/Discord/" + user.Id);
-                } else {
-                    string reason = infractions[index - 1].reason;
-                    infractions.RemoveAt(index - 1);
-
-                    user.SaveInfractions(infractions, "Discord");
-
-                    await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
-                }
-            } else {
-                await ReplyAsync(user.Username + " has no warns");
+            List<Infraction> infractions = user.LoadInfractions();
+            if (infractions.IsNullOrEmpty()) {
+                await ReplyAsync("Infractions are null");
+                return;
             }
+            if (infractions.Count < index || index <= 0) {
+                await ReplyAsync("Invalid infraction number");
+                return;
+            }
+            string reason = infractions[index - 1].reason;
+            infractions.RemoveAt(index - 1);
+
+            user.SaveInfractions(infractions);
+
+            await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
+
         }
 
         [Command("kickwarn")]
@@ -454,13 +332,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>(true);
-            if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
                 return;
             }
             IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempBan(amount.Value, reason, Context, tempBans);
+            await user.TempBan(amount.Value, reason, Context, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
@@ -480,13 +358,13 @@ namespace BotCatMaxy {
             }
 
             await user.Warn(1, reason, Context, "Discord");
-            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>(true);
-            if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
                 return;
             }
             IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempBan(amount.Value, reason, Context, tempBans);
+            await user.TempBan(amount.Value, reason, Context, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
@@ -506,13 +384,13 @@ namespace BotCatMaxy {
             }
 
             await user.Warn(size, reason, Context, "Discord");
-            List<TempAct> tempBans = Context.Guild.LoadFromFile<List<TempAct>>(true);
-            if (!tempBans.IsNullOrEmpty() && tempBans.Any(tempBan => tempBan.user == user.Id)) {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
                 return;
             }
             IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempBan(amount.Value, reason, Context, tempBans);
+            await user.TempBan(amount.Value, reason, Context, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
@@ -535,14 +413,14 @@ namespace BotCatMaxy {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>(true);
-            if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted");
                 return;
             }
 
             IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempMute(amount.Value, reason, Context, settings);
+            await user.TempMute(amount.Value, reason, Context, settings, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
@@ -566,14 +444,14 @@ namespace BotCatMaxy {
                 return;
             }
             await user.Warn(1, reason, Context, "Discord");
-            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>(true);
-            if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
                 return;
             }
 
             IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempMute(amount.Value, reason, Context, settings);
+            await user.TempMute(amount.Value, reason, Context, settings, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
 
@@ -597,14 +475,14 @@ namespace BotCatMaxy {
                 return;
             }
             await user.Warn(size, reason, Context, "Discord");
-            List<TempAct> tempMutes = Context.Guild.LoadFromFile<List<TempAct>>(true);
-            if (!tempMutes.IsNullOrEmpty() && tempMutes.Any(tempMute => tempMute.user == user.Id)) {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
                 return;
             }
 
             IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
-            await user.TempMute(amount.Value, reason, Context, settings);
+            await user.TempMute(amount.Value, reason, Context, settings, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
     }

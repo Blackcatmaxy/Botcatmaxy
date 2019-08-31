@@ -150,7 +150,7 @@ namespace BotCatMaxy {
             string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
             await ((SocketGuildUser)context.User).Warn(warnSize, reason, context, logLink: jumpLink);
 
-            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions("Discord").Count.Suffix()} infraction because of {reason}");
+            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
             try {
                 await context.Message.DeleteAsync();
             } catch {

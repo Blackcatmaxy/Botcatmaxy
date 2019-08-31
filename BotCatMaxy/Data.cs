@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace BotCatMaxy.Data {
     public static class SettingsData {
@@ -43,7 +44,31 @@ namespace BotCatMaxy.Data {
             }*/
         }
 
-        public static List<Infraction> LoadInfractions(this SocketGuildUser user, string dir = "Discord", bool createDir = false) {
+        public static IMongoCollection<BsonDocument> GetInfractionsCollection(this IGuild guild, bool createDir = true) {
+            var db = MainClass.dbClient.GetDatabase("Infractions");
+            var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
+            var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
+            if (guildCollection.CountDocuments(new BsonDocument()) > 0) {
+                return guildCollection;
+            } else if (ownerCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
+                return ownerCollection;
+            }
+
+            return null;
+        }
+
+        public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) {
+            var collection = user.Guild.GetInfractionsCollection(createDir);
+            if (collection == null) return null;
+            List<Infraction> infractions = null;
+
+            using (var cursor = collection.Find(Builders<BsonDocument>.Filter.Eq("_id", user.Id)).ToCursor()) {
+                var doc = cursor.FirstOrDefault();
+                //var options = new BsonTypeMapperOptions { MapBsonDocumentTo = typeof(T) };
+                if (doc != null) infractions = BsonSerializer.Deserialize<UserInfractions>(doc).infractions;
+            }
+            if (infractions == null && createDir) infractions = new List<Infraction>();
+            return infractions;
             /*List<Infraction> infractions = new List<Infraction>();
             string guildDir = user.Guild.GetPath(createDir);
 
@@ -57,15 +82,30 @@ namespace BotCatMaxy.Data {
                     infractions.Add(infraction);
                 }
             }*/
-            return null;
         }
 
-        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions, string dir = "Discord") {
+        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) {
+            var collection = user.Guild.GetInfractionsCollection(true);
+            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", Builders<BsonDocument>.Filter.Eq("_id", user.Id)));
+            collection.InsertOne(new UserInfractions { ID = user.Id, infractions = infractions }.ToBsonDocument());
             /*BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
             bf.Serialize(file, infractions.ToArray());
             file.Close();*/
         }
+    }
+
+    public class UserInfractions {
+        [BsonId]
+        public ulong ID = 0;
+        public List<Infraction> infractions = new List<Infraction>();
+    }
+
+    public class TempActionList {
+        [BsonId]
+        public string ID = "TempActionList";
+        public List<TempAct> tempBans = new List<TempAct>();
+        public List<TempAct> tempMutes = new List<TempAct>();
     }
 
     public class BadWords {
