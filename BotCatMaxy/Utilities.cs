@@ -190,10 +190,14 @@ namespace BotCatMaxy {
         public static TimeSpan? ToTime(this string s) {
             try {
                 string intString = s.Remove(s.Length - 1);
-                if (s.ToLower().EndsWith('d')) {
+                 if (s.ToLower().EndsWith("w")) {
+                    return TimeSpan.FromDays(double.Parse(intString) * 7);
+                } else if (s.ToLower().EndsWith('d')) {
                     return TimeSpan.FromDays(double.Parse(intString));
                 } else if (s.ToLower().EndsWith('h')) {
                     return TimeSpan.FromHours(double.Parse(intString));
+                } else if (s.ToLower().EndsWith("mi")) {
+                    return TimeSpan.FromMinutes(double.Parse(intString));
                 }
             } catch {
             }
