@@ -83,7 +83,7 @@ namespace BotCatMaxy.Data {
 
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) {
             var collection = user.Guild.GetInfractionsCollection(true);
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", Builders<BsonDocument>.Filter.Eq("_id", user.Id)));
+            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", user.Id));
             collection.InsertOne(new UserInfractions { ID = user.Id, infractions = infractions }.ToBsonDocument());
             /*BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);

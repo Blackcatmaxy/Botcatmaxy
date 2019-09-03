@@ -34,24 +34,6 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static string GetPath(this IGuild guild, bool createDir = true) {
-            /*string ownerPath = guild.OwnerId.ToString();
-            string guildPath = guild.Id.ToString();
-            using (LiteRepository guildRep = new LiteRepository(guildPath))
-            using (LiteRepository ownerRep = new LiteRepository(guildPath)) {
-                if (guildRep.SingleOrDefault<object>() != null) {
-                    return guildPath;
-                } else if (ownerRep.SingleOrDefault<object>() != null) {
-                    return ownerPath;
-                } else {
-                    if (createDir) {
-                        return ownerPath;
-                    } else return null;
-                }
-            }*/
-            return null;
-        }
-
         public static bool HasAdmin(this SocketGuildUser user) {
             if (user.Guild.Owner == user) {
                 return true;
@@ -127,13 +109,16 @@ namespace BotCatMaxy {
         public static async Task Log(this LogMessage message) {
             switch (message.Severity) {
                 case LogSeverity.Critical:
-                    logger.Fatal(message.Message);
+                    if(message.Exception != null) logger.Fatal(message.Exception, message.Message);
+                    else logger.Fatal(message.Message);
                     break;
                 case LogSeverity.Error:
-                    logger.Error(message.Message);
+                    if (message.Exception != null) logger.Error(message.Exception, message.Message);
+                    else logger.Error(message.Message);
                     break;
                 case LogSeverity.Warning:
-                    logger.Warning(message.Message);
+                    if (message.Exception != null) logger.Warning(message.Exception, message.Message);
+                    else logger.Warning(message.Message);
                     break;
                 case LogSeverity.Info:
                     logger.Information(message.Message);

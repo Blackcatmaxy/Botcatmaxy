@@ -18,12 +18,12 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         public async Task SettingsInfo() {
             var embed = new EmbedBuilder();
-            string guildDir = Context.Guild.GetPath(false);
+            var guildDir = Context.Guild.GetCollection(false);
             if (guildDir == null) {
                 embed.AddField("Storage", "Not created yet", true);
-            } else if (guildDir.Contains(Context.Guild.OwnerId.ToString())) {
+            } else if (guildDir.CollectionNamespace.CollectionName == Context.Guild.OwnerId.ToString()) {
                 embed.AddField("Storage", "Using Owner's ID", true);
-            } else if (guildDir.Contains(Context.Guild.Id.ToString())) {
+            } else if (guildDir.CollectionNamespace.CollectionName == Context.Guild.Id.ToString()) {
                 embed.AddField("Storage", "Using Guild ID", true);
             }
 

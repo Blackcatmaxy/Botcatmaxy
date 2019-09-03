@@ -277,7 +277,6 @@ namespace BotCatMaxy {
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
         public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
-            string guildDir = user.Guild.GetPath(false);
             List<Infraction> infractions = user.LoadInfractions();
             if (infractions.IsNullOrEmpty()) {
                 await ReplyAsync("Infractions are null");
@@ -291,9 +290,7 @@ namespace BotCatMaxy {
             infractions.RemoveAt(index - 1);
 
             user.SaveInfractions(infractions);
-
             await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
-
         }
 
         [Command("kickwarn")]

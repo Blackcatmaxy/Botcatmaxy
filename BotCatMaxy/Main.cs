@@ -12,6 +12,7 @@ using BotCatMaxy.Settings;
 using BotCatMaxy.Data;
 using MongoDB.Bson.Serialization;
 using System.Collections.Generic;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace BotCatMaxy {
     public class MainClass {
@@ -21,6 +22,7 @@ namespace BotCatMaxy {
 #if DEBUG
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
             new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
+            dbClient = new MongoClient(HiddenInfo.debugDB);
 #endif
             if (args.NotEmpty(1)) new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
             else if (args.NotEmpty(0)) new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
@@ -35,7 +37,7 @@ namespace BotCatMaxy {
 
             Utilities.logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.Console()
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.File($"{Utilities.BasePath}/log.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
@@ -51,7 +53,7 @@ namespace BotCatMaxy {
             } catch (Exception e) {
                 await (new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e)).Log();
             }
-            dbClient = new MongoClient(HiddenInfo.debugDB);
+            
 
             //Sets up the events
             _client = new DiscordSocketClient(config);
@@ -60,7 +62,9 @@ namespace BotCatMaxy {
 
             if (beCanary != null && beCanary.ToLower() == "canary") {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
+                dbClient = new MongoClient(HiddenInfo.debugDB);
             } else {
+                if (dbClient == null) dbClient = new MongoClient(HiddenInfo.mainDB);
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
             }
 

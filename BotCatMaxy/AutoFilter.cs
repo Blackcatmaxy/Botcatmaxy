@@ -33,14 +33,13 @@ namespace BotCatMaxy {
                     return; //Makes sure it's not logging a message from a bot and that it's in a discord server
                 }
                 SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
-                var chnl = message.Channel as SocketGuildChannel;
-                var Guild = chnl.Guild;
-                string guildDir = Guild.GetPath();
+                SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
 
-                if (Guild == null || !Directory.Exists(guildDir)) return;
+                if (chnl == null) return;
+                var Guild = chnl?.Guild;
                 ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>();
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
-                List<BadWord> badWords = Guild.LoadFromFile<List<BadWord>>();
+                List<BadWord> badWords = Guild.LoadFromFile<BadWordList>().badWords;
 
                 if (modSettings != null) {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())
@@ -80,7 +79,7 @@ namespace BotCatMaxy {
                 }
 
                 //Checks for bad words
-                if (File.Exists(guildDir + "/badwords.json")) {
+                if (badWords != null) {
                     StringBuilder sb = new StringBuilder();
                     foreach (char c in message.Content) {
                         switch (c) {

@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using BotCatMaxy.Data;
+using MongoDB.Bson;
 using System.Linq;
 using System.Text;
 using BotCatMaxy;
 using System.IO;
 using Discord;
 using System;
-
+using MongoDB;
+using MongoDB.Driver;
+using MongoDB.Bson.Serialization;
 
 namespace BotCatMaxy {
     public class ConsoleReader {
@@ -44,7 +48,6 @@ namespace BotCatMaxy {
                     break;
                 case "checktempbans":
                     await TempActions.TempActChecker(client, true);
-                    Console.WriteLine("");
                     await (new LogMessage(LogSeverity.Info, "Console", "Checked temp-actions")).Log();
                     break;
                 case "shutdown":
@@ -57,19 +60,12 @@ namespace BotCatMaxy {
                     ulong members = 0;
                     foreach (SocketGuild guild in client.Guilds) {
                         members += (ulong)guild.MemberCount;
-                        string guildDir = guild.GetPath(false);
+                        var collection = guild.GetInfractionsCollection(false);
 
-                        if (!guildDir.IsNullOrEmpty()) {
-                            foreach (SocketUser user in guild.Users) {
-                                if (Directory.Exists(guildDir + "/Infractions/Discord") && File.Exists(guildDir + "/Infractions/Discord/" + user.Id)) {
-                                    BinaryFormatter newbf = new BinaryFormatter();
-                                    FileStream newFile = File.Open(guildDir + "/Infractions/Discord/" + user.Id, FileMode.Open);
-                                    Infraction[] oldInfractions;
-                                    oldInfractions = (Infraction[])newbf.Deserialize(newFile);
-                                    newFile.Close();
-                                    foreach (Infraction infraction in oldInfractions) {
-                                        infractions++;
-                                    }
+                        if (collection != null) {
+                            using (var cursor = collection.Find(new BsonDocument()).ToCursor()) {
+                                foreach (var doc in cursor.ToList()) {
+                                    infractions += (ulong)BsonSerializer.Deserialize<UserInfractions>(doc).infractions.Count;
                                 }
                             }
                         }

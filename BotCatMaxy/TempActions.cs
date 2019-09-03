@@ -25,8 +25,8 @@ namespace BotCatMaxy {
         }
 
         async Task CheckNewUser(SocketGuildUser user) {
-            string guildDir = user.Guild.GetPath(false);
-            if (guildDir == null || !Directory.Exists(guildDir) || !File.Exists(guildDir + "/tempMutes.json")) return;
+            var guildDir = user.Guild.GetCollection(false);
+            if (guildDir == null) return;
             ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
             if (settings == null || user.Guild.GetRole(settings.mutedRole) == null) return;
             if (user.Guild.LoadFromFile<List<TempAct>>().Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
@@ -36,7 +36,10 @@ namespace BotCatMaxy {
             try {
                 int checkedGuilds = 0;
                 foreach (SocketGuild guild in client.Guilds) {
-                    if (debug) Console.Write($"\nChecking {guild.Name} discord ");
+                    if (debug) {
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.Write($"\nChecking {guild.Name} discord ");
+                    }
                     TempActionList actions = guild.LoadFromFile<TempActionList>(false);
                     bool needSave = false;
                     checkedGuilds++;
@@ -97,8 +100,7 @@ namespace BotCatMaxy {
                                 actions.tempMutes = editedMutes;
                                 needSave = true;
                             } else if (debug) Console.Write($"no tempmute changes");
-                            else if (debug) Console.Write("no tempmutes to check or no settings");
-                        }
+                        } else if (debug) Console.Write("no tempmutes to check or no settings");
                         if (needSave) actions.SaveToFile(guild);
                     }
                 }
