@@ -14,10 +14,12 @@ using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System.Collections;
+using Serilog;
 
 namespace BotCatMaxy {
     public static class Utilities {
         public static string BasePath = "/home/bob_the_daniel/Data/";
+        public static ILogger logger;
 
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true) {
             var db = MainClass.dbClient.GetDatabase("Settings");
@@ -123,19 +125,25 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
-            if (message.Severity == LogSeverity.Error || message.Severity == LogSeverity.Critical) {
-                Console.ForegroundColor = ConsoleColor.Red;
-            } else if (message.Severity == LogSeverity.Warning) {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-            } else if (message.Severity == LogSeverity.Info) {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-            }
-
-            Console.WriteLine(message);
-            Console.ResetColor();
-
-            using (StreamWriter w = File.AppendText(BasePath + "log.txt")) {
-                w.WriteLine(message);
+            switch (message.Severity) {
+                case LogSeverity.Critical:
+                    logger.Fatal(message.Message);
+                    break;
+                case LogSeverity.Error:
+                    logger.Error(message.Message);
+                    break;
+                case LogSeverity.Warning:
+                    logger.Warning(message.Message);
+                    break;
+                case LogSeverity.Info:
+                    logger.Information(message.Message);
+                    break;
+                case LogSeverity.Verbose:
+                    logger.Verbose(message.Message);
+                    break;
+                case LogSeverity.Debug:
+                    logger.Debug(message.Message);
+                    break;
             }
         }
 
@@ -207,6 +215,11 @@ namespace BotCatMaxy {
         public static bool IsNullOrEmpty(this IEnumerable<object> list) {
             if (list == null || list.ToArray().Length == 0) return true;
             else return false;
+        }
+
+        public static bool NotEmpty(this IEnumerable<object> list, int needAmount) {
+            if (list == null || list.ToArray().Length <= needAmount) return false;
+            else return true;
         }
     }
 }

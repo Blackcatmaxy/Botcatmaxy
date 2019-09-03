@@ -8,9 +8,6 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using BotCatMaxy.Settings;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace BotCatMaxy.Data {

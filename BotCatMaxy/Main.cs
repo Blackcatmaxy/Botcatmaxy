@@ -1,5 +1,6 @@
 ﻿using System.Timers;
 using System;
+using Serilog;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -21,7 +22,9 @@ namespace BotCatMaxy {
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
             new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
 #endif
-            new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
+            if (args.NotEmpty(1)) new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
+            else if (args.NotEmpty(0)) new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
+            else new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();   
         }
 
         public async Task MainAsync(string version = null, string beCanary = null) {
@@ -30,8 +33,12 @@ namespace BotCatMaxy {
                 MessageCacheSize = 120
             };
 
-            File.CreateText(Utilities.BasePath + "log.txt").Close();
-            
+            Utilities.logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.File($"{Utilities.BasePath}/log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
             //Maps all the classes
             try {
                 BsonClassMap.RegisterClassMap<List<Infraction>>();
@@ -44,7 +51,7 @@ namespace BotCatMaxy {
             } catch (Exception e) {
                 await (new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e)).Log();
             }
-            dbClient = new MongoClient($"mongodb+srv://blackcatmaxy:{HiddenInfo.debugDB}@debug-1mymg.gcp.mongodb.net/test?retryWrites=true&w=majority");
+            dbClient = new MongoClient(HiddenInfo.debugDB);
 
             //Sets up the events
             _client = new DiscordSocketClient(config);
