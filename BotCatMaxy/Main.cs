@@ -87,9 +87,6 @@ namespace BotCatMaxy {
 
             //Debug info
             await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
-            if (!Directory.Exists(Utilities.BasePath)) {
-                await new LogMessage(LogSeverity.Error, "Main", "Data Folder not found").Log();
-            }
 
             await Task.Delay(-1);
         }

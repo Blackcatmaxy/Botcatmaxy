@@ -98,8 +98,8 @@ namespace BotCatMaxy {
                     }
                 }
 
-                LogSettings settings = guild.LoadFromFile<LogSettings>();
-                SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
+                LogSettings settings = guild?.LoadFromFile<LogSettings>();
+                SocketTextChannel logChannel = guild?.GetChannel(settings.logChannel) as SocketTextChannel;
                 if (settings == null || logChannel == null || !settings.logDeletes) {
                     return null;
                 }

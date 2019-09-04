@@ -35,8 +35,8 @@ namespace BotCatMaxy {
                 SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
                 SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
 
-                if (chnl == null) return;
-                var Guild = chnl?.Guild;
+                if (chnl?.Guild == null) return;
+                var Guild = chnl.Guild;
                 ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>();
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
                 List<BadWord> badWords = Guild.LoadFromFile<BadWordList>().badWords;

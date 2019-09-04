@@ -28,8 +28,9 @@ namespace BotCatMaxy {
             var guildDir = user.Guild.GetCollection(false);
             if (guildDir == null) return;
             ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings == null || user.Guild.GetRole(settings.mutedRole) == null) return;
-            if (user.Guild.LoadFromFile<List<TempAct>>().Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
+            TempActionList actions = user.Guild.LoadFromFile<TempActionList>();
+            if (settings == null || user.Guild.GetRole(settings.mutedRole) == null || actions == null || actions.tempMutes.IsNullOrEmpty()) return;
+            if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
         public static async Task TempActChecker(DiscordSocketClient client, bool debug = false) {
