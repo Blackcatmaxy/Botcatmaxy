@@ -19,8 +19,8 @@ namespace BotCatMaxy.Data {
             if (collection != null) {
                 //var newFileDoc = Activator.CreateInstance(typeof(T)).ToBsonDocument();
                 var filter = Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name);
-                using (var cursor = collection.Find(filter)?.ToCursor()) {
-                    var doc = cursor.FirstOrDefault();
+                using (var cursor = collection.Find(filter).ToCursor()) {
+                    var doc = cursor?.FirstOrDefault();
                     //var options = new BsonTypeMapperOptions { MapBsonDocumentTo = typeof(T) };
                     if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
