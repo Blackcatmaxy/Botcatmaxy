@@ -446,10 +446,6 @@ namespace BotCatMaxy {
         [Alias("addbadword")]
         [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f) {
-            if (!((SocketGuildUser)Context.User).HasAdmin()) {
-                await ReplyAsync("You do have administrator permission");
-                return;
-            }
             BadWord badWord = new BadWord {
                 word = word,
                 euphemism = euphemism,

@@ -66,9 +66,13 @@ namespace BotCatMaxy.Data {
         }
 
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) {
-            var collection = user.Guild.GetInfractionsCollection(true);
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", user.Id));
-            collection.InsertOne(new UserInfractions { ID = user.Id, infractions = infractions }.ToBsonDocument());
+            user.Id.SaveInfractions(user.Guild, infractions);
+        }
+
+        public static void SaveInfractions(this ulong userID, IGuild guild, List<Infraction> infractions) {
+            var collection = guild.GetInfractionsCollection(true);
+            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", userID));
+            collection.InsertOne(new UserInfractions { ID = userID, infractions = infractions }.ToBsonDocument());
         }
     }
 

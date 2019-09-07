@@ -22,11 +22,9 @@ namespace BotCatMaxy {
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.File($"{Utilities.BasePath}/log.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
-
 #if DEBUG
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
             dbClient = new MongoClient(HiddenInfo.debugDB);
-            new LogMessage(LogSeverity.Info, "Main", "Logging in to DB with key: " + HiddenInfo.debugDB).Log();
             new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
 #endif
             if (args.NotEmpty(1)) new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();

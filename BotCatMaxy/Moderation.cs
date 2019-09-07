@@ -40,29 +40,40 @@ namespace BotCatMaxy {
                     return;
                 }
 
-                if (size > 999 || size < 0.01) {
-                    await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
-                    return;
-                }
-
-                List<Infraction> infractions = user.LoadInfractions(true);
-                Infraction newInfraction = new Infraction {
-                    reason = reason,
-                    time = DateTime.Now,
-                    size = size
-                };
-                if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
-                infractions.Add(newInfraction);
-                user.SaveInfractions(infractions);
-
-                IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
-                if (!users.Contains(user)) {
-                    IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-                    if (DM != null)
-                        await DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
-                }
+                await user.Id.Warn(size, reason, context, logLink);
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
+            }
+        }
+
+        public static async Task Warn(this ulong userID, float size, string reason, SocketCommandContext context, string logLink = null) {
+            if (size > 999 || size < 0.01) {
+                await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                return;
+            }
+
+            List<Infraction> infractions = userID.LoadInfractions(context.Guild, true);
+            Infraction newInfraction = new Infraction {
+                reason = reason,
+                time = DateTime.Now,
+                size = size
+            };
+            if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
+            infractions.Add(newInfraction);
+            userID.SaveInfractions(context.Guild, infractions);
+            
+            try {
+                IUser user = context.Client.GetUser(userID);
+                if (user != null) {
+                    IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
+                    if (!users.Any(xUser => xUser.Id == userID)) {
+                        IDMChannel DM = await user.GetOrCreateDMChannelAsync();
+                        if (DM != null)
+                            await DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+                    }
+                }
+            } catch {
+
             }
         }
         public struct InfractionsInDays {
@@ -208,7 +219,7 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason, Context.Message.GetJumpUrl());
+            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
             await user.Warn(1, reason, Context, logLink: jumpLink);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
@@ -218,7 +229,7 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user, reason, Context.Message.GetJumpUrl());
+            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
             await user.Warn(size, reason, Context, logLink: jumpLink);
 
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);

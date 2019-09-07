@@ -138,17 +138,22 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static string LogWarn(IGuild guild, IUser warner, SocketGuildUser warnee, string reason, string warnLink) {
+        public static string LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return null;
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
-                if (warnee.Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
-                else
-                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                IGuildUser gWarnee = guild.GetUserAsync(warneeID).Result;
+                if (gWarnee != null) {
+                    if (gWarnee.Nickname.IsNullOrEmpty())
+                        embed.AddField($"{gWarnee.Username} ({gWarnee.Id}) has been warned", "For " + reason);
+                    else
+                        embed.AddField($"{gWarnee.Nickname} aka {gWarnee.Username} ({warneeID}) has been warned", "For " + reason);
+                } else
+                    embed.AddField($"({warneeID}) has been warned", "For " + reason);
+
                 if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Gold);
                 embed.WithCurrentTimestamp();
