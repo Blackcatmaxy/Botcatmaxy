@@ -65,96 +65,97 @@ namespace BotCatMaxy {
                 await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
             }
         }
-        struct InfractionsInDays {
+        public struct InfractionsInDays {
             public float sum;
             public int count;
+        }
 
-            public InfractionsInDays(int x, float y) {
-                sum = y;
-                count = x;
+        public struct InfractionInfo {
+            public InfractionsInDays infractionsToday;
+            public InfractionsInDays infractions30Days;
+            public InfractionsInDays totalInfractions;
+            public InfractionsInDays infractions7Days;
+            public List<string> infractionStrings;
+            public InfractionInfo(List<Infraction> infractions,int amount = 5, bool showLinks = false) {
+                infractionsToday = new InfractionsInDays();
+                infractions30Days = new InfractionsInDays();
+                totalInfractions = new InfractionsInDays();
+                infractions7Days = new InfractionsInDays();
+                infractionStrings = new List<string> { "" };
+                
+
+                infractions.Reverse();
+                if (infractions.Count < amount) {
+                    amount = infractions.Count;
+                }
+                int n = 0;
+                for (int i = 0; i < infractions.Count; i++) {
+                    Infraction infraction = infractions[i];
+
+                    //Gets how long ago all the infractions were
+                    TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
+                    totalInfractions.sum += infraction.size;
+                    totalInfractions.count++;
+                    if (dateAgo.Days <= 7) {
+                        infractions7Days.sum += infraction.size;
+                        infractions7Days.count++;
+                    }
+                    if (dateAgo.Days <= 30) {
+                        infractions30Days.sum += infraction.size;
+                        infractions30Days.count++;
+                        if (dateAgo.Days < 1) {
+                            infractionsToday.sum += infraction.size;
+                            infractionsToday.count++;
+                        }
+                    }
+
+                    string size = "";
+                    if (infraction.size != 1) {
+                        size = "(" + infraction.size + "x) ";
+                    }
+
+                    if (n < amount) {
+                        string jumpLink = "";
+                        string timeAgo = dateAgo.Humanize(2);
+                        if (showLinks && !infraction.logLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.logLink})]";
+                        string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + jumpLink + " - " + timeAgo;
+                        n++;
+
+                        if ((infractionStrings.LastOrDefault() + s).Length < 1024) {
+                            if (infractionStrings.LastOrDefault() != "") infractionStrings[infractionStrings.Count - 1] += "\n";
+                            infractionStrings[infractionStrings.Count - 1] += s;
+                        } else {
+                            infractionStrings.Add(s);
+                        }
+                    }
+                }
             }
         }
 
-        public static Embed GetEmbed(this List<Infraction> infractions, SocketGuildUser user, string dir = "Discord", int amount = 5, bool showLinks = false) {
-            List<string> infractionStrings = new List<string>();
-            infractionStrings.Add("");
-
-            InfractionsInDays infractionsToday = new InfractionsInDays(0, 0);
-            InfractionsInDays infractions30Days = new InfractionsInDays(0, 0);
-            InfractionsInDays totalInfractions = new InfractionsInDays(0, 0);
-            InfractionsInDays infractions7Days = new InfractionsInDays(0, 0);
-            string plural = "";
-            infractions.Reverse();
-            if (infractions.Count < amount) {
-                amount = infractions.Count;
-            }
-            int n = 0;
-            for (int i = 0; i < infractions.Count; i++) {
-                Infraction infraction = infractions[i];
-
-                //Gets how long ago all the infractions were
-                TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
-                totalInfractions.sum += infraction.size;
-                totalInfractions.count++;
-                string timeAgo = dateAgo.Humanize(2);
-
-                if (dateAgo.Days <= 7) {
-                    infractions7Days.sum += infraction.size;
-                    infractions7Days.count++;
-                }
-                if (dateAgo.Days <= 30) {
-                    infractions30Days.sum += infraction.size;
-                    infractions30Days.count++;
-                    if (dateAgo.Days < 1) {
-                        infractionsToday.sum += infraction.size;
-                        infractionsToday.count++;
-                    }
-                }
-
-                string size = "";
-                if (infraction.size != 1) {
-                    size = "(" + infraction.size + "x) ";
-                }
-
-                if (n < amount) {
-                    string jumpLink = "";
-                    if (showLinks && !infraction.logLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.logLink})]";
-                    string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + jumpLink + " - " + timeAgo;
-                    n++;
-
-                    if ((infractionStrings.LastOrDefault() + s).Length < 1024) {
-                        if (infractionStrings.LastOrDefault() != "") infractionStrings[infractionStrings.Count - 1] += "\n";
-                        infractionStrings[infractionStrings.Count - 1] += s;
-                    } else {
-                        infractionStrings.Add(s);
-                    }
-                }
-            }
-
-            if (infractions.Count > 1) {
-                plural = "s";
-            } else {
-                plural = "";
-            }
+        public static Embed GetEmbed(this List<Infraction> infractions, SocketGuildUser user = null, int amount = 5, bool showLinks = false) {
+            InfractionInfo data = new InfractionInfo(infractions, amount, showLinks);
 
             //Builds infraction embed
             var embed = new EmbedBuilder();
             embed.AddField("Today",
-                $"{infractionsToday.sum} sum**|**{infractionsToday.count} count", true);
+                $"{data.infractionsToday.sum} sum**|**{data.infractionsToday.count} count", true);
             embed.AddField("Last 7 days",
-                $"{infractions7Days.sum} sum**|**{infractions7Days.count} count", true);
+                $"{data.infractions7Days.sum} sum**|**{data.infractions7Days.count} count", true);
             embed.AddField("Last 30 days",
-                $"{infractions30Days.sum} sum**|**{infractions30Days.count} count", true);
-            embed.AddField("Warning" + plural + " (total " + totalInfractions.sum + " sum of size & " + infractions.Count + " individual)",
-                infractionStrings[0]);
-            infractionStrings.RemoveAt(0);
-            foreach (string s in infractionStrings) {
+                $"{data.infractions30Days.sum} sum**|**{data.infractions30Days.count} count", true);
+            embed.AddField("Warning".Pluralize(data.totalInfractions.count) + " (total " + data.totalInfractions.sum + " sum of size & " + infractions.Count + " individual)",
+                data.infractionStrings[0]);
+            data.infractionStrings.RemoveAt(0);
+            foreach (string s in data.infractionStrings) {
                 embed.AddField("------------------------------------------------------------", s);
             }
-            embed.WithAuthor(user)
+            if (user != null) {
+                embed.WithAuthor(user)
                 .WithFooter("ID: " + user.Id)
                 .WithColor(Color.Blue)
                 .WithCurrentTimestamp();
+            }
+            
             return embed.Build();
         }
 
@@ -227,7 +228,7 @@ namespace BotCatMaxy {
         [Command("dmwarns")]
         [RequireContext(ContextType.Guild)]
         [Alias("dminfractions", "dmwarnings")]
-        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 10) {
+        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 99) {
             if (amount < 1) {
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;

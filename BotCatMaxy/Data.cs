@@ -1,14 +1,15 @@
-﻿using System;
-using Discord;
-using Discord.WebSocket;
-using BotCatMaxy;
-using MongoDB.Bson;
-using MongoDB.Bson.IO;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using Serilog.Sinks.SystemConsole.Themes;
 using MongoDB.Bson.Serialization;
-using MongoDB.Driver;
-using BotCatMaxy.Settings;
 using System.Collections.Generic;
-using MongoDB.Bson.Serialization.Attributes;
+using BotCatMaxy.Settings;
+using Discord.WebSocket;
+using MongoDB.Bson.IO;
+using MongoDB.Driver;
+using MongoDB.Bson;
+using BotCatMaxy;
+using Discord;
+using System;
 
 namespace BotCatMaxy.Data {
     public static class SettingsData {
@@ -17,11 +18,9 @@ namespace BotCatMaxy.Data {
             var collection = guild.GetCollection(createFile);
             
             if (collection != null) {
-                //var newFileDoc = Activator.CreateInstance(typeof(T)).ToBsonDocument();
                 var filter = Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name);
                 using (var cursor = collection.Find(filter).ToCursor()) {
                     var doc = cursor?.FirstOrDefault();
-                    //var options = new BsonTypeMapperOptions { MapBsonDocumentTo = typeof(T) };
                     if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
                 if (createFile && file == null) return (T)Activator.CreateInstance(typeof(T));
@@ -34,11 +33,6 @@ namespace BotCatMaxy.Data {
             var collection = guild.GetCollection(true);
             collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name));
             collection.InsertOne(file.ToBsonDocument());
-
-            /*using (StreamWriter sw = new StreamWriter(Guild.GetPath(true) + fileName))
-            using (JsonTextWriter writer = new JsonTextWriter(sw)) {
-                serializer.Serialize(sw, settings);
-            }*/
         }
 
         public static IMongoCollection<BsonDocument> GetInfractionsCollection(this IGuild guild, bool createDir = true) {
@@ -55,40 +49,26 @@ namespace BotCatMaxy.Data {
         }
 
         public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) {
-            var collection = user.Guild.GetInfractionsCollection(createDir);
+            return user?.Id.LoadInfractions(user.Guild, createDir);
+        }
+
+        public static List<Infraction> LoadInfractions(this ulong userID, IGuild guild, bool createDir = false) {
+            var collection = guild.GetInfractionsCollection(createDir);
             if (collection == null) return null;
             List<Infraction> infractions = null;
 
-            using (var cursor = collection.Find(Builders<BsonDocument>.Filter.Eq("_id", user.Id)).ToCursor()) {
+            using (var cursor = collection.Find(Builders<BsonDocument>.Filter.Eq("_id", userID)).ToCursor()) {
                 var doc = cursor.FirstOrDefault();
-                //var options = new BsonTypeMapperOptions { MapBsonDocumentTo = typeof(T) };
                 if (doc != null) infractions = BsonSerializer.Deserialize<UserInfractions>(doc).infractions;
             }
             if (infractions == null && createDir) infractions = new List<Infraction>();
             return infractions;
-            /*List<Infraction> infractions = new List<Infraction>();
-            string guildDir = user.Guild.GetPath(createDir);
-
-            if (Directory.Exists(guildDir + "/Infractions/" + dir) && File.Exists(guildDir + "/Infractions/" + dir + "/" + user.Id)) {
-                BinaryFormatter newbf = new BinaryFormatter();
-                FileStream newFile = File.Open(guildDir + "/Infractions/" + dir + "/" + user.Id, FileMode.Open);
-                Infraction[] oldInfractions;
-                oldInfractions = (Infraction[])newbf.Deserialize(newFile);
-                newFile.Close();
-                foreach (Infraction infraction in oldInfractions) {
-                    infractions.Add(infraction);
-                }
-            }*/
         }
 
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) {
             var collection = user.Guild.GetInfractionsCollection(true);
             collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", user.Id));
             collection.InsertOne(new UserInfractions { ID = user.Id, infractions = infractions }.ToBsonDocument());
-            /*BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(user.Guild.GetPath(true) + "/Infractions/" + dir + "/" + user.Id);
-            bf.Serialize(file, infractions.ToArray());
-            file.Close();*/
         }
     }
 

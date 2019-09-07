@@ -39,7 +39,7 @@ namespace BotCatMaxy {
                 var Guild = chnl.Guild;
                 ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>();
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
-                List<BadWord> badWords = Guild.LoadFromFile<BadWordList>().badWords;
+                List<BadWord> badWords = Guild.LoadFromFile<BadWordList>()?.badWords;
 
                 if (modSettings != null) {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())

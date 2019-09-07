@@ -1,28 +1,33 @@
-﻿using System.Timers;
-using System;
-using Serilog;
+﻿using Serilog.Sinks.SystemConsole.Themes;
+using System.Collections.Generic;
+using MongoDB.Bson.Serialization;
 using System.Threading.Tasks;
-using Discord;
+using BotCatMaxy.Settings;
 using Discord.WebSocket;
 using Discord.Commands;
-using System.IO;
-using MongoDB;
-using MongoDB.Driver;
-using BotCatMaxy.Settings;
 using BotCatMaxy.Data;
-using MongoDB.Bson.Serialization;
-using System.Collections.Generic;
-using Serilog.Sinks.SystemConsole.Themes;
+using MongoDB.Driver;
+using Serilog;
+using Discord;
+using MongoDB;
+using System;
 
 namespace BotCatMaxy {
     public class MainClass {
         private DiscordSocketClient _client;
         public static MongoClient dbClient;
         public static void Main(string[] args) {
+            Utilities.logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+                .WriteTo.File($"{Utilities.BasePath}/log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
 #if DEBUG
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
-            new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
             dbClient = new MongoClient(HiddenInfo.debugDB);
+            new LogMessage(LogSeverity.Info, "Main", "Logging in to DB with key: " + HiddenInfo.debugDB).Log();
+            new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
 #endif
             if (args.NotEmpty(1)) new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
             else if (args.NotEmpty(0)) new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
@@ -35,12 +40,6 @@ namespace BotCatMaxy {
                 MessageCacheSize = 120
             };
 
-            Utilities.logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.File($"{Utilities.BasePath}/log.txt", rollingInterval: RollingInterval.Day)
-                .CreateLogger();
-
             //Maps all the classes
             try {
                 BsonClassMap.RegisterClassMap<List<Infraction>>();
@@ -51,10 +50,9 @@ namespace BotCatMaxy {
                 BsonClassMap.RegisterClassMap<TempAct>();
                 BsonClassMap.RegisterClassMap<BadWord>();
             } catch (Exception e) {
-                await (new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e)).Log();
+                await new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e).Log();
             }
             
-
             //Sets up the events
             _client = new DiscordSocketClient(config);
             _client.Log += Utilities.Log;
@@ -71,10 +69,10 @@ namespace BotCatMaxy {
             await _client.StartAsync();
 
             if (version != null || version != "") {
-                await (new LogMessage(LogSeverity.Info, "Main", "Starting with version " + version)).Log();
+                await new LogMessage(LogSeverity.Info, "Main", "Starting with version " + version).Log();
                 await _client.SetGameAsync("version " + version);
             } else {
-                await (new LogMessage(LogSeverity.Info, "Main", "Starting with no version num")).Log();
+                await new LogMessage(LogSeverity.Info, "Main", "Starting with no version num").Log();
             }
 
             CommandService service = new CommandService();

@@ -15,6 +15,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System.Collections;
 using Serilog;
+using Humanizer;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -107,9 +108,15 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
+            try {
+                ClearLine();
+            } catch {
+
+            }
             switch (message.Severity) {
                 case LogSeverity.Critical:
-                    if(message.Exception != null) logger.Fatal(message.Exception, message.Message);
+                    Console.Beep();
+                    if (message.Exception != null) logger.Fatal(message.Exception, message.Message);
                     else logger.Fatal(message.Message);
                     break;
                 case LogSeverity.Error:
@@ -130,6 +137,7 @@ namespace BotCatMaxy {
                     logger.Debug(message.Message);
                     break;
             }
+            Console.Write("> ");
         }
 
         public static string Suffix(this int num) {
@@ -181,6 +189,7 @@ namespace BotCatMaxy {
         }
 
         public static TimeSpan? ToTime(this string s) {
+            ClearLine();
             try {
                 string intString = s.Remove(s.Length - 1);
                  if (s.ToLower().EndsWith("w")) {
@@ -205,6 +214,27 @@ namespace BotCatMaxy {
         public static bool NotEmpty(this IEnumerable<object> list, int needAmount) {
             if (list == null || list.ToArray().Length <= needAmount) return false;
             else return true;
+        }
+
+        public static string Pluralize(this string s, float num) {
+            if (num == 1) return s;
+            else return s.Pluralize();
+        }
+
+        public static void ClearLine() {
+            int currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, currentLineCursor);
+        }
+
+        public static string JoinAll(this IEnumerable<string> list) {
+            string s = "";
+            foreach (string element in list) {
+                if (s != "") s += " ";
+                s += element;
+            }
+            return s;
         }
     }
 }
