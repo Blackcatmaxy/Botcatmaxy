@@ -236,5 +236,15 @@ namespace BotCatMaxy {
             }
             return s;
         }
+
+        public static bool TryNotify(this IUser user, string message) {
+            try {
+                var sentMessage = user.GetOrCreateDMChannelAsync()?.Result.SendMessageAsync(message);
+                if (sentMessage == null) return false;
+                return true;
+            } catch {
+                return false;
+            }
+        }
     }
 }

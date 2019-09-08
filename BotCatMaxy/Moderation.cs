@@ -508,5 +508,21 @@ namespace BotCatMaxy {
             await user.TempMute(amount.Value, reason, Context, settings, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
+        [Command("ban")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
+        public async Task Ban(SocketUser user, [Remainder] string reason = "Unspecified") {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
+            if (actions?.tempBans?.Any(tempBan => tempBan.user == user.Id) ?? false) {
+                actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.user == user.Id));
+            } else if (Context.Guild.GetBansAsync().Result.Any(ban => ban.User.Id == user.Id)) {
+                await ReplyAsync("User has already been banned permanently");
+                return;
+            }
+            user.TryNotify($"You have been banned in the {Context.Guild.Name} discord for {reason}");
+            await Context.Guild.AddBanAsync(user);
+            await ReplyAsync("User has been banned for " + reason);
+        }
     }
 }
