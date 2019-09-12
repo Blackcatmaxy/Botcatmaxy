@@ -141,7 +141,8 @@ namespace BotCatMaxy {
         public static string LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
-                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return null;
+                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
+                if (channel == null) return null;
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
@@ -158,7 +159,7 @@ namespace BotCatMaxy {
                 embed.WithColor(Color.Gold);
                 embed.WithCurrentTimestamp();
 
-                return guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                return channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
@@ -168,7 +169,8 @@ namespace BotCatMaxy {
         public static void LogTempAct(IGuild guild, IUser warner, SocketGuildUser warnee, string actType, string reason, string warnLink, TimeSpan length) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
-                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
+                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
+                if (channel == null) return;
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
@@ -180,7 +182,7 @@ namespace BotCatMaxy {
                 embed.WithColor(Color.Red);
                 embed.WithCurrentTimestamp();
 
-                guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build());
+                channel.SendMessageAsync(embed: embed.Build());
                 return;
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
@@ -191,7 +193,9 @@ namespace BotCatMaxy {
         public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason, TimeSpan length) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
-                if (settings == null || guild.GetTextChannelAsync(settings.logChannel).Result == null) return;
+                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
+                if (channel == null)
+                    return;
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warnee);
@@ -203,7 +207,7 @@ namespace BotCatMaxy {
                 embed.WithColor(Color.Green);
                 embed.WithCurrentTimestamp();
 
-                guild.GetTextChannelAsync(settings.logChannel).Result.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
                 return;
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();

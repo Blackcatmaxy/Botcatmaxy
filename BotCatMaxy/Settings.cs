@@ -157,7 +157,24 @@ namespace BotCatMaxy {
             }
 
             settings.SaveToFile(Context.Guild);
-            await message.ModifyAsync(msg => msg.Content = "Set log channel");
+            await message.ModifyAsync(msg => msg.Content = "Set log channel to this channel");
+        }
+
+        [Command("setpubchannel")]
+        [HasAdmin]
+        public async Task SetPubLogChannel() {
+            IUserMessage message = await ReplyAsync("Setting...");
+            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
+
+            if (Context.Client.GetChannel(settings.pubLogChannel ?? 0) == Context.Channel) {
+                await ReplyAsync("This channel already is the logging channel");
+                return;
+            } else {
+                settings.pubLogChannel = Context.Channel.Id;
+            }
+
+            settings.SaveToFile(Context.Guild);
+            await message.ModifyAsync(msg => msg.Content = "Set log channel to this channel");
         }
 
         [Command("info")]
@@ -268,6 +285,7 @@ namespace BotCatMaxy {
         public class LogSettings {
             [BsonId]
             public BsonString Id = "LogSettings";
+            public ulong? pubLogChannel = null;
             public ulong logChannel;
             public bool logDeletes = true;
             public bool logEdits = false;
