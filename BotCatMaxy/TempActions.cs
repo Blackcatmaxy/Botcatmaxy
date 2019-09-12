@@ -54,7 +54,7 @@ namespace BotCatMaxy {
                                         RestUser rUser = guild.GetBansAsync().Result.First(ban => ban.User.Id == tempBan.user).User;
                                         await guild.RemoveBanAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
-                                        Logging.LogEndTempAct(guild, rUser, "ban", tempBan.reason, tempBan.length);
+                                        Logging.LogEndTempAct(guild, rUser, "bann", tempBan.reason, tempBan.length);
                                     }
                                 } catch (Exception e) {
                                     _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
