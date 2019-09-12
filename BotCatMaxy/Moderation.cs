@@ -339,7 +339,7 @@ namespace BotCatMaxy {
         [Command("tempban")]
         [Alias("tban", "temp-ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempBanUser(SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
@@ -364,7 +364,7 @@ namespace BotCatMaxy {
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn")]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempBanWarnUser(SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
@@ -391,7 +391,7 @@ namespace BotCatMaxy {
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempBanWarnUser(SocketGuildUser user, string time, float size, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
@@ -508,6 +508,7 @@ namespace BotCatMaxy {
             await user.TempMute(amount.Value, reason, Context, settings, actions);
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
         }
+
         [Command("ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
