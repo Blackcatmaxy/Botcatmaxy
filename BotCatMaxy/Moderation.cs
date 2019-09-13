@@ -24,15 +24,6 @@ namespace BotCatMaxy {
     }
 
     public static class ModerationFunctions {
-        public static void CheckDirectories(this string path) {
-            if (!Directory.Exists(path + "/Infractions/")) {
-                Directory.CreateDirectory(path + "/Infractions/");
-            }
-            if (!Directory.Exists(path + "/Infractions/Discord/")) {
-                Directory.CreateDirectory(path + "/Infractions/Discord/");
-            }
-        }
-
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string logLink = null) {
             try {
                 if (user.CantBeWarned()) {
@@ -67,13 +58,10 @@ namespace BotCatMaxy {
                 if (user != null) {
                     IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
                     if (!users.Any(xUser => xUser.Id == userID)) {
-                        IDMChannel DM = await user.GetOrCreateDMChannelAsync();
-                        if (DM != null)
-                            await DM.SendMessageAsync("You have been warned in " + context.Guild.Name + " discord for \"" + reason + "\" in a channel you can't view");
+                        user.TryNotify($"You have been warned in {context.Guild.Name} discord for \"{reason}\" in a channel you can't view");
                     }
                 }
             } catch {
-
             }
         }
         public struct InfractionsInDays {
@@ -93,7 +81,6 @@ namespace BotCatMaxy {
                 totalInfractions = new InfractionsInDays();
                 infractions7Days = new InfractionsInDays();
                 infractionStrings = new List<string> { "" };
-
 
                 infractions.Reverse();
                 if (infractions.Count < amount) {
@@ -205,11 +192,7 @@ namespace BotCatMaxy {
             embed.AddField("Guild name", guild.Name, true);
             embed.WithCurrentTimestamp();
             if (author != null) embed.WithAuthor(author);
-
-            IDMChannel DMChannel = await user.GetOrCreateDMChannelAsync();
-            if (DMChannel != null) {
-                _ = DMChannel.SendMessageAsync(embed: embed.Build());
-            }
+            user.TryNotify(embed.Build());
         }
     }
 

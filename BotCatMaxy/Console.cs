@@ -1,5 +1,6 @@
 ﻿using System.Runtime.Serialization.Formatters.Binary;
 using System.Collections.Generic;
+using MongoDB.Bson.Serialization;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
@@ -12,7 +13,7 @@ using Discord;
 using System;
 using MongoDB;
 using MongoDB.Driver;
-using MongoDB.Bson.Serialization;
+using static BotCatMaxy.ModerationFunctions;
 
 namespace BotCatMaxy {
     public class ConsoleReader {
@@ -39,11 +40,7 @@ namespace BotCatMaxy {
                             if (!owners.Contains(guild.Owner)) owners.Add(guild.Owner);
                         }
                         foreach (SocketUser owner in owners) {
-                            try {
-                                await owner.GetOrCreateDMChannelAsync().Result.SendMessageAsync(message);
-                            } catch (Exception e) {
-                                if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "Console", "Something went wrong notifying person", e).Log();
-                            }
+                            owner.TryNotify(message);
                         }
                         await new LogMessage(LogSeverity.Info, "Console", "Messaged guild owners:" + message).Log();
                         break;
@@ -57,7 +54,9 @@ namespace BotCatMaxy {
                         Environment.Exit(0);
                         break;
                     case "stats":
-                        ulong infractions = 0;
+                    case "statistics":
+                        Console.Write($"Part of {client.Guilds.Count} discord guilds ");
+                        List<Infraction> infractions = new List<Infraction>();
                         ulong members = 0;
                         int i = 0;
                         foreach (SocketGuild guild in client.Guilds) {
@@ -68,13 +67,16 @@ namespace BotCatMaxy {
                             if (collection != null) {
                                 using (var cursor = collection.Find(new BsonDocument()).ToCursor()) {
                                     foreach (var doc in cursor.ToList()) {
-                                        infractions += (ulong)BsonSerializer.Deserialize<UserInfractions>(doc).infractions.Count;
+                                        foreach (Infraction infraction in BsonSerializer.Deserialize<UserInfractions>(doc).infractions) {
+                                            infractions.Add(infraction);
+                                        }
                                     }
                                 }
                             }
                         }
-
-                        await (new LogMessage(LogSeverity.Info, "Console", $"Part of {client.Guilds.Count} discord guilds with a total of {members} users. There are {infractions} total infractions")).Log();
+                        Console.Write($"with a total of {members} users. There are {infractions.Count} total infractions ");
+                        InfractionInfo data = new InfractionInfo(infractions, 0, false);
+                        Console.Write($"with {data.infractionsToday.count} infractions given in the last 24 hours");
                         break;
                     default:
                         await new LogMessage(LogSeverity.Warning, "Console", "Command not recognized").Log();
