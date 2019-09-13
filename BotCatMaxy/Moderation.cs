@@ -61,7 +61,7 @@ namespace BotCatMaxy {
             if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
             infractions.Add(newInfraction);
             userID.SaveInfractions(context.Guild, infractions);
-            
+
             try {
                 IUser user = context.Client.GetUser(userID);
                 if (user != null) {
@@ -87,13 +87,13 @@ namespace BotCatMaxy {
             public InfractionsInDays totalInfractions;
             public InfractionsInDays infractions7Days;
             public List<string> infractionStrings;
-            public InfractionInfo(List<Infraction> infractions,int amount = 5, bool showLinks = false) {
+            public InfractionInfo(List<Infraction> infractions, int amount = 5, bool showLinks = false) {
                 infractionsToday = new InfractionsInDays();
                 infractions30Days = new InfractionsInDays();
                 totalInfractions = new InfractionsInDays();
                 infractions7Days = new InfractionsInDays();
                 infractionStrings = new List<string> { "" };
-                
+
 
                 infractions.Reverse();
                 if (infractions.Count < amount) {
@@ -166,7 +166,7 @@ namespace BotCatMaxy {
                 .WithColor(Color.Blue)
                 .WithCurrentTimestamp();
             }
-            
+
             return embed.Build();
         }
 
@@ -350,6 +350,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
@@ -375,7 +382,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
             await user.Warn(1, reason, Context, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
@@ -402,7 +415,13 @@ namespace BotCatMaxy {
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
             await user.Warn(size, reason, Context, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
@@ -430,6 +449,12 @@ namespace BotCatMaxy {
                 return;
             }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
@@ -461,6 +486,12 @@ namespace BotCatMaxy {
                 return;
             }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
@@ -493,6 +524,12 @@ namespace BotCatMaxy {
                 return;
             }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
             if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null) {
                 await ReplyAsync("Muted role is null or invalid");
                 return;

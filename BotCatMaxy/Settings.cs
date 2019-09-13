@@ -10,6 +10,7 @@ using BotCatMaxy.Data;
 using BotCatMaxy.Settings;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Humanizer;
 
 namespace BotCatMaxy {
     public class SettingsModule : ModuleBase<SocketCommandContext> {
@@ -102,8 +103,13 @@ namespace BotCatMaxy {
             }
             TimeSpan? span = length.ToTime();
             if (span != null) {
-                settings.maxTempAction = span;
-                settings.SaveToFile(Context.Guild);
+                if (span == settings.maxTempAction) {
+                    await ReplyAsync("The maximum temp punishment is already " + ((TimeSpan)span).Humanize(4));
+                } else {
+                    settings.maxTempAction = span;
+                    settings.SaveToFile(Context.Guild);
+                    await ReplyAsync("The maximum temp punishment is now " + ((TimeSpan)span).Humanize(4));
+                }
             } else {
                 await ReplyAsync("Your time is incorrectly setup");
             }
