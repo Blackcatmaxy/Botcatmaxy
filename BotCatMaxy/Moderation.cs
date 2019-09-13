@@ -362,9 +362,9 @@ namespace BotCatMaxy {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
                 return;
             }
-            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempBan(amount.Value, reason, Context, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
         [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
@@ -395,9 +395,9 @@ namespace BotCatMaxy {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
                 return;
             }
-            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempBan(amount.Value, reason, Context, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
         [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
@@ -428,9 +428,9 @@ namespace BotCatMaxy {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
                 return;
             }
-            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempBan(amount.Value, reason, Context, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
         [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
@@ -465,9 +465,9 @@ namespace BotCatMaxy {
                 return;
             }
 
-            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempMute(amount.Value, reason, Context, settings, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
         [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
@@ -503,9 +503,9 @@ namespace BotCatMaxy {
                 return;
             }
 
-            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempMute(amount.Value, reason, Context, settings, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
         [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
@@ -541,9 +541,9 @@ namespace BotCatMaxy {
                 return;
             }
 
-            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempMute(amount.Value, reason, Context, settings, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize()} because of {reason}");
+            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
         [Command("ban")]
