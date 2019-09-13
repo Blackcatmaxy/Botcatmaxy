@@ -8,6 +8,7 @@ using Humanizer;
 using Discord.Addons.Preconditions;
 using Discord.WebSocket;
 using Discord;
+using System.Linq;
 
 namespace BotCatMaxy {
     [Group("ID")]
@@ -95,6 +96,23 @@ namespace BotCatMaxy {
             jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, ID, reason, Context.Message.GetJumpUrl());
             await ID.Warn(1, reason, Context, logLink: jumpLink);
             await ReplyAsync($"{Context.Client.GetUser(ID)?.Username ?? "They"} have gotten their " + ID.LoadInfractions(Context.Guild).Count.Suffix() + " infraction for " + reason);
+        }
+
+        [Command("ban")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
+        public async Task Ban(ulong ID, [Remainder] string reason = "Unspecified") {
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
+            if (actions?.tempBans?.Any(tempBan => tempBan.user == ID) ?? false) {
+                actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.user == ID));
+            } else if (Context.Guild.GetBansAsync().Result.Any(ban => ban.User.Id == ID)) {
+                await ReplyAsync("User has already been banned permanently");
+                return;
+            }
+            Context.Client.GetUser(ID)?.TryNotify($"You have been banned in the {Context.Guild.Name} discord for {reason}");
+            await Context.Guild.AddBanAsync(ID);
+            await ReplyAsync("User has been banned for " + reason);
         }
     }
 }
