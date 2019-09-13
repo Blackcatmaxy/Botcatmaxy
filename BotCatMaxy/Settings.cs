@@ -75,9 +75,6 @@ namespace BotCatMaxy {
         public async Task AddWarnRole(SocketRole role) {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
-            if (settings == null) {
-                settings = new ModerationSettings();
-            }
             if (!settings.ableToWarn.Contains(role.Id)) {
                 settings.ableToWarn.Add(role.Id);
             } else {
@@ -87,6 +84,29 @@ namespace BotCatMaxy {
             settings.SaveToFile(Context.Guild);
 
             await ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
+        }
+
+        [Command("setmaxpunishment"), Alias("setmaxpunish")]
+        [RequireContext(ContextType.Guild), HasAdmin()]
+        public async Task SetMaxPunishment(string length) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            if (length == "none") { //Maybe add more options that mean none
+                if (settings.maxTempAction == null) 
+                    await ReplyAsync("The maximum temp punishment is already none");
+                else {
+                    settings.maxTempAction = null;
+                    settings.SaveToFile(Context.Guild);
+                    await ReplyAsync("The maximum temp punishment is now none");
+                }
+                return;
+            }
+            TimeSpan? span = length.ToTime();
+            if (span != null) {
+                settings.maxTempAction = span;
+                settings.SaveToFile(Context.Guild);
+            } else {
+                await ReplyAsync("Your time is incorrectly setup");
+            }
         }
 
         [Command("setmutedrole")]
@@ -274,6 +294,7 @@ namespace BotCatMaxy {
             public List<ulong> ableToBan = new List<ulong>();
             public List<string> allowedLinks = new List<string>();
             public List<ulong> allowedToLink = new List<ulong>();
+            public TimeSpan? maxTempAction = null;
             public ulong mutedRole = 0;
             public ushort allowedCaps = 0;
             public bool useOwnerID = false;

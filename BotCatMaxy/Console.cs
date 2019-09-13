@@ -19,8 +19,8 @@ namespace BotCatMaxy {
         readonly DiscordSocketClient client;
         public ConsoleReader(DiscordSocketClient client) {
             this.client = client;
+            Task.Run(() => NewInput());
             _ = new LogMessage(LogSeverity.Info, "Main", "Console setup").Log();
-            _ = NewInput();
         }
 
         public async Task NewInput() {

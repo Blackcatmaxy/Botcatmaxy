@@ -88,7 +88,7 @@ namespace BotCatMaxy {
         }
 
         private async Task Ready() {
-            await (new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!")).Log();
+            await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
         }
     }
 }
