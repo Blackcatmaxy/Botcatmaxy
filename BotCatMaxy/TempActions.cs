@@ -22,7 +22,7 @@ namespace BotCatMaxy {
 
         public async Task Ready() {
             client.Ready -= Ready;
-            _ = Timer();
+            await Task.Run(() => Timer());
         }
 
         async Task CheckNewUser(SocketGuildUser user) {
@@ -76,8 +76,11 @@ namespace BotCatMaxy {
                             foreach (TempAct tempMute in actions.tempMutes) {
                                 checkedMutes++;
                                 try {
-                                    if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
-                                        SocketUser user = guild.GetUser(tempMute.user);
+                                    SocketUser user = guild.GetUser(tempMute.user);
+                                    if (user != null && !(user as SocketGuildUser).Roles.Any(role => role.Id == settings.mutedRole)) {
+                                        _ = user.TryNotify($"As you might now, you have been manually unmuted in {guild.Name} discord");
+                                        editedMutes.Remove(tempMute);
+                                    } else if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
                                         if (user != null) {
                                             await (user as SocketGuildUser).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
                                         }
@@ -96,7 +99,7 @@ namespace BotCatMaxy {
                             _ = (checkedMutes == actions.tempMutes.Count || checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
 
                             if (editedMutes != actions.tempMutes) {
-                                if (debug) Console.Write($"{actions.tempMutes.Count - editedMutes.Count} tempmutes are over");
+                                if (debug) Console.Write($"{actions.tempMutes.Count - editedMutes.Count}/{actions.tempMutes.Count} tempmutes are over");
                                 actions.tempMutes = editedMutes;
                                 needSave = true;
                             } else if (debug) Console.Write($"no tempmute changes");

@@ -76,7 +76,8 @@ namespace BotCatMaxy {
                         }
                         Console.Write($"with a total of {members} users. There are {infractions.Count} total infractions ");
                         InfractionInfo data = new InfractionInfo(infractions, 0, false);
-                        Console.Write($"with {data.infractionsToday.count} infractions given in the last 24 hours");
+                        Console.WriteLine($"with {data.infractionsToday.count} infractions given in the last 24 hours");
+                        Console.Write("> ");
                         break;
                     default:
                         await new LogMessage(LogSeverity.Warning, "Console", "Command not recognized").Log();
