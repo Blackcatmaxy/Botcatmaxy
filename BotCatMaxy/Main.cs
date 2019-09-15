@@ -79,7 +79,7 @@ namespace BotCatMaxy {
             Logging logger = new Logging(_client);
             TempActions tempActions = new TempActions(_client);
             Filter filter = new Filter(_client);
-            ConsoleReader consoleReader = new ConsoleReader(_client);
+            //ConsoleReader consoleReader = new ConsoleReader(_client);
 
             //Debug info
             await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();

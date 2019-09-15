@@ -9,8 +9,6 @@
     <DocumentationFile></DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Discord.Addons.Interactive" Version="1.0.1" />
-    <PackageReference Include="Discord.Addons.Preconditions" Version="1.2.0-alpha3" />
     <PackageReference Include="Discord.Net" Version="2.1.1" />
     <PackageReference Include="Discord.Net.Commands" Version="2.1.1" />
     <PackageReference Include="Discord.Net.WebSocket" Version="2.1.1" />

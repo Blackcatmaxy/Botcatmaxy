@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Discord.Addons.Preconditions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BotCatMaxy.Settings;
@@ -16,7 +15,6 @@ using System;
 
 namespace BotCatMaxy {
     public class MiscCommands : ModuleBase<SocketCommandContext> {
-        [Ratelimit(1, 3, Measure.Minutes, flags: RatelimitFlags.ApplyPerGuild)]
         [Command("help")]
         public async Task Help() {
             var embed = new EmbedBuilder();

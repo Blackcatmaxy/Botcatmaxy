@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System.Text.RegularExpressions;
-using Discord.Addons.Preconditions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BotCatMaxy.Settings;
@@ -198,7 +197,6 @@ namespace BotCatMaxy {
 
     [RequireContext(ContextType.Guild)]
     public class DiscordModModule : ModuleBase<SocketCommandContext> {
-        [Ratelimit(2, 1, Measure.Minutes)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
@@ -208,7 +206,6 @@ namespace BotCatMaxy {
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
-        [Ratelimit(2, 1, Measure.Minutes)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
@@ -218,7 +215,6 @@ namespace BotCatMaxy {
             await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
         }
 
-        [Ratelimit(3, 5, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("dmwarns")]
         [RequireContext(ContextType.Guild)]
         [Alias("dminfractions", "dmwarnings")]
@@ -255,7 +251,6 @@ namespace BotCatMaxy {
         [Command("warns")]
         [RequireContext(ContextType.Guild)]
         [Alias("infractions", "warnings")]
-        [Ratelimit(3, 2, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         public async Task CheckUserWarnsAsync(SocketGuildUser user = null, int amount = 5) {
             if (user == null) {
                 user = Context.Message.Author as SocketGuildUser;
@@ -276,7 +271,6 @@ namespace BotCatMaxy {
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
             List<Infraction> infractions = user.LoadInfractions();
             if (infractions.IsNullOrEmpty()) {
@@ -294,7 +288,6 @@ namespace BotCatMaxy {
             await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -306,7 +299,6 @@ namespace BotCatMaxy {
             await user.KickAsync(reason);
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -318,7 +310,6 @@ namespace BotCatMaxy {
             await user.KickAsync(reason);
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("tempban")]
         [Alias("tban", "temp-ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
@@ -350,7 +341,6 @@ namespace BotCatMaxy {
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn")]
         [RequireBotPermission(GuildPermission.BanMembers)]
@@ -383,7 +373,6 @@ namespace BotCatMaxy {
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
@@ -416,7 +405,6 @@ namespace BotCatMaxy {
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("tempmute")]
         [Alias("tmute", "temp-mute")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -453,7 +441,6 @@ namespace BotCatMaxy {
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("tempmutewarn")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -491,7 +478,6 @@ namespace BotCatMaxy {
             _ = message.ModifyAsync(msg => msg.Content = $"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
         }
 
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [Command("tempmutewarn")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -532,7 +518,6 @@ namespace BotCatMaxy {
         [Command("ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         public async Task Ban(SocketUser user, [Remainder] string reason = "Unspecified") {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.user == user.Id) ?? false) {

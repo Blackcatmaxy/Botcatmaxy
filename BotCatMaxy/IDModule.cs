@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Text;
 using BotCatMaxy.Data;
 using Humanizer;
-using Discord.Addons.Preconditions;
 using Discord.WebSocket;
 using Discord;
 using System.Linq;
@@ -13,7 +12,6 @@ using System.Linq;
 namespace BotCatMaxy {
     [Group("ID")]
     public class IDCommands : ModuleBase<SocketCommandContext> {
-        [Ratelimit(3, 5, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [RequireContext(ContextType.Guild)]
         [Command("dmwarns")]
         public async Task DMWarns(ulong ID, int amount = 99) {
@@ -43,7 +41,6 @@ namespace BotCatMaxy {
             else await ReplyAsync($"DMed you {username ?? "their"} last {amount} out of {quantity}");
         }
 
-        [Ratelimit(3, 5, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         [RequireContext(ContextType.Guild)]
         [Command("warns"), Alias("infractions", "warnings")]
         public async Task Warns(ulong ID, int amount = 6) {
@@ -64,7 +61,6 @@ namespace BotCatMaxy {
             }
         }
 
-        [Ratelimit(2, 1, Measure.Minutes)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync(ulong ID, [Remainder] string reason = "Unspecified") {
@@ -81,7 +77,6 @@ namespace BotCatMaxy {
             await ReplyAsync($"{Context.Client.GetUser(ID)?.Username ?? "They"} have gotten their " + ID.LoadInfractions(Context.Guild).Count.Suffix() + " infraction for " + reason);
         }
 
-        [Ratelimit(2, 1, Measure.Minutes)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(ulong ID, float size, [Remainder] string reason = "Unspecified") {
@@ -101,7 +96,6 @@ namespace BotCatMaxy {
         [Command("ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        [Ratelimit(3, 1, Measure.Minutes, ErrorMessage = "You have used this command too much, calm down")]
         public async Task Ban(ulong ID, [Remainder] string reason = "Unspecified") {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.user == ID) ?? false) {

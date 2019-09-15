@@ -22,13 +22,13 @@ namespace BotCatMaxy {
 
         public async Task Ready() {
             client.Ready -= Ready;
-            await Task.Run(() => Timer());
+            _ = Task.Run(() => Timer());
         }
 
         async Task CheckNewUser(SocketGuildUser user) {
             ModerationSettings settings = user.Guild?.LoadFromFile<ModerationSettings>();
             TempActionList actions = user.Guild?.LoadFromFile<TempActionList>();
-            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes.IsNullOrEmpty() ?? true)) return;
+            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.IsNullOrEmpty() ?? true)) return;
             if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
