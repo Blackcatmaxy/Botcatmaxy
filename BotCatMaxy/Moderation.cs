@@ -285,6 +285,7 @@ namespace BotCatMaxy {
             infractions.RemoveAt(index - 1);
 
             user.SaveInfractions(infractions);
+            user.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
             await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
         }
 
