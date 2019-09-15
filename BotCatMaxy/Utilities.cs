@@ -109,7 +109,7 @@ namespace BotCatMaxy {
 
         public static async Task Log(this LogMessage message) {
             try {
-                ClearLine();
+                //ClearLine();
             } catch {
 
             }
@@ -137,7 +137,7 @@ namespace BotCatMaxy {
                     logger.Debug(message.Message);
                     break;
             }
-            Console.Write("> ");
+            //Console.Write("> ");
         }
 
         public static string Suffix(this int num) {

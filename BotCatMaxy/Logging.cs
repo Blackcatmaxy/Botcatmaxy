@@ -99,10 +99,11 @@ namespace BotCatMaxy {
                 }
 
                 LogSettings settings = guild?.LoadFromFile<LogSettings>();
-                SocketTextChannel logChannel = guild?.GetChannel(settings.logChannel) as SocketTextChannel;
-                if (settings == null || logChannel == null || !settings.logDeletes) {
+                SocketGuildChannel gChannel = guild?.GetChannel(settings.logChannel);
+                if (settings == null || gChannel == null || !settings.logDeletes) {
                     return null;
                 }
+                SocketTextChannel logChannel = gChannel as SocketTextChannel;
 
                 var embed = new EmbedBuilder();
                 SocketTextChannel channel = message.Channel as SocketTextChannel;
@@ -220,7 +221,7 @@ namespace BotCatMaxy {
                 if (!(channel is SocketGuildChannel)) return;
                 LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
             } catch (Exception exception) {
-                Console.WriteLine(new LogMessage(LogSeverity.Error, "Logging", "Error", exception));
+                await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
             }
             //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
         }

@@ -107,7 +107,7 @@ namespace BotCatMaxy {
                         if (needSave) actions.SaveToFile(guild);
                     }
                 }
-                Console.Write("\n");
+                if (debug) Console.Write("\n");
                 _ = (checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
 
             } catch (Exception e) {
