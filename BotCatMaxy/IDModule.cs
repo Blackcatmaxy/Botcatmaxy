@@ -8,6 +8,7 @@ using Humanizer;
 using Discord.WebSocket;
 using Discord;
 using System.Linq;
+using BotCatMaxy;
 
 namespace BotCatMaxy {
     [Group("ID")]
@@ -74,7 +75,8 @@ namespace BotCatMaxy {
             }
             jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, ID, reason, Context.Message.GetJumpUrl());
             await ID.Warn(1, reason, Context, logLink: jumpLink);
-            await ReplyAsync($"{Context.Client.GetUser(ID)?.Username ?? "They"} have gotten their " + ID.LoadInfractions(Context.Guild).Count.Suffix() + " infraction for " + reason);
+            Context.Message.DeleteOrRespond(
+                $"{Context.Client.GetUser(ID)?.Username.StrippedOfPing() ?? "They"} have gotten their {ID.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
         [Command("warn")]
@@ -90,7 +92,8 @@ namespace BotCatMaxy {
             }
             jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, ID, reason, Context.Message.GetJumpUrl());
             await ID.Warn(1, reason, Context, logLink: jumpLink);
-            await ReplyAsync($"{Context.Client.GetUser(ID)?.Username ?? "They"} have gotten their " + ID.LoadInfractions(Context.Guild).Count.Suffix() + " infraction for " + reason);
+            Context.Message.DeleteOrRespond(
+                $"{Context.Client.GetUser(ID)?.Username.StrippedOfPing() ?? "They"} have gotten their {ID.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
         [Command("ban")]
@@ -106,7 +109,7 @@ namespace BotCatMaxy {
             }
             Context.Client.GetUser(ID)?.TryNotify($"You have been banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(ID);
-            await ReplyAsync("User has been banned for " + reason);
+            Context.Message.DeleteOrRespond($"User has been banned for {reason}", Context.Guild);
         }
     }
 }
