@@ -74,7 +74,7 @@ namespace BotCatMaxy {
             // command.
              if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                await new LogMessage(LogSeverity.Error, "Commands", result.ErrorReason).Log();
+                await new LogMessage(LogSeverity.Warning, "Commands", result.ErrorReason).Log();
              }
         }
     }

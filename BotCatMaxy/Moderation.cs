@@ -203,7 +203,7 @@ namespace BotCatMaxy {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
             await user.Warn(1, reason, Context, logLink: jumpLink);
 
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+            Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
         [Command("warn")]
@@ -212,7 +212,7 @@ namespace BotCatMaxy {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
             await user.Warn(size, reason, Context, logLink: jumpLink);
 
-            await ReplyAsync(user.Mention + " has gotten their " + user.LoadInfractions().Count.Suffix() + " infraction for " + reason);
+            Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
         [Command("dmwarns")]
@@ -296,8 +296,8 @@ namespace BotCatMaxy {
             await user.Warn(1, reason, Context, "Discord");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
-            await ReplyAsync(user.Mention + " has been kicked for " + reason);
             await user.KickAsync(reason);
+            Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason} ", Context.Guild);
         }
 
         [Command("kickwarn")]
@@ -307,8 +307,8 @@ namespace BotCatMaxy {
             await user.Warn(size, reason, Context, "Discord");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
-            await ReplyAsync(user.Mention + " has been kicked for " + reason);
             await user.KickAsync(reason);
+            Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason} ", Context.Guild);
         }
 
         [Command("tempban")]
@@ -337,9 +337,8 @@ namespace BotCatMaxy {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
                 return;
             }
-            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempBan(amount.Value, reason, Context, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
+            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempbanwarn")]
@@ -366,12 +365,11 @@ namespace BotCatMaxy {
             await user.Warn(1, reason, Context, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
-                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
+                Context.Message.DeleteOrRespond($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)", Context.Guild);
                 return;
             }
-            IUserMessage message = await ReplyAsync($"Temporarily banning {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempBan(amount.Value, reason, Context, actions);
-            _ = message.ModifyAsync(msg => msg.Content = $"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
+            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempbanwarn")]

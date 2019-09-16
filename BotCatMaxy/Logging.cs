@@ -77,19 +77,23 @@ namespace BotCatMaxy {
             }
         }
 
+        public static void AddToDeletedCache(ulong ID) {
+            if (deletedMessagesCache == null) {
+                deletedMessagesCache = new List<ulong>();
+            }
+            if (deletedMessagesCache.Count > 0 && deletedMessagesCache.Contains(ID)) {
+                return;
+            }
+            if (deletedMessagesCache.Count == 10) {
+                deletedMessagesCache.RemoveAt(9);
+            }
+            deletedMessagesCache.Insert(0, ID);
+        }
+
         public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
             try {
                 if (message == null) return null;
-                if (deletedMessagesCache == null) {
-                    deletedMessagesCache = new List<ulong>();
-                }
-                if (deletedMessagesCache.Count > 0 && deletedMessagesCache.Contains(message.Id)) {
-                    return null;
-                }
-                if (deletedMessagesCache.Count == 5) {
-                    deletedMessagesCache.RemoveAt(4);
-                }
-                deletedMessagesCache.Insert(0, message.Id);
+                if (deletedMessagesCache?.Contains(message.Id) ?? false) return null;
 
                 if (guild == null) {
                     guild = Utilities.GetGuild(message.Channel as SocketGuildChannel);
@@ -99,7 +103,7 @@ namespace BotCatMaxy {
                 }
 
                 LogSettings settings = guild?.LoadFromFile<LogSettings>();
-                SocketGuildChannel gChannel = guild?.GetChannel(settings.logChannel);
+                SocketGuildChannel gChannel = guild?.GetChannel(settings?.logChannel ?? 0);
                 if (settings == null || gChannel == null || !settings.logDeletes) {
                     return null;
                 }

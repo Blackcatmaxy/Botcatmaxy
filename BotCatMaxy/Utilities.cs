@@ -120,6 +120,7 @@ namespace BotCatMaxy {
                     else logger.Fatal(message.Message);
                     break;
                 case LogSeverity.Error:
+                    Console.Beep();
                     if (message.Exception != null) logger.Error(message.Exception, message.Message);
                     else logger.Error(message.Message);
                     break;
@@ -253,6 +254,16 @@ namespace BotCatMaxy {
                 return true;
             } catch {
                 return false;
+            }
+        }
+
+        public static void DeleteOrRespond(this SocketMessage message, string toSay, IGuild guild, LogSettings settings = null) {
+            if (settings == null) settings = guild.LoadFromFile<LogSettings>(false);
+            if (guild.GetChannelAsync(settings?.pubLogChannel ?? 0).Result == null) message.Channel.SendMessageAsync(toSay);
+            else {
+                Logging.AddToDeletedCache(message.Id);
+                _ = message.DeleteAsync();
+                guild.GetTextChannelAsync(settings.pubLogChannel ?? 0).Result.SendMessageAsync($"{message.Author.Mention}, {toSay}");
             }
         }
     }

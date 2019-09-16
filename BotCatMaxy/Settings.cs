@@ -188,10 +188,16 @@ namespace BotCatMaxy {
 
         [Command("setpubchannel")]
         [HasAdmin]
-        public async Task SetPubLogChannel() {
+        public async Task SetPubLogChannel(string setNull = null) {
             IUserMessage message = await ReplyAsync("Setting...");
             LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
 
+            if (!setNull.IsNullOrEmpty() && (setNull.ToLower() == "none" || setNull.ToLower() == "null")) {
+                settings.pubLogChannel = null;
+                settings.SaveToFile(Context.Guild);
+                await message.ModifyAsync(msg => msg.Content = "Set public log channel to null");
+                return;
+            }
             if (Context.Client.GetChannel(settings.pubLogChannel ?? 0) == Context.Channel) {
                 await ReplyAsync("This channel already is the logging channel");
                 return;
@@ -200,7 +206,7 @@ namespace BotCatMaxy {
             }
 
             settings.SaveToFile(Context.Guild);
-            await message.ModifyAsync(msg => msg.Content = "Set log channel to this channel");
+            await message.ModifyAsync(msg => msg.Content = "Set public log channel to this channel");
         }
 
         [Command("info")]
