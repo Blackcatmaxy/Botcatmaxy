@@ -434,7 +434,6 @@ namespace BotCatMaxy {
                 return;
             }
 
-            IUserMessage message = await ReplyAsync($"Temporarily muting {user.Mention} for {amount.Value.Humanize(3)} because of {reason}");
             await user.TempMute(amount.Value, reason, Context, settings, actions);
             Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
         }
@@ -525,7 +524,6 @@ namespace BotCatMaxy {
             user.TryNotify($"You have been banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(user);
             Context.Message.DeleteOrRespond($"User has been banned for {reason}", Context.Guild);
-
         }
     }
 }
