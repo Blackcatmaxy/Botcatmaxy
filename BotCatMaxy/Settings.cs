@@ -303,15 +303,17 @@ namespace BotCatMaxy {
             public List<ulong> ableToWarn = new List<ulong>();
             public List<ulong> cantBeWarned = new List<ulong>();
             public List<ulong> channelsWithoutAutoMod = new List<ulong>();
-            public List<ulong> ableToBan = new List<ulong>();
             public List<string> allowedLinks = new List<string>();
             public List<ulong> allowedToLink = new List<ulong>();
+            public List<string> badUEmojis = new List<string>();
+            public List<ulong> ableToBan = new List<ulong>();
             public TimeSpan? maxTempAction = null;
             public ulong mutedRole = 0;
             public ushort allowedCaps = 0;
             public bool useOwnerID = false;
             public bool moderateUsernames = false;
             public bool invitesAllowed = true;
+            public uint? maxEmojis = null;
             public BsonDocument CatchAll { get; set; }
         }
 

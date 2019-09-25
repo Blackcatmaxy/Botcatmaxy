@@ -20,11 +20,22 @@ namespace BotCatMaxy {
             this.client = client;
             client.MessageReceived += CheckMessage;
             client.MessageUpdated += CheckEdit;
+            client.ReactionAdded += CheckReaction;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
         public async Task CheckEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel) {
             _ = CheckMessage(editedMessage);
+        }
+
+        public async Task CheckReaction(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction) {
+            try {
+                if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is SocketGuildChannel)) {
+                    return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+                }
+            } catch (Exception e) {
+                await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the reaction filter", e).Log();
+            }
         }
 
         public async Task CheckMessage(SocketMessage message) {
@@ -41,7 +52,7 @@ namespace BotCatMaxy {
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
                 List<BadWord> badWords = Guild.LoadFromFile<BadWordList>()?.badWords;
 
-                if (modSettings != null) {
+                if (modSettings == null) {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())
                         return; //Returns if channel is set as not using automod
 
@@ -63,6 +74,22 @@ namespace BotCatMaxy {
                             }
                         }
                     }
+
+                    //Check for emojis
+                    /*if (modSettings.maxEmojis != null || modSettings.badEmojis.NotEmpty()) {
+                        List<string> emojis = new List<string>();
+                        const string emojiRegex = @"<a?:(\w+):(\d+)>|\\U(\1\d+)\d";
+                        MatchCollection matches = Regex.Matches(message.Content, emojiRegex, RegexOptions.IgnoreCase);
+                        foreach (Match match in matches) {
+                            
+                        }
+                        if (modSettings.badEmojis.NotEmpty()) {
+
+                        }
+                        if ((modSettings.maxEmojis ?? 0) > emojis.Count) {
+
+                        }
+                    }*/
 
                     if (modSettings.allowedCaps > 0 && message.Content.Length > 5) {
                         uint amountCaps = 0;
@@ -139,7 +166,7 @@ namespace BotCatMaxy {
                     }
                 }
             } catch (Exception e) {
-                _ = new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the filter", e).Log();
+                await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the message filter", e).Log();
             }
         }
     }
@@ -218,6 +245,11 @@ namespace BotCatMaxy {
                     } else {
                         embed.AddField("Allowed caps", "Capitalization is not filtered");
                     }
+
+                    string badUniEmojis = settings.badUEmojis?.ListItems();
+                    if (!badUniEmojis.IsNullOrEmpty()) {
+
+                    }
                 }
 
                 message = "";
@@ -246,6 +278,79 @@ namespace BotCatMaxy {
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Settings", "Error", e).Log();
             }
+        }
+
+        [HasAdmin]
+        [Command("maxemoji"), Alias("setmaxemoji")]
+        public async Task AllowEmojis(uint amount) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            if (amount == settings.maxEmojis) {
+                await ReplyAsync("The selected value is already set");
+                return;
+            }
+            settings.maxEmojis = amount;
+            settings.SaveToFile(Context.Guild);
+            string extraInfo = "";
+            if (settings.allowedToLink.NotEmpty()) extraInfo = " except by role allowed to link";
+            if (amount == 0) await ReplyAsync("No emojis are allowed" + extraInfo);
+            else await ReplyAsync($"Max {amount} emojis are allowed{extraInfo}");
+        }
+
+        [HasAdmin]
+        [Command("allowemoji"), Alias("setmaxemojis")]
+        public async Task SetMaxEmojis(string amount) {
+            ModerationSettings settings = null;
+            switch (amount.ToLower()) {
+                case "null":
+                case "none":
+                case "disable":
+                    settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+                    if (settings?.maxEmojis == null)
+                        await ReplyAsync("Emoji moderation is already disabled");
+                    else {
+                        settings.maxEmojis = null;
+                        settings.SaveToFile(Context.Guild);
+                        await ReplyAsync("Emoji moderation is now disabled");
+                    }
+                    break;
+                case "all":
+                    settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+                    settings.maxEmojis = 0;
+                    settings.SaveToFile(Context.Guild);
+                    string extraInfo = "";
+                    if (settings.allowedToLink.NotEmpty()) extraInfo = " except by role allowed to link";
+                    await ReplyAsync("Emojis are now no longer allowed" + extraInfo);
+                    break;
+                default:
+                    await ReplyAsync("Input not understood");
+                    break;
+            }
+        }
+
+        [HasAdmin]
+        [Command("banemoji"), Alias("disallowemoji")]
+        public async Task BanEmoji(Emoji emoji) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            if (settings.badUEmojis.Contains(emoji.Name)) {
+                await ReplyAsync($"Emoji {emoji.Name} is already banned");
+                return;
+            }
+            settings.badUEmojis.Add(emoji.Name);
+            settings.SaveToFile(Context.Guild);
+            await ReplyAsync($"Emoji {emoji.Name} is now banned");
+        }
+
+        [HasAdmin]
+        [Command("allowemoji"), Alias("setmaxemojis")]
+        public async Task RemoveBannedEmoji(Emoji emoji) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+            if (settings == null || !settings.badUEmojis.Contains(emoji.Name)) {
+                await ReplyAsync($"Emoji {emoji.Name} is not banned");
+                return;
+            }
+            settings.badUEmojis.Remove(emoji.Name);
+            settings.SaveToFile(Context.Guild);
+            await ReplyAsync($"Emoji {emoji.Name} is now not banned");
         }
 
         [HasAdmin]

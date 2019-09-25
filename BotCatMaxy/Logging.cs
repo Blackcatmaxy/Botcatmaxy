@@ -124,7 +124,7 @@ namespace BotCatMaxy {
                 }
 
                 string links = "";
-                if (!message.Attachments.IsNullOrEmpty()) {
+                if (message.Attachments.NotEmpty()) {
                     foreach (IAttachment attachment in message.Attachments) {
                         links += " " + attachment.ProxyUrl;
                     }

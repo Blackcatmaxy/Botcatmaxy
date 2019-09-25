@@ -97,9 +97,9 @@ namespace BotCatMaxy {
             return channel.Guild;
         }
 
-        public static void RemoveNullEntries(this IList list) {
+        public static void RemoveNullEntries<T>(this ICollection<T> list) {
             if (list != null || list.Count > 0) {
-                foreach (object thing in list) {
+                foreach (T thing in list) {
                     if (thing == null) {
                         list.Remove(thing);
                     }
@@ -207,13 +207,12 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static bool IsNullOrEmpty(this IEnumerable<object> list) {
-            if (list == null || list.ToArray().Length == 0) return true;
+        public static bool IsNullOrEmpty(this ICollection list) {
+            if (list == null || list.Count == 0) return true;
             else return false;
         }
-
-        public static bool NotEmpty(this IEnumerable<object> list, int needAmount) {
-            if (list == null || list.ToArray().Length <= needAmount) return false;
+        public static bool NotEmpty<T>(this IReadOnlyCollection<T> list, int needAmount = 0) {
+            if (list == null || list.Count <= needAmount) return false;
             else return true;
         }
 
@@ -265,6 +264,18 @@ namespace BotCatMaxy {
                 _ = message.DeleteAsync();
                 guild.GetTextChannelAsync(settings.pubLogChannel ?? 0).Result.SendMessageAsync($"{message.Author.Mention}, {toSay}");
             }
+        }
+
+        public static string ListItems(this ICollection<string> list) {
+            string items = null;
+            if (list.NotEmpty()) {
+                list.RemoveNullEntries();
+                foreach (string item in list) {
+                    if (items == null) items = "";
+
+                }
+            }
+            return items;
         }
     }
 }

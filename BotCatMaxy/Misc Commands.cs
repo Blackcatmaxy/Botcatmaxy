@@ -26,17 +26,7 @@ namespace BotCatMaxy {
         [RequireOwner()]
         [Command("bottest")]
         public async Task TestCommand([Remainder] string s) {
-            ModerationSettings modSettings = Context.Guild.LoadFromFile<ModerationSettings>();
-
-            if (modSettings.allowedCaps > 0 && s.Length > 5) {
-                uint amountCaps = 0;
-                foreach (char c in s) {
-                    if (char.IsUpper(c)) {
-                        amountCaps++;
-                    }
-                }
-                await ReplyAsync($"{(amountCaps / (float)s.Length) * 100} {modSettings.allowedCaps}, {(((amountCaps / (float)s.Length) * 100) >= modSettings.allowedCaps)}");
-            }
+            
         }
     }
 }

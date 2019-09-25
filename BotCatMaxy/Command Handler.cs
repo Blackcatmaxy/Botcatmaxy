@@ -7,6 +7,7 @@ using Discord.Commands;
 using System.Threading.Tasks;
 using System.Reflection;
 using BotCatMaxy;
+using System.Text.RegularExpressions;
 
 namespace BotCatMaxy {
     public class CommandHandler {
@@ -25,13 +26,9 @@ namespace BotCatMaxy {
             // Hook the MessageReceived event into our command handler
             _client.MessageReceived += HandleCommandAsync;
 
-            // Here we discover all of the command modules in the entry 
-            // assembly and load them. Starting from Discord.NET 2.0, a
-            // service provider is required to be passed into the
-            // module registration method to inject the 
-            // required dependencies.
-            //
-            // If you do not use Dependency Injection, pass null.
+            //Adds Emoji type reader
+            _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
+
             // See Dependency Injection guide for more information.
             await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
                                             services: null);
@@ -68,14 +65,11 @@ namespace BotCatMaxy {
                 argPos: argPos,
                 services: null);
 
-            // Optionally, we may inform the user if the command fails
-            // to be executed; however, this may not always be desired,
-            // as it may clog up the request queue should a user spam a
-            // command.
-             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
+            //may clog up the request queue should a user spam a command.
+            if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
                 await new LogMessage(LogSeverity.Warning, "Commands", result.ErrorReason).Log();
-             }
+            }
         }
     }
 }
@@ -86,7 +80,7 @@ namespace Discord.Commands {
             //Makes sure it's in a server
             if (context.User is SocketGuildUser gUser) {
                 // If this command was executed by a user with the appropriate role, return a success
-                if (gUser.CanWarn()) 
+                if (gUser.CanWarn())
                     return Task.FromResult(PreconditionResult.FromSuccess());
                 else
                     return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
@@ -105,6 +99,24 @@ namespace Discord.Commands {
                     return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
             } else
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
+        }
+    }
+
+    public class EmojiTypeReader : TypeReader {
+        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
+            string regex = @"<(a?):(\w+):(\d+)>";
+            Match match = Regex.Match(input, regex); //Check if it's custom discord emoji
+            if (match.Success) {
+                return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "This is a custom emoji not a normal one, if you beleive they should work on this command make an issue on the GitHub over at !help"));
+            }
+            Emoji emoji = new Emoji(input);
+            try {
+                await context.Message.AddReactionAsync(emoji);
+                await context.Message.RemoveReactionAsync(emoji, context.Client.CurrentUser);
+            } catch {
+                return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "That is not a valid emoji"));
+            }
+            return await Task.FromResult(TypeReaderResult.FromSuccess(emoji));
         }
     }
 }
