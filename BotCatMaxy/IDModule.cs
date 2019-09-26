@@ -69,12 +69,12 @@ namespace BotCatMaxy {
             string jumpLink;
             if (gUser != null) {
                 jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, gUser.Id, reason, Context.Message.GetJumpUrl());
-                await gUser.Warn(1, reason, Context, logLink: jumpLink);
+                await gUser.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
                 await ReplyAsync(gUser.Mention + " has gotten their " + gUser.LoadInfractions().Count.Suffix() + " infraction for " + reason);
                 return;
             }
             jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, ID, reason, Context.Message.GetJumpUrl());
-            await ID.Warn(1, reason, Context, logLink: jumpLink);
+            await ID.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
             Context.Message.DeleteOrRespond(
                 $"{Context.Client.GetUser(ID)?.Username.StrippedOfPing() ?? "They"} have gotten their {ID.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
         }
@@ -86,12 +86,12 @@ namespace BotCatMaxy {
             string jumpLink;
             if (gUser != null) {
                 jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, gUser.Id, reason, Context.Message.GetJumpUrl());
-                await gUser.Warn(size, reason, Context, logLink: jumpLink);
+                await gUser.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
                 await ReplyAsync(gUser.Mention + " has gotten their " + gUser.LoadInfractions().Count.Suffix() + " infraction for " + reason);
                 return;
             }
             jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, ID, reason, Context.Message.GetJumpUrl());
-            await ID.Warn(1, reason, Context, logLink: jumpLink);
+            await ID.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
             Context.Message.DeleteOrRespond(
                 $"{Context.Client.GetUser(ID)?.Username.StrippedOfPing() ?? "They"} have gotten their {ID.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
         }

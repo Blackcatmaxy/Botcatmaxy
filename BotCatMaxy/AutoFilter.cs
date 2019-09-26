@@ -28,10 +28,27 @@ namespace BotCatMaxy {
             _ = CheckMessage(editedMessage);
         }
 
-        public async Task CheckReaction(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction) {
+        public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) {
             try {
                 if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is SocketGuildChannel)) {
                     return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+                }
+                var message = cachedMessage.GetOrDownloadAsync().Result;
+                SocketGuildChannel chnl = channel as SocketGuildChannel;
+                SocketGuild guild = chnl?.Guild;
+                if (guild == null) return;
+                
+                ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
+                SocketGuildUser gUser = guild.GetUser(reaction.UserId);
+                var Guild = chnl.Guild;
+                if (settings?.badUEmojis.IsNullOrEmpty() ?? true || (reaction.User.Value as SocketGuildUser).HasAdmin() || reaction.User.Value.IsBot) {
+                    return;
+                }
+                if (settings.badUEmojis.Select(emoji => new Emoji(emoji)).Contains(reaction.Emote)) {
+                    await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                    await ((SocketGuildUser)reaction.User.Value).Warn(1, "Bad reaction used", channel as SocketTextChannel);
+                    IUserMessage warnMessage = await channel.SendMessageAsync(
+                        $"{reaction.User.Value.Mention} has been given their {(reaction.User.Value as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of bad reaction used");
                 }
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the reaction filter", e).Log();
@@ -174,7 +191,7 @@ namespace BotCatMaxy {
     public static class FilterActions {
         public static async Task Punish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
             string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
-            await ((SocketGuildUser)context.User).Warn(warnSize, reason, context, logLink: jumpLink);
+            await ((SocketGuildUser)context.User).Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
 
             IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
             try {
@@ -228,15 +245,8 @@ namespace BotCatMaxy {
 
                         embed.AddField("Allowed links", message, true);
                         if (settings.allowedToLink != null && settings.allowedToLink.Count > 0) {
-                            message = "";
-                            foreach (SocketRole role in Context.Guild.Roles) {
-                                if (role.Permissions.Administrator || settings.allowedToLink.Contains(role.Id) && !role.IsManaged) {
-                                    if (message != "") {
-                                        message += "\n";
-                                    }
-                                    message += role.Name;
-                                }
-                            }
+                            message = Context.Guild.Roles.Where(
+                                role => (role.Permissions.Administrator && !role.IsManaged) || settings.allowedToLink.Contains(role.Id)).Select(role => role.Name).ToArray().ListItems("\n");
                             embed.AddField("Roles that can post links", message, true);
                         }
                     }
@@ -246,9 +256,9 @@ namespace BotCatMaxy {
                         embed.AddField("Allowed caps", "Capitalization is not filtered");
                     }
 
-                    string badUniEmojis = settings.badUEmojis?.ListItems();
+                    string badUniEmojis = settings.badUEmojis?.ListItems("");
                     if (!badUniEmojis.IsNullOrEmpty()) {
-
+                        embed.AddField("Banned Emojis", badUniEmojis, true);
                     }
                 }
 

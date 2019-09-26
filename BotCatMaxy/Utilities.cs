@@ -211,8 +211,8 @@ namespace BotCatMaxy {
             if (list == null || list.Count == 0) return true;
             else return false;
         }
-        public static bool NotEmpty<T>(this IReadOnlyCollection<T> list, int needAmount = 0) {
-            if (list == null || list.Count <= needAmount) return false;
+        public static bool NotEmpty<T>(this IEnumerable<T> list, int needAmount = 0) {
+            if (list == null || list.ToArray().Length <= needAmount) return false;
             else return true;
         }
 
@@ -266,13 +266,14 @@ namespace BotCatMaxy {
             }
         }
 
-        public static string ListItems(this ICollection<string> list) {
+        public static string ListItems(this ICollection<string> list, string joiner = " ") {
             string items = null;
             if (list.NotEmpty()) {
                 list.RemoveNullEntries();
                 foreach (string item in list) {
                     if (items == null) items = "";
-
+                    else items += joiner;
+                    items += item;
                 }
             }
             return items;

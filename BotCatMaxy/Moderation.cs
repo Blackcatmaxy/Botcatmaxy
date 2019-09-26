@@ -23,26 +23,26 @@ namespace BotCatMaxy {
     }
 
     public static class ModerationFunctions {
-        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketCommandContext context, string logLink = null) {
+        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null) {
             try {
                 if (user.CantBeWarned()) {
-                    await context.Channel.SendMessageAsync("This person can't be warned");
+                    await channel.SendMessageAsync("This person can't be warned");
                     return;
                 }
 
-                await user.Id.Warn(size, reason, context, logLink);
+                await user.Id.Warn(size, reason, channel, user, logLink);
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
             }
         }
 
-        public static async Task Warn(this ulong userID, float size, string reason, SocketCommandContext context, string logLink = null) {
+        public static async Task Warn(this ulong userID, float size, string reason, SocketTextChannel channel, IUser warnee = null, string logLink = null) {
             if (size > 999 || size < 0.01) {
-                await context.Channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                await channel.SendMessageAsync("Why would you need to warn someone with that size?");
                 return;
             }
 
-            List<Infraction> infractions = userID.LoadInfractions(context.Guild, true);
+            List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
             Infraction newInfraction = new Infraction {
                 reason = reason,
                 time = DateTime.Now,
@@ -50,14 +50,13 @@ namespace BotCatMaxy {
             };
             if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
             infractions.Add(newInfraction);
-            userID.SaveInfractions(context.Guild, infractions);
+            userID.SaveInfractions(channel.Guild, infractions);
 
             try {
-                IUser user = context.Client.GetUser(userID);
-                if (user != null) {
-                    IUser[] users = await context.Channel.GetUsersAsync().Flatten().ToArray();
+                if (warnee != null) {
+                    IUser[] users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
                     if (!users.Any(xUser => xUser.Id == userID)) {
-                        user.TryNotify($"You have been warned in {context.Guild.Name} discord for \"{reason}\" in a channel you can't view");
+                        warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");
                     }
                 }
             } catch {
@@ -201,7 +200,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
-            await user.Warn(1, reason, Context, logLink: jumpLink);
+            await user.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
 
             Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
         }
@@ -210,7 +209,7 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
-            await user.Warn(size, reason, Context, logLink: jumpLink);
+            await user.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
 
             Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
         }
@@ -293,7 +292,7 @@ namespace BotCatMaxy {
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
-            await user.Warn(1, reason, Context, "Discord");
+            await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
@@ -304,7 +303,7 @@ namespace BotCatMaxy {
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
-            await user.Warn(size, reason, Context, "Discord");
+            await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
@@ -362,7 +361,7 @@ namespace BotCatMaxy {
                     return;
                 }
             }
-            await user.Warn(1, reason, Context, "Discord");
+            await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 Context.Message.DeleteOrRespond($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)", Context.Guild);
@@ -393,7 +392,7 @@ namespace BotCatMaxy {
                     return;
                 }
             }
-            await user.Warn(size, reason, Context, "Discord");
+            await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned (the warn did go through)");
@@ -463,7 +462,7 @@ namespace BotCatMaxy {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            await user.Warn(1, reason, Context, "Discord");
+            await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
@@ -499,7 +498,7 @@ namespace BotCatMaxy {
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            await user.Warn(size, reason, Context, "Discord");
+            await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) {
                 await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted, (the warn did go through)");
