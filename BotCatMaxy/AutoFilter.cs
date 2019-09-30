@@ -116,6 +116,10 @@ namespace BotCatMaxy {
                 if (badWords != null) {
                     StringBuilder sb = new StringBuilder();
                     foreach (char c in message.Content) {
+                        if (sb.ToString().Length + 1 == message.Content.Length) {
+                            sb.Append(c);
+                            break;
+                        }
                         switch (c) {
                             case '1':
                             case '!':
@@ -246,8 +250,12 @@ namespace BotCatMaxy {
                     List<string> words = new List<string>();
                     foreach (BadWord badWord in badWords.all) {
                         string word = "";
-                        if (!badWord.euphemism.IsNullOrEmpty()) word = badWord.euphemism;
-                        else if (useExplicit) word = $"[{badWord.size}x] {badWord.euphemism} ({badWord.word})";
+                        if (useExplicit) {
+                            word = $"[{badWord.size}x] " ;
+                            if (badWord.euphemism.NotEmpty()) word += $"{badWord.euphemism} ";
+                            word += $"({badWord.word})";
+                        } 
+                        else if (!badWord.euphemism.IsNullOrEmpty()) word = badWord.euphemism;
                         if (badWord.partOfWord && (useExplicit || !badWord.euphemism.IsNullOrEmpty())) {
                             word += "⌝";
                         }
