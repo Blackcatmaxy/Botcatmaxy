@@ -287,7 +287,7 @@ namespace BotCatMaxy {
             public List<string> moreWords = new List<string>();
             public string word;
             public string euphemism;
-            public float size;
+            public float size = 0.5f;
             public bool partOfWord = true;
         }
 

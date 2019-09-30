@@ -60,13 +60,13 @@ namespace BotCatMaxy {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
                 dbClient = new MongoClient(HiddenInfo.debugDB);
             } else {
-                if (dbClient == null) dbClient = new MongoClient(HiddenInfo.mainDB);
+                dbClient ??= new MongoClient(HiddenInfo.mainDB);
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
             }
 
             await _client.StartAsync();
 
-            if (version != null || version != "") {
+            if (version.NotEmpty()) {
                 await new LogMessage(LogSeverity.Info, "Main", "Starting with version " + version).Log();
                 await _client.SetGameAsync("version " + version);
             } else {

@@ -41,7 +41,7 @@ namespace BotCatMaxy {
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;
-                if (settings?.badUEmojis.IsNullOrEmpty() ?? true || (reaction.User.Value as SocketGuildUser).HasAdmin() || reaction.User.Value.IsBot) {
+                if (settings?.badUEmojis.IsNullOrEmpty() ?? true || (reaction.User.Value as SocketGuildUser).CantBeWarned() || reaction.User.Value.IsBot) {
                     return;
                 }
                 if (settings.badUEmojis.Select(emoji => new Emoji(emoji)).Contains(reaction.Emote)) {
@@ -93,20 +93,10 @@ namespace BotCatMaxy {
                     }
 
                     //Check for emojis
-                    /*if (modSettings.maxEmojis != null || modSettings.badEmojis.NotEmpty()) {
-                        List<string> emojis = new List<string>();
-                        const string emojiRegex = @"<a?:(\w+):(\d+)>|\\U(\1\d+)\d";
-                        MatchCollection matches = Regex.Matches(message.Content, emojiRegex, RegexOptions.IgnoreCase);
-                        foreach (Match match in matches) {
-                            
-                        }
-                        if (modSettings.badEmojis.NotEmpty()) {
-
-                        }
-                        if ((modSettings.maxEmojis ?? 0) > emojis.Count) {
-
-                        }
-                    }*/
+                    if (modSettings.badUEmojis.NotEmpty() && modSettings.badUEmojis.Any(s => message.Content.Contains(s))) {
+                        await context.Punish("Bad emoji used", 0.8f);
+                        return;
+                    }
 
                     if (modSettings.allowedCaps > 0 && message.Content.Length > 5) {
                         uint amountCaps = 0;
@@ -120,7 +110,7 @@ namespace BotCatMaxy {
                             return;
                         }
                     }
-                }
+                } //End of stuff from mod settings
 
                 //Checks for bad words
                 if (badWords != null) {
@@ -171,11 +161,10 @@ namespace BotCatMaxy {
                             foreach (string word in messageParts) {
                                 if (word == badWord.word.ToLower()) {
                                     if (badWord.euphemism != null && badWord.euphemism != "") {
-                                        await context.Punish("Bad word used (" + badWord.euphemism + ")");
+                                        await context.Punish("Bad word used (" + badWord.euphemism + ")", badWord.size);
                                     } else {
-                                        await context.Punish("Bad word used");
+                                        await context.Punish("Bad word used", badWord.size);
                                     }
-
                                     return;
                                 }
                             }
@@ -235,19 +224,12 @@ namespace BotCatMaxy {
                     if (settings.allowedLinks == null || settings.allowedLinks.Count == 0) {
                         embed.AddField("Allowed links", "Links aren't moderated  ", true);
                     } else {
-                        message = "";
-                        foreach (string link in settings.allowedLinks) {
-                            if (message != "") {
-                                message += "  \n";
-                            }
-                            message += link;
-                        }
-
-                        embed.AddField("Allowed links", message, true);
+                        message = settings.allowedLinks.ListItems("\n");
+                        if (message.NotEmpty()) embed.AddField("Allowed links", message, true);
                         if (settings.allowedToLink != null && settings.allowedToLink.Count > 0) {
                             message = Context.Guild.Roles.Where(
                                 role => (role.Permissions.Administrator && !role.IsManaged) || settings.allowedToLink.Contains(role.Id)).Select(role => role.Name).ToArray().ListItems("\n");
-                            embed.AddField("Roles that can post links", message, true);
+                            if (message.NotEmpty()) embed.AddField("Roles that can post links", message, true);
                         }
                     }
                     if (settings.allowedCaps > 0) {
@@ -255,33 +237,28 @@ namespace BotCatMaxy {
                     } else {
                         embed.AddField("Allowed caps", "Capitalization is not filtered");
                     }
-
                     string badUniEmojis = settings.badUEmojis?.ListItems("");
                     if (!badUniEmojis.IsNullOrEmpty()) {
                         embed.AddField("Banned Emojis", badUniEmojis, true);
                     }
                 }
-
-                message = "";
                 if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
+                    List<string> words = new List<string>();
                     foreach (BadWord badWord in badWords.all) {
-                        if (message != "" && !badWord.euphemism.IsNullOrEmpty() || useExplicit) {
-                            message += "\n";
-                        }
-                        if (!badWord.euphemism.IsNullOrEmpty()) message += badWord.euphemism;
-                        if (useExplicit) message += " (" + badWord.word + ")";
+                        string word = "";
+                        if (!badWord.euphemism.IsNullOrEmpty()) word = badWord.euphemism;
+                        else if (useExplicit) word = $"[{badWord.size}x] {badWord.euphemism} ({badWord.word})";
                         if (badWord.partOfWord && (useExplicit || !badWord.euphemism.IsNullOrEmpty())) {
-                            message += "⌝";
+                            word += "⌝";
                         }
-                        message += "  ";
+                        words.Add(word);
                     }
+                    message = words.ListItems("\n");
                     embed.AddField("Badword euphemisms (not an exhaustive list)", message, false);
                 }
-
-                message = "The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word";
                 IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
                 if (channel != null) {
-                    _ = channel.SendMessageAsync(message, embed: embed.Build());
+                    _ = channel.SendMessageAsync("The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
                 } else {
                     _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
                 }
@@ -339,6 +316,7 @@ namespace BotCatMaxy {
 
         [HasAdmin]
         [Command("banemoji"), Alias("disallowemoji")]
+        [RequireBotPermission(ChannelPermission.AddReactions)]
         public async Task BanEmoji(Emoji emoji) {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             if (settings.badUEmojis.Contains(emoji.Name)) {
@@ -351,7 +329,8 @@ namespace BotCatMaxy {
         }
 
         [HasAdmin]
-        [Command("allowemoji"), Alias("setmaxemojis")]
+        [Command("allowemoji"), Alias("unbanemoji")]
+        [RequireBotPermission(ChannelPermission.AddReactions)]
         public async Task RemoveBannedEmoji(Emoji emoji) {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
             if (settings == null || !settings.badUEmojis.Contains(emoji.Name)) {
