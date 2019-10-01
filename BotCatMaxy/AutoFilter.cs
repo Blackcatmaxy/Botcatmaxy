@@ -69,7 +69,7 @@ namespace BotCatMaxy {
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
                 List<BadWord> badWords = Guild.LoadFromFile<BadWordList>()?.badWords;
 
-                if (modSettings == null) {
+                if (modSettings != null) {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())
                         return; //Returns if channel is set as not using automod
 
