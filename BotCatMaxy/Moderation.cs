@@ -198,7 +198,7 @@ namespace BotCatMaxy {
     public class DiscordModModule : ModuleBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserAsync(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
+        public async Task WarnUserAsync([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
             await user.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
 
@@ -207,7 +207,7 @@ namespace BotCatMaxy {
 
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnWithSizeUserAsync(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
+        public async Task WarnWithSizeUserAsync([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
             await user.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
 
@@ -270,7 +270,7 @@ namespace BotCatMaxy {
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task RemoveWarnAsync(SocketGuildUser user, int index) {
+        public async Task RemoveWarnAsync([RequireHierarchy] SocketGuildUser user, int index) {
             List<Infraction> infractions = user.LoadInfractions();
             if (infractions.IsNullOrEmpty()) {
                 await ReplyAsync("Infractions are null");
@@ -291,7 +291,7 @@ namespace BotCatMaxy {
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task KickAndWarn(SocketGuildUser user, [Remainder] string reason = "Unspecified") {
+        public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
@@ -302,7 +302,7 @@ namespace BotCatMaxy {
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task KickAndWarn(SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
+        public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
@@ -314,7 +314,7 @@ namespace BotCatMaxy {
         [Alias("tban", "temp-ban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempBanUser(SocketGuildUser user, string time, [Remainder] string reason) {
+        public async Task TempBanUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
@@ -344,7 +344,7 @@ namespace BotCatMaxy {
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempBanWarnUser(SocketGuildUser user, string time, [Remainder] string reason) {
+        public async Task TempBanWarnUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
@@ -375,7 +375,7 @@ namespace BotCatMaxy {
         [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempBanWarnUser(SocketGuildUser user, string time, float size, [Remainder] string reason) {
+        public async Task TempBanWarnUser([RequireHierarchy] SocketGuildUser user, string time, float size, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
@@ -406,7 +406,7 @@ namespace BotCatMaxy {
         [Alias("tmute", "temp-mute")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempMuteUser(SocketGuildUser user, string time, [Remainder] string reason) {
+        public async Task TempMuteUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
@@ -441,7 +441,7 @@ namespace BotCatMaxy {
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempMuteWarnUser(SocketGuildUser user, string time, [Remainder] string reason) {
+        public async Task TempMuteWarnUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
@@ -477,7 +477,7 @@ namespace BotCatMaxy {
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempMuteWarnUser(SocketGuildUser user, string time, float size, [Remainder] string reason) {
+        public async Task TempMuteWarnUser([RequireHierarchy] SocketGuildUser user, string time, float size, [Remainder] string reason) {
             var amount = time.ToTime();
             if (amount == null) {
                 await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
