@@ -284,7 +284,6 @@ namespace BotCatMaxy {
         }
 
         public class BadWord {
-            public List<string> moreWords = new List<string>();
             public string word;
             public string euphemism;
             public float size = 0.5f;

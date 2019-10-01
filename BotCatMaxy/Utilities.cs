@@ -267,7 +267,7 @@ namespace BotCatMaxy {
         }
 
         public static string ListItems(this ICollection<string> list, string joiner = " ") {
-            string items = "";
+            string items = null;
             if (list.NotEmpty()) {
                 list.RemoveNullEntries();
                 foreach (string item in list) {

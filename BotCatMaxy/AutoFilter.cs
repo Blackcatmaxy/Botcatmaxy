@@ -248,7 +248,32 @@ namespace BotCatMaxy {
                 }
                 if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
                     List<string> words = new List<string>();
-                    foreach (BadWord badWord in badWords.all) {
+                    foreach (List<BadWord> group in badWords.grouped) {
+                        BadWord first = group.FirstOrDefault();
+                        if (first != null) {
+                            string word = "";
+                            if (useExplicit) {
+                                if (group.Count == 1 || group.All(badWord => badWord.size == first.size)) {
+                                    word = $"[{first.size}x] ";
+                                } else {
+                                    var sizes = group.Select(badword => badword.size);
+                                    word = $"[{sizes.Min()}-{sizes.Max()}x] ";
+                                }
+                                if (first.euphemism.NotEmpty()) word += $"{first.euphemism} ";
+                                if (group.Count == 1) {
+                                    word += $"({first.word})";
+                                }
+                                word += $"({group.Select(badWord => badWord.word).ToArray().ListItems(", ")})";
+                            } else if (!first.euphemism.IsNullOrEmpty()) word = first.euphemism;
+                            if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() || useExplicit)) {
+                                word += "⌝";
+                            }
+                            words.Add(word);
+                        } else {
+                            _ = new LogMessage(LogSeverity.Error, "Filter", "Empty badword list in badwords").Log();
+                        }
+                    }
+                    /*foreach (BadWord badWord in badWords.all) { Old code
                         string word = "";
                         if (useExplicit) {
                             word = $"[{badWord.size}x] " ;
@@ -260,7 +285,7 @@ namespace BotCatMaxy {
                             word += "⌝";
                         }
                         words.Add(word);
-                    }
+                    }*/
                     message = words.ListItems("\n");
                     embed.AddField("Badword euphemisms (not an exhaustive list)", message, false);
                 }

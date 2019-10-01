@@ -10,6 +10,7 @@ using MongoDB.Bson;
 using BotCatMaxy;
 using Discord;
 using System;
+using System.Linq;
 
 namespace BotCatMaxy.Data {
     public static class SettingsData {
@@ -93,18 +94,26 @@ namespace BotCatMaxy.Data {
         public List<BadWord> all;
         public List<BadWord> onlyAlone;
         public List<BadWord> insideWords;
+        public List<List<BadWord>> grouped;
 
         public BadWords(IGuild guild) {
             all = guild.LoadFromFile<BadWordList>().badWords ?? new List<BadWord>();
             onlyAlone = new List<BadWord>();
             insideWords = new List<BadWord>();
-
+            grouped = new List<List<BadWord>>();
             if (all == null) {
                 return;
             }
             foreach (BadWord badWord in all) {
                 if (badWord.partOfWord) insideWords.Add(badWord);
-                else onlyAlone.Add(badWord); 
+                else onlyAlone.Add(badWord);
+
+                List<BadWord> group = grouped.Find(list => list.FirstOrDefault() != null && list.First().euphemism == badWord.euphemism);
+                if (group != null) {
+                    group.Add(badWord);
+                } else {
+                    grouped.Add(new List<BadWord> { badWord });
+                }
             }
         }
     }
