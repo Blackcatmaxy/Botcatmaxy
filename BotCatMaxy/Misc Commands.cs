@@ -25,8 +25,9 @@ namespace BotCatMaxy {
 
         [RequireOwner()]
         [Command("bottest")]
-        public async Task TestCommand([Remainder] string s) {
-            
+        public async Task TestCommand(SocketGuildUser other) {
+            await ReplyAsync(
+                $"Are you allowed to act on {other.NickOrUsername().StrippedOfPing()}: {(Context.User as SocketGuildUser).CanActOn(other)}");
         }
     }
 }

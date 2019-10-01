@@ -278,5 +278,11 @@ namespace BotCatMaxy {
             }
             return items;
         }
+
+        public static bool CanActOn(this SocketGuildUser focus, SocketGuildUser comparer) {
+            if (focus.Roles.Select(role => role.Position).Max() > comparer.Roles.Select(role => role.Position).Max())
+                return true;
+            return false;
+        }
     }
 }

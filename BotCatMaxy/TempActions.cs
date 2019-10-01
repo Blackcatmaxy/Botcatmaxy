@@ -84,7 +84,7 @@ namespace BotCatMaxy {
                                         if (user != null) {
                                             await (user as SocketGuildUser).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
                                         }
-                                        user = client.GetUser(tempMute.user);
+                                        user ??= client.GetUser(tempMute.user);
                                         if (user != null) {
                                             Logging.LogEndTempAct(guild, user, "mut", tempMute.reason, tempMute.length);
                                             _ = user.Notify($"untemp-muted", tempMute.reason, guild);
