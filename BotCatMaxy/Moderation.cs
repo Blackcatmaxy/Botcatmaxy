@@ -36,6 +36,38 @@ namespace BotCatMaxy {
             }
         }
 
+        public static async Task Warn(this SocketGuildUser user, Warning warning, SocketTextChannel channel) {
+            try {
+                if (user.CantBeWarned()) {
+                    await channel.SendMessageAsync("This person can't be warned");
+                    return;
+                }
+
+                await user.Id.Warn(warning, channel, user);
+            } catch (Exception e) {
+                await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
+            }
+        }
+
+        public static async Task Warn(this ulong userID, Warning warning, SocketTextChannel channel, IUser warnee = null) {
+            if (warning.Size > 999 || warning.Size < 0.01) {
+                await channel.SendMessageAsync("Why would you need to warn someone with that size?");
+                return;
+            }
+
+            UserInfractions history = userID.LoadHistory(channel.Guild, true);
+            history.history.Add(warning);
+            history.Save();
+            try {
+                if (warnee != null) {
+                    IUser[] users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
+                    if (!users.Any(xUser => xUser.Id == userID)) {
+                        warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{warning.Reason}\" in a channel you can't view");
+                    }
+                }
+            } catch { }
+        }
+
         public static async Task Warn(this ulong userID, float size, string reason, SocketTextChannel channel, IUser warnee = null, string logLink = null) {
             if (size > 999 || size < 0.01) {
                 await channel.SendMessageAsync("Why would you need to warn someone with that size?");

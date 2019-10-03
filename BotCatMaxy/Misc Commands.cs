@@ -26,7 +26,7 @@ namespace BotCatMaxy {
         [RequireOwner()]
         [Command("bottest")]
         public async Task TestCommand([RequireHierarchy] SocketGuildUser other) {
-            await ReplyAsync("Command success");
+            await other.Warn(new Warning("Test", Context.Message.Author.Id, 1), Context.Channel as SocketTextChannel);
         }
     }
 }
