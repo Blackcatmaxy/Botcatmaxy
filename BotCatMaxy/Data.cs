@@ -75,34 +75,11 @@ namespace BotCatMaxy.Data {
             collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", userID));
             collection.InsertOne(new UserInfractions { ID = userID, infractions = infractions }.ToBsonDocument());
         }
-
-        public static UserInfractions LoadHistory(this ulong userID, IGuild guild, bool createDir = false) {
-            var collection = guild.GetInfractionsCollection(createDir);
-            if (collection == null) return null;
-            UserInfractions history = null;
-
-            using (var cursor = collection.Find(Builders<BsonDocument>.Filter.Eq("_id", userID)).ToCursor()) {
-                var doc = cursor.FirstOrDefault();
-                if (doc != null) history = BsonSerializer.Deserialize<UserInfractions>(doc);
-            }
-            if (history == null && createDir) history = new UserInfractions { ID = userID };
-            if (history != null) history.guild = guild;
-            return history;
-        }
-
-        public static void Save(this UserInfractions history) {
-            var collection = history.guild.GetInfractionsCollection(true);
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", history.ID));
-            collection.InsertOne(history.ToBsonDocument());
-        }
     }
 
     public class UserInfractions {
         [BsonId]
         public ulong ID = 0;
-        [BsonIgnore]
-        public IGuild guild;
-        public List<IAction> history = new List<IAction>();
         public List<Infraction> infractions = new List<Infraction>();
     }
 
@@ -138,62 +115,6 @@ namespace BotCatMaxy.Data {
                     grouped.Add(new List<BadWord> { badWord });
                 }
             }
-        }
-    }
-
-    public enum PunishType {
-        TempMute,
-        TempBan,
-        Mute,
-        Ban,
-    }
-
-    public interface IAction {
-        public string Reason { get; }
-        public string LogLink { get; }
-        public DateTime TimeStamp { get; }
-        public ulong Punisher { get; }
-    }
-
-    public interface IPunishment : IAction {
-        public PunishType PunishType { get; }
-        public TimeSpan? Duration { get; }
-    }
-
-    public interface IWarning : IAction {
-        public float Size { get; }
-    }
-
-    public class Warning : IWarning {
-        public float Size { get; }
-
-        public string Reason { get; }
-
-        public string LogLink { get; }
-
-        public DateTime TimeStamp { get; }
-
-        public ulong Punisher { get; }
-
-        public Warning(string reason, ulong punisher, float size, string logLink = null) {
-            _ = (size > 999 || size < 0.01).AssertWarnAsync("Warn size shouldn't be allowed to be an invalid length");
-            Reason = reason;
-            Punisher = punisher;
-            Size = size;
-            if (logLink.NotEmpty()) LogLink = $"[Click Here]({logLink})";
-            TimeStamp = DateTime.Now; 
-        }
-    }
-
-    public class TempPunishWithWarn : Warning, IPunishment{
-        public PunishType PunishType { get; }
-        public TimeSpan? Duration { get; }
-
-        public TempPunishWithWarn(PunishType punishType, string reason, ulong punisher, TimeSpan duration, float size, string logLink) : base(reason, punisher, size, logLink) {
-            Duration = duration;
-            if (punishType == PunishType.Ban || punishType == PunishType.Mute) 
-                throw new InvalidOperationException("Can't use permament punishtype in TempPunishWithWarn");
-            PunishType = punishType;
         }
     }
 }
