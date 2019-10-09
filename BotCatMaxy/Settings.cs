@@ -176,7 +176,7 @@ namespace BotCatMaxy {
             }
 
             if (Context.Client.GetChannel(settings.logChannel) == Context.Channel) {
-                await ReplyAsync("This channel already is the logging channel");
+                await message.ModifyAsync(msg => msg.Content = "This channel already is the logging channel");
                 return;
             } else {
                 settings.logChannel = Context.Channel.Id;
@@ -199,7 +199,7 @@ namespace BotCatMaxy {
                 return;
             }
             if (Context.Client.GetChannel(settings.pubLogChannel ?? 0) == Context.Channel) {
-                await ReplyAsync("This channel already is the logging channel");
+                await message.ModifyAsync(msg => msg.Content = "This channel already is the logging channel");
                 return;
             } else {
                 settings.pubLogChannel = Context.Channel.Id;
