@@ -288,6 +288,7 @@ namespace BotCatMaxy {
             public string euphemism;
             public float size = 0.5f;
             public bool partOfWord = true;
+            public object[] moreWords;
         }
 
         public class BadWordList {
