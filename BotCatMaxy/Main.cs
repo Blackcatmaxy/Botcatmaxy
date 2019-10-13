@@ -38,7 +38,8 @@ namespace BotCatMaxy {
         public async Task MainAsync(string version = null, string beCanary = null) {
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
-                MessageCacheSize = 120
+                MessageCacheSize = 120,
+                ExclusiveBulkDelete = false
             };
 
             //Maps all the classes
