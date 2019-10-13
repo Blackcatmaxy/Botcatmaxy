@@ -22,7 +22,7 @@ namespace BotCatMaxy {
         }
 
         public async Task SetUpAsync() {
-            _client.MessageDeleted += LogDelete;
+            _client.MessageDeleted += HandleDelete;
             _client.MessageUpdated += LogEdit;
             _client.MessageReceived += LogNew;
 
@@ -218,6 +218,9 @@ namespace BotCatMaxy {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return;
+        }
+        private async Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
+            _ = LogDelete(message, channel);
         }
 
         private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
