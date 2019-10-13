@@ -112,7 +112,7 @@ namespace BotCatMaxy {
 
                     if (n < amount) {
                         string jumpLink = "";
-                        string timeAgo = dateAgo.Humanize(2);
+                        string timeAgo = dateAgo.LimitedHumanize(2);
                         if (showLinks && !infraction.logLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.logLink})]";
                         string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + jumpLink + " - " + timeAgo;
                         n++;
@@ -161,7 +161,7 @@ namespace BotCatMaxy {
             actions.tempBans.Add(tempBan);
             actions.SaveToFile(context.Guild);
             try {
-                await user.Notify($"tempbanned for {time.Humanize()}", reason, context.Guild, context.Message.Author);
+                await user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
             } catch (Exception e) {
                 if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
             }
@@ -175,7 +175,7 @@ namespace BotCatMaxy {
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile(context.Guild);
             try {
-                await user.Notify($"tempmuted for {time.Humanize()}", reason, context.Guild, context.Message.Author);
+                await user.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
             } catch (Exception e) {
                 if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
             }
@@ -337,7 +337,7 @@ namespace BotCatMaxy {
                 return;
             }
             await user.TempBan(amount.Value, reason, Context, actions);
-            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempbanwarn")]
@@ -368,7 +368,7 @@ namespace BotCatMaxy {
                 return;
             }
             await user.TempBan(amount.Value, reason, Context, actions);
-            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempbanwarn")]
@@ -399,7 +399,7 @@ namespace BotCatMaxy {
                 return;
             }
             await user.TempBan(amount.Value, reason, Context, actions);
-            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempmute")]
@@ -434,7 +434,7 @@ namespace BotCatMaxy {
             }
 
             await user.TempMute(amount.Value, reason, Context, settings, actions);
-            Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempmutewarn")]
@@ -470,7 +470,7 @@ namespace BotCatMaxy {
             }
 
             await user.TempMute(amount.Value, reason, Context, settings, actions);
-            Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("tempmutewarn")]
@@ -506,7 +506,7 @@ namespace BotCatMaxy {
             }
 
             await user.TempMute(amount.Value, reason, Context, settings, actions);
-            Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.Humanize(3)} because of {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"Temporarily muted {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("ban")]

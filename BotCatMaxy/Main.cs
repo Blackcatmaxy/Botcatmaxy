@@ -20,7 +20,10 @@ namespace BotCatMaxy {
             Utilities.logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.File($"{Utilities.BasePath}/log.txt", rollingInterval: RollingInterval.Day)
+                .WriteTo.File($"{AppDomain.CurrentDomain}/log.txt", rollingInterval: RollingInterval.Day)
+#if DEBUG
+                .WriteTo.File($"C:/Users/bobth/Documents/Bmax-test/log.txt", rollingInterval: RollingInterval.Day)
+#endif
                 .CreateLogger();
 #if DEBUG
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";

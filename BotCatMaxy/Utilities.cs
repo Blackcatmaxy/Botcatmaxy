@@ -284,5 +284,9 @@ namespace BotCatMaxy {
                 return true;
             return false;
         }
+
+        public static string LimitedHumanize(this TimeSpan timeSpan, int precision = 2) {
+            return timeSpan.Humanize(precision, maxUnit: Humanizer.Localisation.TimeUnit.Day, minUnit: Humanizer.Localisation.TimeUnit.Second);
+        }
     }
 }

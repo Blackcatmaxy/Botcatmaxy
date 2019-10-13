@@ -180,9 +180,9 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
                 if (warnee.Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.Humanize()}", $"Because of {reason}");
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
                 else
-                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.Humanize()}", $"Because of {reason}");
+                    embed.AddField($"{warnee.Nickname} aka {warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
                 if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Red);
                 embed.WithCurrentTimestamp();
@@ -205,7 +205,7 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warnee);
                 if (!(warnee is SocketGuildUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.Humanize(2)}, because of {reason}");
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.LimitedHumanize(2)}, because of {reason}");
                 else
                     embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
                 //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
