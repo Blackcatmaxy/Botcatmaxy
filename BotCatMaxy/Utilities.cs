@@ -16,6 +16,8 @@ using MongoDB.Driver;
 using System.Collections;
 using Serilog;
 using Humanizer;
+using System.Reflection;
+using System.Globalization;
 
 namespace BotCatMaxy {
     public static class Utilities {

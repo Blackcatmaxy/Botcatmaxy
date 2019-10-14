@@ -12,6 +12,8 @@ using Discord;
 using MongoDB;
 using System;
 using System.Reflection;
+using BotCatMaxy;
+using System.Globalization;
 
 namespace BotCatMaxy {
     public class MainClass {
@@ -33,7 +35,7 @@ namespace BotCatMaxy {
 #endif
             if (args.NotEmpty(1)) new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
             else if (args.NotEmpty(0)) new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
-            else new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();   
+            else new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
         }
 
         public async Task MainAsync(string version = null, string beCanary = null) {
@@ -55,7 +57,7 @@ namespace BotCatMaxy {
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e).Log();
             }
-            
+
             //Sets up the events
             _client = new DiscordSocketClient(config);
             _client.Log += Utilities.Log;
@@ -70,11 +72,19 @@ namespace BotCatMaxy {
             }
 
             await _client.StartAsync();
-
-            var aVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            DateTime startDate = new DateTime(2000, 1, 1, 0, 0, 0);
-            TimeSpan span = new TimeSpan(aVersion.Build, 0, 0, aVersion.Revision * 2);
-            DateTime buildDate = startDate.Add(span);
+            const string BuildVersionMetadataPrefix = "+build";
+            DateTime buildDate = new DateTime();
+            var attribute = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            if (attribute?.InformationalVersion != null) {
+                var value = attribute.InformationalVersion;
+                var index = value.IndexOf(BuildVersionMetadataPrefix);
+                if (index > 0) {
+                    value = value.Substring(index + BuildVersionMetadataPrefix.Length);
+                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var result)) {
+                        buildDate = result;
+                    }
+                }
+            }
             if (version.NotEmpty()) {
                 await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {version} built {buildDate.ToShortDateString()}").Log();
                 await _client.SetGameAsync("version " + version);
