@@ -20,13 +20,15 @@ namespace BotCatMaxy {
             this.client = client;
             client.MessageReceived += CheckMessage;
             client.MessageUpdated += CheckEdit;
-            client.ReactionAdded += CheckReaction;
+            client.ReactionAdded += HandleReaction;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
-        public async Task CheckEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel) {
-            _ = CheckMessage(editedMessage);
-        }
+        public async Task CheckEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
+            => _ = CheckMessage(editedMessage);
+
+        public async Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) 
+            => _ = CheckReaction(cachedMessage, channel, reaction);
 
         public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) {
             try {
@@ -36,7 +38,7 @@ namespace BotCatMaxy {
                 var message = cachedMessage.GetOrDownloadAsync().Result;
                 SocketGuildChannel chnl = channel as SocketGuildChannel;
                 SocketGuild guild = chnl?.Guild;
-                if (guild == null) return;
+                if (guild == null) return; 
                 
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
