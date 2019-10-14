@@ -10,6 +10,7 @@
     <DocumentationFile></DocumentationFile>
     <OutputPath>C:\Users\bobth\Documents\Botcatmaxy</OutputPath>
     <Optimize>true</Optimize>
+  <Deterministic>false</Deterministic>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Interactive" Version="1.0.1" />

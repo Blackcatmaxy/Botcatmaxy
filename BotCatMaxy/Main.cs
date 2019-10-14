@@ -11,6 +11,7 @@ using Serilog;
 using Discord;
 using MongoDB;
 using System;
+using System.Reflection;
 
 namespace BotCatMaxy {
     public class MainClass {
@@ -70,11 +71,15 @@ namespace BotCatMaxy {
 
             await _client.StartAsync();
 
+            var aVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            DateTime startDate = new DateTime(2000, 1, 1, 0, 0, 0);
+            TimeSpan span = new TimeSpan(aVersion.Build, 0, 0, aVersion.Revision * 2);
+            DateTime buildDate = startDate.Add(span);
             if (version.NotEmpty()) {
-                await new LogMessage(LogSeverity.Info, "Main", "Starting with version " + version).Log();
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {version} built {buildDate.ToShortDateString()}").Log();
                 await _client.SetGameAsync("version " + version);
             } else {
-                await new LogMessage(LogSeverity.Info, "Main", "Starting with no version num").Log();
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num built {buildDate.ToShortDateString()}").Log();
             }
 
             CommandService service = new CommandService();
