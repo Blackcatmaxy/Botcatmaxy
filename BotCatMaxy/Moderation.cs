@@ -12,6 +12,7 @@ using Humanizer;
 using System.IO;
 using Discord;
 using System;
+using Discord.Addons.Interactive;
 
 namespace BotCatMaxy {
     public class Infraction {
@@ -195,7 +196,7 @@ namespace BotCatMaxy {
     }
 
     [RequireContext(ContextType.Guild)]
-    public class DiscordModModule : ModuleBase<SocketCommandContext> {
+    public class DiscordModModule : InteractiveBase<SocketCommandContext> {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified") {
@@ -332,9 +333,22 @@ namespace BotCatMaxy {
                 }
             }
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.user == user.Id)) {
-                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-banned");
-                return;
+            TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.user == user.Id);
+            if (oldAct != null) {
+                IUserMessage query = await ReplyAsync(
+                    $"{user.NickOrUsername().StrippedOfPing()} is already temp-banned for {oldAct.length.LimitedHumanize()}, reply with !confirm within 2 minutes to confirm you want to change the length");
+                SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
+                if (nextMessage?.Content?.ToLower() == "!confirm") {
+                    _ = query.DeleteAsync();
+                    _ = nextMessage.DeleteAsync();
+                    actions.tempBans.Remove(oldAct);
+                    actions.SaveToFile(Context.Guild);
+                } else {
+                    _ = query.DeleteAsync();
+                    if (nextMessage != null) _ = nextMessage.DeleteAsync();
+                    await ReplyAsync("Command canceled");
+                    return;
+                }
             }
             await user.TempBan(amount.Value, reason, Context, actions);
             Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
@@ -402,7 +416,7 @@ namespace BotCatMaxy {
             Context.Message.DeleteOrRespond($"Temporarily banned {user.Mention} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
-        [Command("tempmute")]
+        [Command("tempmute", RunMode = RunMode.Async)]
         [Alias("tmute", "temp-mute")]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -428,9 +442,22 @@ namespace BotCatMaxy {
                 return;
             }
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) {
-                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} is already temp-muted");
-                return;
+            TempAct oldAct = actions.tempMutes.FirstOrDefault(tempMute => tempMute.user == user.Id);
+            if (oldAct != null) {
+                IUserMessage query = await ReplyAsync(
+                    $"{user.NickOrUsername().StrippedOfPing()} is already temp-muted for {oldAct.length.LimitedHumanize()}, reply with !confirm within 2 minutes to confirm you want to change the length");
+                SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
+                if (nextMessage?.Content?.ToLower() == "!confirm") {
+                    _ = query.DeleteAsync();
+                    _ = nextMessage.DeleteAsync();
+                    actions.tempMutes.Remove(oldAct);
+                    actions.SaveToFile(Context.Guild);
+                } else {
+                    _ = query.DeleteAsync();
+                    if (nextMessage != null) _ = nextMessage.DeleteAsync();
+                    await ReplyAsync("Command canceled");
+                    return;
+                }
             }
 
             await user.TempMute(amount.Value, reason, Context, settings, actions);

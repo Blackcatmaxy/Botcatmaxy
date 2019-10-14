@@ -8,31 +8,41 @@ using System.Threading.Tasks;
 using System.Reflection;
 using BotCatMaxy;
 using System.Text.RegularExpressions;
+using Discord.Addons.Interactive;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BotCatMaxy {
     public class CommandHandler {
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
+        public readonly IServiceProvider services;
         //private SwearFilter filter;
 
         public CommandHandler(DiscordSocketClient client, CommandService commands) {
             _commands = commands;
             _client = client;
-
+            services = new ServiceCollection()
+                .AddSingleton(_client)
+                .AddSingleton(new InteractiveService(client))
+                .BuildServiceProvider();
             _ = InstallCommandsAsync();
         }
 
         public async Task InstallCommandsAsync() {
-            // Hook the MessageReceived event into our command handler
-            _client.MessageReceived += HandleCommandAsync;
+            try {
+                // Hook the MessageReceived event into our command handler
+                _client.MessageReceived += HandleCommandAsync;
 
-            //Adds Emoji type reader
-            _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
+                //Adds Emoji type reader
+                _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
 
-            // See Dependency Injection guide for more information.
-            await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
-                                            services: null);
-            await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
+                // See Dependency Injection guide for more information.
+                await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
+                                                services: services);
+                await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
+            } catch (Exception e) {
+                await new LogMessage(LogSeverity.Critical, "CMDs", "Commands set up failed", e).Log();
+            }
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam) {
@@ -63,7 +73,7 @@ namespace BotCatMaxy {
             var result = await _commands.ExecuteAsync(
                 context: context,
                 argPos: argPos,
-                services: null);
+                services: services);
 
             //may clog up the request queue should a user spam a command.
             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {

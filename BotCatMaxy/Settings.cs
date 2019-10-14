@@ -11,10 +11,10 @@ using BotCatMaxy.Settings;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Humanizer;
+using Discord.Addons.Interactive;
 
 namespace BotCatMaxy {
-    public class SettingsModule : ModuleBase<SocketCommandContext> {
-        public Task needsConfirmation;
+    public class SettingsModule : InteractiveBase<SocketCommandContext> {
         [Command("Settings Info")]
         [RequireContext(ContextType.Guild)]
         public async Task SettingsInfo() {
@@ -31,43 +31,10 @@ namespace BotCatMaxy {
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("ToggleServerID")]
+        [Command("toggleserverstorage", RunMode = RunMode.Async)]
         [HasAdmin]
-        public async Task ServerIDCommand() {
-            await ReplyAsync("This will delete any existing data and changing back will also delete any existing data, use !confirm or !cancel to proceed");
-            needsConfirmation = ToggleServerIDUse(Context.Guild);
-        }
-
-        [Command("confirm")]
-        [HasAdmin]
-        public async Task Confirm() {
-            if (needsConfirmation == null) {
-                await ReplyAsync("There is nothing to confirm");
-            } else {
-                needsConfirmation.Start();
-                needsConfirmation = null;
-            }
-        }
-
-        [Command("cancel")]
-        [HasAdmin]
-        public async Task Cancel() {
-            if (needsConfirmation == null) {
-                await ReplyAsync("There is nothing to cancel");
-            } else {
-                await ReplyAsync(needsConfirmation.ToString() + " event has been canceled");
-                needsConfirmation = null;
-            }
-        }
-
-        public async Task ToggleServerIDUse(SocketGuild guild) {
-            if (Directory.Exists(Utilities.BasePath + guild.Id)) {
-                await ReplyAsync("Switching to using owner ID to store data");
-                Directory.Delete(Utilities.BasePath + guild.Id, true);
-            } else {
-                await ReplyAsync("Switching to using server ID to store data");
-                Directory.CreateDirectory(Utilities.BasePath + guild.Id);
-            }
+        public async Task ToggleServerIDUse() {
+            var query = ReplyAsync("This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
         }
 
         [Command("allowwarn")]
