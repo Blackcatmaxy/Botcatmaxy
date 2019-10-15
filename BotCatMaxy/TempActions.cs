@@ -77,25 +77,21 @@ namespace BotCatMaxy {
                                 checkedMutes++;
                                 try {
                                     SocketUser user = guild.GetUser(tempMute.user);
-                                    if (user != null && !(user as SocketGuildUser).Roles.Any(role => role.Id == settings.mutedRole)) {
-                                        _ = user.TryNotify($"As you might now, you have been manually unmuted in {guild.Name} discord");
+                                    if (user != null && !(user as IGuildUser).RoleIds.Contains(settings.mutedRole)) {
+                                        _ = user.TryNotify($"As you might know, you have been manually unmuted in {guild.Name} discord");
                                         editedMutes.Remove(tempMute);
                                     } else if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
                                         if (user != null) {
-                                            await (user as SocketGuildUser).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                            await guild.GetUser(tempMute.user).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
                                         }
-                                        IGuildUser gUser = guild.GetUser(tempMute.user);
-                                        if (gUser?.RoleIds?.NotEmpty() ?? false && gUser.RoleIds.Contains(settings.mutedRole)) {
-                                            _ = new LogMessage(LogSeverity.Error, "TempAction", 
-                                                $"User ({tempMute.user} in {guild.Name} discord) should be unmuted but is still muted. NUser null: {user == null}, Nuser is in guild {user is IGuildUser}(socket: {user is SocketGuildUser}) with {user.MutualGuilds.Count} shared guilds").Log();
-                                            await gUser.RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                        if (!(user as IGuildUser)?.RoleIds?.NotEmpty() ?? true || !(user as IGuildUser).RoleIds.Contains(settings.mutedRole)) { //Doesn't remove tempmute if unmuting fails
+                                            user ??= client.GetUser(tempMute.user);
+                                            if (user != null) {
+                                                Logging.LogEndTempAct(guild, user, "mut", tempMute.reason, tempMute.length);
+                                                _ = user.Notify($"untemp-muted", tempMute.reason, guild);
+                                            }
+                                            editedMutes.Remove(tempMute);
                                         }
-                                        user ??= client.GetUser(tempMute.user);
-                                        if (user != null) {
-                                            Logging.LogEndTempAct(guild, user, "mut", tempMute.reason, tempMute.length);
-                                            _ = user.Notify($"untemp-muted", tempMute.reason, guild);
-                                        }
-                                        editedMutes.Remove(tempMute);
                                     }
                                 } catch (Exception e) {
                                     _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unmuting someone, continuing", e).Log();
