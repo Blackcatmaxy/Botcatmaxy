@@ -84,6 +84,12 @@ namespace BotCatMaxy {
                                         if (user != null) {
                                             await (user as SocketGuildUser).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
                                         }
+                                        IGuildUser gUser = guild.GetUser(tempMute.user);
+                                        if (gUser?.RoleIds?.NotEmpty() ?? false && gUser.RoleIds.Contains(settings.mutedRole)) {
+                                            _ = new LogMessage(LogSeverity.Error, "TempAction", 
+                                                $"User ({tempMute.user} in {guild.Name} discord) should be unmuted but is still muted. NUser null: {user == null}, Nuser is in guild {user is IGuildUser}(socket: {user is SocketGuildUser})").Log();
+                                            await gUser.RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                        }
                                         user ??= client.GetUser(tempMute.user);
                                         if (user != null) {
                                             Logging.LogEndTempAct(guild, user, "mut", tempMute.reason, tempMute.length);
