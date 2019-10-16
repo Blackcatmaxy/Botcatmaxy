@@ -49,7 +49,8 @@ namespace BotCatMaxy {
                             foreach (TempAct tempBan in actions.tempBans) {
                                 try {
                                     if (!guild.GetBansAsync().Result.Any(ban => ban.User.Id == tempBan.user)) { //Need to add an embed for when this happens that's distinct
-                                        _ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
+                                        _ = client.GetUser(tempBan.user)?.TryNotify($"As you might know, you have been manually unbanned in {guild.Name} discord");
+                                        //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         editedBans.Remove(tempBan);
                                     } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
                                         RestUser rUser = guild.GetBansAsync().Result.First(ban => ban.User.Id == tempBan.user).User;
@@ -58,7 +59,7 @@ namespace BotCatMaxy {
                                         Logging.LogEndTempAct(guild, rUser, "bann", tempBan.reason, tempBan.length);
                                     }
                                 } catch (Exception e) {
-                                    _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone, continuing", e).Log();
+                                    _ = new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unbanning someone, continuing", e).Log();
                                 }
                             }
 
@@ -94,7 +95,7 @@ namespace BotCatMaxy {
                                         }
                                     }
                                 } catch (Exception e) {
-                                    _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unmuting someone, continuing", e).Log();
+                                    _ = new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unmuting someone, continuing", e).Log();
                                 }
                             }
 
@@ -113,7 +114,7 @@ namespace BotCatMaxy {
                 _ = (checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
 
             } catch (Exception e) {
-                _ = new LogMessage(LogSeverity.Error, "TempAction", "Something went wrong unbanning someone", e).Log();
+                _ = new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unbanning someone", e).Log();
             }
         }
 

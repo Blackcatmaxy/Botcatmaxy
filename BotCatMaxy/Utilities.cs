@@ -38,7 +38,7 @@ namespace BotCatMaxy {
         }
 
         public static bool HasAdmin(this SocketGuildUser user) {
-            if (user.Guild.Owner == user) {
+            if (user?.Guild?.Owner == user) {
                 return true;
             }
 
