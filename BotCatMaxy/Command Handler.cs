@@ -10,9 +10,11 @@ using BotCatMaxy;
 using System.Text.RegularExpressions;
 using Discord.Addons.Interactive;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace BotCatMaxy {
     public class CommandHandler {
+        public readonly string[] ignoredCMDErrors = { "User not found.", "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild." };
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;
@@ -78,7 +80,7 @@ namespace BotCatMaxy {
             //may clog up the request queue should a user spam a command.
             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                await new LogMessage(LogSeverity.Warning, "Commands", result.ErrorReason).Log();
+                if (ignoredCMDErrors.Contains(result.ErrorReason)) await new LogMessage(LogSeverity.Warning, "CMDs", result.ErrorReason).Log();
             }
         }
     }

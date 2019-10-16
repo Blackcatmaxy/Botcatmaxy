@@ -110,34 +110,30 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
-            try {
-                //ClearLine();
-            } catch {
-
-            }
+            string finalMessage = message.Source.PadRight(8) + message.Message;
             switch (message.Severity) {
                 case LogSeverity.Critical:
                     Console.Beep();
-                    if (message.Exception != null) logger.Fatal(message.Exception, message.Message);
-                    else logger.Fatal(message.Message);
+                    if (message.Exception != null) logger.Fatal(message.Exception, finalMessage);
+                    else logger.Fatal(finalMessage);
                     break;
                 case LogSeverity.Error:
                     Console.Beep();
-                    if (message.Exception != null) logger.Error(message.Exception, message.Message);
-                    else logger.Error(message.Message);
+                    if (message.Exception != null) logger.Error(message.Exception, finalMessage);
+                    else logger.Error(finalMessage);
                     break;
                 case LogSeverity.Warning:
-                    if (message.Exception != null) logger.Warning(message.Exception, message.Message);
-                    else logger.Warning(message.Message);
+                    if (message.Exception != null) logger.Warning(message.Exception, finalMessage);
+                    else logger.Warning(finalMessage);
                     break;
                 case LogSeverity.Info:
-                    logger.Information(message.Message);
+                    logger.Information(finalMessage);
                     break;
                 case LogSeverity.Verbose:
-                    logger.Verbose(message.Message);
+                    logger.Verbose(finalMessage);
                     break;
                 case LogSeverity.Debug:
-                    logger.Debug(message.Message);
+                    logger.Debug(finalMessage);
                     break;
             }
             //Console.Write("> ");

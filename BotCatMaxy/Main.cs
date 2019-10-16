@@ -80,7 +80,7 @@ namespace BotCatMaxy {
                 var index = value.IndexOf(BuildVersionMetadataPrefix);
                 if (index > 0) {
                     value = value.Substring(index + BuildVersionMetadataPrefix.Length);
-                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var result)) {
+                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result)) {
                         buildDate = result;
                     }
                 }
