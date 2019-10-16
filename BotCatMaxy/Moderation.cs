@@ -218,7 +218,7 @@ namespace BotCatMaxy {
         [Command("dmwarns")]
         [RequireContext(ContextType.Guild)]
         [Alias("dminfractions", "dmwarnings")]
-        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 99) {
+        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 50) {
             if (amount < 1) {
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
