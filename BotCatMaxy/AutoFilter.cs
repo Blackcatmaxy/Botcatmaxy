@@ -262,9 +262,6 @@ namespace BotCatMaxy {
                                     word = $"[{sizes.Min()}-{sizes.Max()}x] ";
                                 }
                                 if (first.euphemism.NotEmpty()) word += $"{first.euphemism} ";
-                                if (group.Count == 1) {
-                                    word += $"({first.word})";
-                                }
                                 word += $"({group.Select(badWord => badWord.word).ToArray().ListItems(", ")})";
                             } else if (!first.euphemism.IsNullOrEmpty()) word = first.euphemism;
                             if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() || useExplicit)) {
