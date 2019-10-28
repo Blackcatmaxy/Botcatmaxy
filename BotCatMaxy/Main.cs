@@ -72,6 +72,8 @@ namespace BotCatMaxy {
             }
 
             await _client.StartAsync();
+
+            //Gets build date
             const string BuildVersionMetadataPrefix = "+build";
             DateTime buildDate = new DateTime();
             var attribute = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>();
@@ -107,6 +109,7 @@ namespace BotCatMaxy {
         }
 
         private async Task Ready() {
+            _client.Ready -= Ready;
             await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
         }
     }
