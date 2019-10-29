@@ -535,8 +535,6 @@ namespace BotCatMaxy {
                 Console.WriteLine(DateTime.Now.ToShortTimeString() + " Creating new mod settings");
             }
             settings.invitesAllowed = !settings.invitesAllowed;
-            Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
-
             settings.SaveToFile(Context.Guild);
 
             await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());

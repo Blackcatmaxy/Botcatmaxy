@@ -34,7 +34,7 @@ namespace BotCatMaxy {
         [Command("toggleserverstorage", RunMode = RunMode.Async)]
         [HasAdmin]
         public async Task ToggleServerIDUse() {
-            var query = ReplyAsync("This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
+            await ReplyAsync("This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
         }
 
         [Command("allowwarn")]

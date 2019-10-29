@@ -97,13 +97,13 @@ namespace BotCatMaxy.Data {
         public List<List<BadWord>> grouped;
 
         public BadWords(IGuild guild) {
-            all = guild.LoadFromFile<BadWordList>().badWords ?? new List<BadWord>();
+            if (guild == null) throw new ArgumentNullException();
+            all = guild.LoadFromFile<BadWordList>()?.badWords;
+            if (all == null) return;
             onlyAlone = new List<BadWord>();
             insideWords = new List<BadWord>();
             grouped = new List<List<BadWord>>();
-            if (all == null) {
-                return;
-            }
+            
             foreach (BadWord badWord in all) {
                 if (badWord.partOfWord) insideWords.Add(badWord);
                 else onlyAlone.Add(badWord);
