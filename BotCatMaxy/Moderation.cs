@@ -60,8 +60,7 @@ namespace BotCatMaxy {
                         warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");
                     }
                 }
-            } catch {
-            }
+            } catch { }
         }
         public struct InfractionsInDays {
             public float sum;
@@ -119,7 +118,7 @@ namespace BotCatMaxy {
                         n++;
 
                         if ((infractionStrings.LastOrDefault() + s).Length < 1024) {
-                            if (infractionStrings.LastOrDefault() != "") infractionStrings[infractionStrings.Count - 1] += "\n";
+                            if (infractionStrings.LastOrDefault().IsNullOrEmpty()) infractionStrings[infractionStrings.Count - 1] += "\n";
                             infractionStrings[infractionStrings.Count - 1] += s;
                         } else {
                             infractionStrings.Add(s);
@@ -156,6 +155,10 @@ namespace BotCatMaxy {
             return embed.Build();
         }
 
+        public struct EmbedResult {
+            public Embed embed;
+        }
+
         public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) {
             TempAct tempBan = new TempAct(user.Id, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
@@ -184,7 +187,7 @@ namespace BotCatMaxy {
             Logging.LogTempAct(context.Guild, context.User, user, "mut", reason, context.Message.GetJumpUrl(), time);
         }
 
-        public static async Task Notify(this IUser user, string action, string reason, SocketGuild guild, SocketUser author = null) {
+        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null) {
             var embed = new EmbedBuilder();
             embed.WithTitle($"You have been {action} from a discord guild");
             embed.AddField("Reason", reason, true);
@@ -216,31 +219,49 @@ namespace BotCatMaxy {
         }
 
         [Command("dmwarns")]
-        [RequireContext(ContextType.Guild)]
+        [RequireContext(ContextType.DM)]
         [Alias("dminfractions", "dmwarnings")]
-        public async Task DMUserWarnsAsync(SocketGuildUser user = null, int amount = 50) {
+        public async Task DMUserWarnsAsync(SocketUser user = null, int amount = 50) {
             if (amount < 1) {
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
             }
 
-            if (user == null) {
-                user = Context.Message.Author as SocketGuildUser;
+            var guildsEmbed = new EmbedBuilder();
+            guildsEmbed.WithTitle("Copy the ID of the guild you want to check the infractions from");
+            foreach (SocketGuild fieldGuild in Context.Message.Author.MutualGuilds) {
+                guildsEmbed.AddField($"{fieldGuild.Name} discord", fieldGuild.Id);
             }
+            await ReplyAsync(embed: guildsEmbed.Build());
+            SocketGuild guild;
+            while (true) {
+                SocketMessage message = await NextMessageAsync();
+                if (message == null || message.Content == "cancel") {
+                    await ReplyAsync("You have timed out");
+                    return;
+                }
+                try {
+                    guild = Context.Client.GetGuild(ulong.Parse(message.Content));
+                    break;
+                } catch {
+                    await ReplyAsync("Invalid ID, please reply again with a valid ID or ``cancel``");
+                }
+            }
+            SocketGuildUser gUser = guild.GetUser(user?.Id ?? Context.Message.Author.Id);
             string username;
-            if (!user.Nickname.IsNullOrEmpty()) username = user.Nickname.StrippedOfPing();
+            if (!gUser.Nickname.IsNullOrEmpty()) username = gUser.Nickname.StrippedOfPing();
             else username = user.Username.StrippedOfPing();
 
-            List<Infraction> infractions = user.LoadInfractions(false);
+            List<Infraction> infractions = gUser.LoadInfractions(false);
             if (!infractions.IsNullOrEmpty()) {
                 try {
-                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: infractions.GetEmbed(user, amount: amount));
+                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: infractions.GetEmbed(gUser, amount: amount));
                 } catch {
                     await ReplyAsync("Something went wrong DMing you their infractions. Check your privacy settings and make sure the amount isn't too high");
                     return;
                 }
             } else {
-                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} has no infractions");
+                await ReplyAsync($"{gUser.NickOrUsername().StrippedOfPing()} has no infractions");
                 return;
             }
             string quantity = "infraction".ToQuantity(infractions.Count);

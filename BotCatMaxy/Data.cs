@@ -81,6 +81,7 @@ namespace BotCatMaxy.Data {
         [BsonId]
         public ulong ID = 0;
         public List<Infraction> infractions = new List<Infraction>();
+        public BsonDocument CatchAll { get; set; }
     }
 
     public class TempActionList {

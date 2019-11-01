@@ -35,7 +35,7 @@ namespace BotCatMaxy {
         public static async Task TempActChecker(DiscordSocketClient client, bool debug = false) {
             try {
                 int checkedGuilds = 0;
-                foreach (SocketGuild guild in client.Guilds) {
+                foreach (RestGuild guild in await client.Rest.GetGuildsAsync()) {
                     if (debug) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         Console.Write($"\nChecking {guild.Name} discord ");
@@ -77,16 +77,16 @@ namespace BotCatMaxy {
                             foreach (TempAct tempMute in actions.tempMutes) {
                                 checkedMutes++;
                                 try {
-                                    SocketUser user = guild.GetUser(tempMute.user);
+                                    RestUser user = await guild.GetUserAsync(tempMute.user);
                                     if (user != null && !(user as IGuildUser).RoleIds.Contains(settings.mutedRole)) {
                                         _ = user.TryNotify($"As you might know, you have been manually unmuted in {guild.Name} discord");
                                         editedMutes.Remove(tempMute);
                                     } else if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) {
                                         if (user != null) {
-                                            await guild.GetUser(tempMute.user).RemoveRoleAsync(guild.GetRole(settings.mutedRole));
+                                            await guild.GetUserAsync(tempMute.user).Result.RemoveRoleAsync(guild.GetRole(settings.mutedRole));
                                         }
                                         if (!(user as IGuildUser)?.RoleIds?.NotEmpty() ?? true || !(user as IGuildUser).RoleIds.Contains(settings.mutedRole)) { //Doesn't remove tempmute if unmuting fails
-                                            user ??= client.GetUser(tempMute.user);
+                                            user ??= await client.Rest.GetUserAsync(tempMute.user);
                                             if (user != null) {
                                                 Logging.LogEndTempAct(guild, user, "mut", tempMute.reason, tempMute.length);
                                                 _ = user.Notify($"untemp-muted", tempMute.reason, guild);
