@@ -269,10 +269,10 @@ namespace BotCatMaxy {
                                     word = $"[{sizes.Min()}-{sizes.Max()}x] ";
                                 }
                                 if (first.euphemism.NotEmpty()) word += $"{first.euphemism} ";
-                                word += $"({group.Select(badWord => badWord.word).ToArray().ListItems(", ")})";
+                                word += $"({group.Select(badWord => $"{badWord.word}{(badWord.partOfWord? "¤" : "")}").ToArray().ListItems(", ")})";
                             } else if (!first.euphemism.IsNullOrEmpty()) word = first.euphemism;
-                            if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() || useExplicit)) {
-                                word += "⌝";
+                            if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() && !useExplicit)) {
+                                word += "¤";
                             }
                             words.Add(word);
                         } else {
@@ -288,7 +288,7 @@ namespace BotCatMaxy {
                         } 
                         else if (!badWord.euphemism.IsNullOrEmpty()) word = badWord.euphemism;
                         if (badWord.partOfWord && (useExplicit || !badWord.euphemism.IsNullOrEmpty())) {
-                            word += "⌝";
+                            word += "¤";
                         }
                         words.Add(word);
                     }*/
@@ -297,7 +297,7 @@ namespace BotCatMaxy {
                 }
                 IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
                 if (channel != null) {
-                    _ = channel.SendMessageAsync("The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
+                    _ = channel.SendMessageAsync("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
                 } else {
                     _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
                 }
