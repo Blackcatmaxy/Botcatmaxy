@@ -198,8 +198,8 @@ namespace BotCatMaxy {
         }
     }
 
-    [RequireContext(ContextType.Guild)]
     public class DiscordModModule : InteractiveBase<SocketCommandContext> {
+        [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified") {
@@ -209,6 +209,7 @@ namespace BotCatMaxy {
             Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
+        [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
@@ -218,55 +219,64 @@ namespace BotCatMaxy {
             Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
-        [Command("dmwarns")]
+        [Command("dmwarns", RunMode = RunMode.Async)]
         [RequireContext(ContextType.DM)]
-        [Alias("dminfractions", "dmwarnings")]
-        public async Task DMUserWarnsAsync(SocketUser user = null, int amount = 50) {
+        [Alias("dminfractions", "dmwarnings", "warns", "infractions", "warnings")]
+        public async Task DMUserWarnsAsync(IUser user = null, int amount = 50) {
             if (amount < 1) {
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
             }
-
+            var mutualGuilds = Context.Message.Author.MutualGuilds.ToArray();
+            if (user == null) {
+                user = Context.Message.Author;
+            } else {
+                SocketUser sUser = user as SocketUser ?? Context.Client.GetUser(user.Id);
+                if (sUser == null) {
+                    await ReplyAsync("User exists but isn't cached and won't work with this command");
+                    return;
+                }
+                mutualGuilds = sUser.MutualGuilds.Intersect(mutualGuilds).ToArray();
+                if (mutualGuilds.Length == 0) {
+                    await ReplyAsync("You do not share any guilds that I moderate with that user");
+                    return;
+                }
+            }
+            
             var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Copy the ID of the guild you want to check the infractions from");
-            foreach (SocketGuild fieldGuild in Context.Message.Author.MutualGuilds) {
-                guildsEmbed.AddField($"{fieldGuild.Name} discord", fieldGuild.Id);
+            guildsEmbed.WithTitle("Reply with the the number next to the guild you want to check the infractions from");
+            
+            for (int i = 0; i < mutualGuilds.Length; i++) { 
+                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
             while (true) {
-                SocketMessage message = await NextMessageAsync();
+                SocketMessage message = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
                 if (message == null || message.Content == "cancel") {
-                    await ReplyAsync("You have timed out");
+                    await ReplyAsync("You have timed out or canceled");
                     return;
                 }
                 try {
-                    guild = Context.Client.GetGuild(ulong.Parse(message.Content));
+                    guild = mutualGuilds[ushort.Parse(message.Content) - 1];
                     break;
                 } catch {
-                    await ReplyAsync("Invalid ID, please reply again with a valid ID or ``cancel``");
+                    await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
                 }
             }
-            SocketGuildUser gUser = guild.GetUser(user?.Id ?? Context.Message.Author.Id);
+            SocketGuildUser gUser = guild.GetUser(user.Id);
             string username;
             if (!gUser.Nickname.IsNullOrEmpty()) username = gUser.Nickname.StrippedOfPing();
             else username = user.Username.StrippedOfPing();
 
             List<Infraction> infractions = gUser.LoadInfractions(false);
             if (!infractions.IsNullOrEmpty()) {
-                try {
-                    await Context.Message.Author.GetOrCreateDMChannelAsync().Result.SendMessageAsync(embed: infractions.GetEmbed(gUser, amount: amount));
-                } catch {
-                    await ReplyAsync("Something went wrong DMing you their infractions. Check your privacy settings and make sure the amount isn't too high");
-                    return;
-                }
+                await ReplyAsync($"Here are {username}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
+                embed: infractions.GetEmbed(gUser, amount: amount));
             } else {
-                await ReplyAsync($"{gUser.NickOrUsername().StrippedOfPing()} has no infractions");
+                await ReplyAsync($"{gUser.NickOrUsername()} has no infractions");
                 return;
             }
-            string quantity = "infraction".ToQuantity(infractions.Count);
-            if (amount >= infractions.Count) await ReplyAsync($"DMed you {username}'s {quantity}");
-            else await ReplyAsync($"DMed you {username}'s last {amount} out of {quantity}");
         }
 
         [Command("warns")]
@@ -312,6 +322,7 @@ namespace BotCatMaxy {
 
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
+        [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified") {
             await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
@@ -323,6 +334,7 @@ namespace BotCatMaxy {
 
         [Command("kickwarn")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
+        [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
             await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
@@ -334,6 +346,7 @@ namespace BotCatMaxy {
 
         [Command("tempban")]
         [Alias("tban", "temp-ban")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempBanUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
@@ -381,6 +394,7 @@ namespace BotCatMaxy {
 
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempBanWarnUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
@@ -412,6 +426,7 @@ namespace BotCatMaxy {
 
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempBanWarnUser([RequireHierarchy] SocketGuildUser user, string time, float size, [Remainder] string reason) {
@@ -443,6 +458,7 @@ namespace BotCatMaxy {
 
         [Command("tempmute", RunMode = RunMode.Async)]
         [Alias("tmute", "temp-mute")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempMuteUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
@@ -495,6 +511,7 @@ namespace BotCatMaxy {
 
         [Command("tempmutewarn")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempMuteWarnUser([RequireHierarchy] SocketGuildUser user, string time, [Remainder] string reason) {
@@ -531,6 +548,7 @@ namespace BotCatMaxy {
 
         [Command("tempmutewarn")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task TempMuteWarnUser([RequireHierarchy] SocketGuildUser user, string time, float size, [Remainder] string reason) {
@@ -566,6 +584,7 @@ namespace BotCatMaxy {
         }
 
         [Command("ban")]
+        [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task Ban(SocketUser user, [Remainder] string reason = "Unspecified") {

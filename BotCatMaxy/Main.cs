@@ -58,12 +58,16 @@ namespace BotCatMaxy {
             _client.Log += Utilities.Log;
             _client.Ready += Ready;
 
-            if (args[1].NotEmpty() && args[1].ToLower() == "canary") {
+            if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary") {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
                 dbClient = new MongoClient(HiddenInfo.debugDB);
             } else {
+#if DEBUG
+                await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
+#else
                 dbClient ??= new MongoClient(HiddenInfo.mainDB);
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
+#endif
             }
             await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();
             await _client.StartAsync();
@@ -82,7 +86,7 @@ namespace BotCatMaxy {
                     }
                 }
             }
-            if (args[0].NotEmpty()) {
+            if (args.Length > 0 && args[0].NotEmpty()) {
                 await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]} built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
                 await _client.SetGameAsync("version " + args[0]);
             } else {
