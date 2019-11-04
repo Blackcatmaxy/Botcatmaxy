@@ -1,7 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BotCatMaxy.Settings;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
 using Discord.Rest;

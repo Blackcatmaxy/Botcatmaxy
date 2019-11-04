@@ -3,11 +3,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using BotCatMaxy;
 using BotCatMaxy.Data;
-using BotCatMaxy.Settings;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Humanizer;
@@ -232,66 +230,6 @@ namespace BotCatMaxy {
             } else {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages won't be logged now");
             }
-        }
-    }
-
-    namespace Settings {
-        public class TempAct {
-            public TempAct(ulong userID, TimeSpan length, string reason) {
-                user = userID;
-                this.reason = reason;
-                dateBanned = DateTime.Now;
-                this.length = length;
-            }
-            public string reason;
-            public ulong user;
-            public TimeSpan length;
-            [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
-            public DateTime dateBanned;
-        }
-
-        public class BadWord {
-            public string word;
-            public string euphemism;
-            public float size = 0.5f;
-            public bool partOfWord = true;
-            public object moreWords;
-        }
-
-        public class BadWordList {
-            [BsonId]
-            public string Id = "BadWordList";
-            public List<BadWord> badWords = new List<BadWord>();
-        }
-
-        public class ModerationSettings {
-            [BsonId]
-            public string Id = "ModerationSettings";
-            public List<ulong> ableToWarn = new List<ulong>();
-            public List<ulong> cantBeWarned = new List<ulong>();
-            public List<ulong> channelsWithoutAutoMod = new List<ulong>();
-            public List<string> allowedLinks = new List<string>();
-            public List<ulong> allowedToLink = new List<ulong>();
-            public List<string> badUEmojis = new List<string>();
-            public List<ulong> ableToBan = new List<ulong>();
-            public TimeSpan? maxTempAction = null;
-            public ulong mutedRole = 0;
-            public ushort allowedCaps = 0;
-            public bool useOwnerID = false;
-            public bool moderateUsernames = false;
-            public bool invitesAllowed = true;
-            public uint? maxEmojis = null;
-            public BsonDocument CatchAll { get; set; }
-        }
-
-        public class LogSettings {
-            [BsonId]
-            public BsonString Id = "LogSettings";
-            public ulong? pubLogChannel = null;
-            public ulong logChannel;
-            public bool logDeletes = true;
-            public bool logEdits = false;
-            public BsonDocument CatchAll { get; set; }
         }
     }
 }

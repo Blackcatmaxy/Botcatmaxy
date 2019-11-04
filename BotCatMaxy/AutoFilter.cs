@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BotCatMaxy.Settings;
+using BotCatMaxy.Moderation;
 using Discord.WebSocket;
 using Discord.Commands;
 using BotCatMaxy.Data;
@@ -10,7 +10,6 @@ using Discord.Rest;
 using System.Text;
 using System.Linq;
 using BotCatMaxy;
-using System.IO;
 using Discord;
 using System;
 
@@ -78,7 +77,7 @@ namespace BotCatMaxy {
 
                     //Checks if a message contains an invite
                     if (!modSettings.invitesAllowed && message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
-                        await context.Punish("Posted Invite");
+                        await context.FilterPunish("Posted Invite");
                         return;
                     }
 
@@ -89,7 +88,7 @@ namespace BotCatMaxy {
                         //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                         foreach (Match match in matches) {
                             if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
-                                await context.Punish("Using unauthorized links", 1);
+                                await context.FilterPunish("Using unauthorized links", 1);
                                 return;
                             }
                         }
@@ -97,7 +96,7 @@ namespace BotCatMaxy {
 
                     //Check for emojis
                     if (modSettings.badUEmojis.NotEmpty() && modSettings.badUEmojis.Any(s => message.Content.Contains(s))) {
-                        await context.Punish("Bad emoji used", 0.8f);
+                        await context.FilterPunish("Bad emoji used", 0.8f);
                         return;
                     }
 
@@ -109,7 +108,7 @@ namespace BotCatMaxy {
                             }
                         }
                         if (((amountCaps / (float)message.Content.Length) * 100) >= modSettings.allowedCaps) {
-                            await context.Punish("Excessive caps", 0.3f);
+                            await context.FilterPunish("Excessive caps", 0.3f);
                             return;
                         }
                     }
@@ -156,9 +155,9 @@ namespace BotCatMaxy {
                         if (badWord.partOfWord) {
                             if (strippedMessage.Contains(badWord.word.ToLower())) {
                                 if (badWord.euphemism != null && badWord.euphemism != "") {
-                                    await context.Punish("Bad word used (" + badWord.euphemism + ")");
+                                    await context.FilterPunish("Bad word used (" + badWord.euphemism + ")");
                                 } else {
-                                    await context.Punish("Bad word used");
+                                    await context.FilterPunish("Bad word used");
                                 }
 
                                 return;
@@ -168,9 +167,9 @@ namespace BotCatMaxy {
                             foreach (string word in messageParts) {
                                 if (word == badWord.word.ToLower()) {
                                     if (badWord.euphemism != null && badWord.euphemism != "") {
-                                        await context.Punish("Bad word used (" + badWord.euphemism + ")", badWord.size);
+                                        await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", badWord.size);
                                     } else {
-                                        await context.Punish("Bad word used", badWord.size);
+                                        await context.FilterPunish("Bad word used", badWord.size);
                                     }
                                     return;
                                 }
@@ -180,26 +179,6 @@ namespace BotCatMaxy {
                 }
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the message filter", e).Log();
-            }
-        }
-    }
-
-    public static class FilterActions {
-        public static async Task Punish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
-            string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
-            await ((SocketGuildUser)context.User).Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
-            LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
-            Task<RestUserMessage> warnMessage = null;
-            if (context.Guild.GetTextChannel(logSettings?.pubLogChannel ?? 0) != null) {
-                warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
-            } else {
-                warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
-            }
-            try {
-                Logging.AddToDeletedCache(context.Message.Id);
-                await context.Message.DeleteAsync();
-            } catch {
-                _ = warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
             }
         }
     }
