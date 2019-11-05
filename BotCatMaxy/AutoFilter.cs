@@ -77,7 +77,7 @@ namespace BotCatMaxy {
 
                     //Checks if a message contains an invite
                     if (!modSettings.invitesAllowed && message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
-                        await context.FilterPunish("Posted Invite");
+                        await context.FilterPunish("Posted Invite", modSettings);
                         return;
                     }
 
@@ -88,7 +88,7 @@ namespace BotCatMaxy {
                         //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                         foreach (Match match in matches) {
                             if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
-                                await context.FilterPunish("Using unauthorized links", 1);
+                                await context.FilterPunish("Using unauthorized links", modSettings, 1);
                                 return;
                             }
                         }
@@ -96,7 +96,7 @@ namespace BotCatMaxy {
 
                     //Check for emojis
                     if (modSettings.badUEmojis.NotEmpty() && modSettings.badUEmojis.Any(s => message.Content.Contains(s))) {
-                        await context.FilterPunish("Bad emoji used", 0.8f);
+                        await context.FilterPunish("Bad emoji used", modSettings, 0.8f);
                         return;
                     }
 
@@ -108,7 +108,7 @@ namespace BotCatMaxy {
                             }
                         }
                         if (((amountCaps / (float)message.Content.Length) * 100) >= modSettings.allowedCaps) {
-                            await context.FilterPunish("Excessive caps", 0.3f);
+                            await context.FilterPunish("Excessive caps", modSettings, 0.3f);
                             return;
                         }
                     }
@@ -155,9 +155,9 @@ namespace BotCatMaxy {
                         if (badWord.partOfWord) {
                             if (strippedMessage.Contains(badWord.word.ToLower())) {
                                 if (badWord.euphemism != null && badWord.euphemism != "") {
-                                    await context.FilterPunish("Bad word used (" + badWord.euphemism + ")");
+                                    await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", modSettings);
                                 } else {
-                                    await context.FilterPunish("Bad word used");
+                                    await context.FilterPunish("Bad word used", modSettings);
                                 }
 
                                 return;
@@ -167,9 +167,9 @@ namespace BotCatMaxy {
                             foreach (string word in messageParts) {
                                 if (word == badWord.word.ToLower()) {
                                     if (badWord.euphemism != null && badWord.euphemism != "") {
-                                        await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", badWord.size);
+                                        await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", modSettings, badWord.size);
                                     } else {
-                                        await context.FilterPunish("Bad word used", badWord.size);
+                                        await context.FilterPunish("Bad word used", modSettings, badWord.size);
                                     }
                                     return;
                                 }

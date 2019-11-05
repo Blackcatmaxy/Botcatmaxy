@@ -9,6 +9,7 @@ using Discord.WebSocket;
 using Discord;
 using System.Linq;
 using BotCatMaxy;
+using BotCatMaxy.Moderation;
 
 namespace BotCatMaxy {
     [Group("ID")]
