@@ -1,15 +1,12 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using BotCatMaxy.Moderation;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
-using BotCatMaxy;
-using System.Text;
-using Discord;
-using System.IO;
 using Discord.Rest;
-using BotCatMaxy.Settings;
 using System.Linq;
+using Discord;
+using System;
 
 namespace BotCatMaxy {
     public class TempActions {

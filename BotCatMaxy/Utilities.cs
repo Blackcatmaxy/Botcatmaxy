@@ -4,7 +4,6 @@ using System.Text;
 using Discord;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
-using BotCatMaxy.Settings;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Rest;

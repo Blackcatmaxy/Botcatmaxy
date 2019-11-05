@@ -165,6 +165,7 @@ namespace BotCatMaxy.Data {
         public List<ulong> allowedToLink = new List<ulong>();
         public List<string> badUEmojis = new List<string>();
         public List<ulong> ableToBan = new List<ulong>();
+        public List<ulong> anouncementChannels = new List<ulong>();
         public TimeSpan? maxTempAction = null;
         public ulong mutedRole = 0;
         public ushort allowedCaps = 0;

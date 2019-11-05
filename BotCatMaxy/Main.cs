@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using MongoDB.Bson.Serialization;
 using System.Threading.Tasks;
-using BotCatMaxy.Settings;
+using System.Globalization;
+using System.Reflection;
 using Discord.WebSocket;
 using Discord.Commands;
 using BotCatMaxy.Data;
@@ -11,9 +12,6 @@ using Serilog;
 using Discord;
 using MongoDB;
 using System;
-using System.Reflection;
-using BotCatMaxy;
-using System.Globalization;
 
 namespace BotCatMaxy {
     public class MainClass {

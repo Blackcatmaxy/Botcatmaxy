@@ -530,18 +530,13 @@ namespace BotCatMaxy {
         [Alias("removebadword")]
         [HasAdmin]
         public async Task RemoveBadWord(string word) {
-            BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(true);
+            BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(false);
 
             if (badWordsClass == null) {
                 await ReplyAsync("Bad words is null");
                 return;
             }
-            BadWord badToRemove = null;
-            foreach (BadWord badWord in badWordsClass.badWords) {
-                if (badWord.word == word) {
-                    badToRemove = badWord;
-                }
-            }
+            BadWord badToRemove = badWordsClass.badWords.FirstOrDefault(badWord => badWord.word == word);
             if (badToRemove != null) {
                 badWordsClass.badWords.Remove(badToRemove);
                 badWordsClass.SaveToFile(Context.Guild);
@@ -571,6 +566,30 @@ namespace BotCatMaxy {
             } else {
                 await ReplyAsync("added " + badWord.word + " to bad word list");
             }
+        }
+
+        [Command("addanouncementchannel"), HasAdmin]
+        public async Task AddAnouncementChannel() {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            if (settings.anouncementChannels.Contains(Context.Channel.Id)) {
+                await ReplyAsync("This is already an 'anouncement' channel");
+                return;
+            }
+            settings.anouncementChannels.Add(Context.Channel.Id);
+            settings.SaveToFile(Context.Guild);
+            await ReplyAsync("This channel is now an 'anouncement' channel");
+        }
+
+        [Command("removeanouncementchannel"), HasAdmin]
+        public async Task RemoveAnouncementChannel() {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+            if (!settings?.anouncementChannels?.Contains(Context.Channel.Id) ?? true) {
+                await ReplyAsync("This not an 'anouncement' channel or the settings are null");
+                return;
+            }
+            settings.anouncementChannels.Remove(Context.Channel.Id);
+            settings.SaveToFile(Context.Guild);
+            await ReplyAsync("This channel is now not an 'anouncement' channel");
         }
     }
 }

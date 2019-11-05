@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
 using BotCatMaxy.Data;
+using Discord.Rest;
 using System.Linq;
 using BotCatMaxy;
 using Humanizer;
 using Discord;
 using System;
-using Discord.Rest;
 
 namespace BotCatMaxy.Moderation {
     public static class PunishFunctions {
@@ -51,7 +51,7 @@ namespace BotCatMaxy.Moderation {
             } catch { }
         }
 
-        public static async Task FilterPunish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
+        public static async Task FilterPunish(this SocketCommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f) {
             string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
             await ((SocketGuildUser)context.User).Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
@@ -59,7 +59,10 @@ namespace BotCatMaxy.Moderation {
             if (context.Guild.GetTextChannel(logSettings?.pubLogChannel ?? 0) != null) {
                 warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
             } else {
-                warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+                if (settings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
+                    _ = context.Message.Author.Notify("warned", reason, context.Guild, article: "in");
+                else
+                    warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
             }
             try {
                 Logging.AddToDeletedCache(context.Message.Id);
@@ -194,9 +197,9 @@ namespace BotCatMaxy.Moderation {
             Logging.LogTempAct(context.Guild, context.User, user, "mut", reason, context.Message.GetJumpUrl(), time);
         }
 
-        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null) {
+        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null, string article = "from") {
             var embed = new EmbedBuilder();
-            embed.WithTitle($"You have been {action} from a discord guild");
+            embed.WithTitle($"You have been {action} {article} a discord guild");
             embed.AddField("Reason", reason, true);
             embed.AddField("Guild name", guild.Name, true);
             embed.WithCurrentTimestamp();
