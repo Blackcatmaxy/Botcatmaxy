@@ -17,9 +17,9 @@ using System.Globalization;
 
 namespace BotCatMaxy {
     public class MainClass {
-        private DiscordSocketClient _client;
+        private static DiscordSocketClient _client;
         public static MongoClient dbClient;
-        public static void Main(string[] args) {
+        public static async Task Main(string[] args) {
             Utilities.logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
@@ -31,16 +31,11 @@ namespace BotCatMaxy {
 #if DEBUG
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
             dbClient = new MongoClient(HiddenInfo.debugDB);
-            new MainClass().MainAsync("Debug", "canary").GetAwaiter().GetResult();
 #endif
-            if (args.NotEmpty(1)) new MainClass().MainAsync(args[0], args[1]).GetAwaiter().GetResult();
-            else if (args.NotEmpty(0)) new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
-            else new MainClass().MainAsync(args[0]).GetAwaiter().GetResult();
-        }
 
-        public async Task MainAsync(string version = null, string beCanary = null) {
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
+                ConnectionTimeout = 6000,
                 MessageCacheSize = 120,
                 ExclusiveBulkDelete = false
             };
@@ -63,15 +58,21 @@ namespace BotCatMaxy {
             _client.Log += Utilities.Log;
             _client.Ready += Ready;
 
-            if (beCanary != null && beCanary.ToLower() == "canary") {
+            if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary") {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
                 dbClient = new MongoClient(HiddenInfo.debugDB);
             } else {
+#if DEBUG
+                await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
+#else
                 dbClient ??= new MongoClient(HiddenInfo.mainDB);
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
+#endif
             }
-
+            await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();
             await _client.StartAsync();
+
+            //Gets build date
             const string BuildVersionMetadataPrefix = "+build";
             DateTime buildDate = new DateTime();
             var attribute = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>();
@@ -85,9 +86,9 @@ namespace BotCatMaxy {
                     }
                 }
             }
-            if (version.NotEmpty()) {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {version} built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
-                await _client.SetGameAsync("version " + version);
+            if (args.Length > 0 && args[0].NotEmpty()) {
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]} built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
+                await _client.SetGameAsync("version " + args[0]);
             } else {
                 await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
             }
@@ -98,7 +99,6 @@ namespace BotCatMaxy {
             Logging logger = new Logging(_client);
             TempActions tempActions = new TempActions(_client);
             Filter filter = new Filter(_client);
-            //ConsoleReader consoleReader = new ConsoleReader(_client);
 
             //Debug info
             await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
@@ -106,7 +106,8 @@ namespace BotCatMaxy {
             await Task.Delay(-1);
         }
 
-        private async Task Ready() {
+        private static async Task Ready() {
+            _client.Ready -= Ready;
             await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
         }
     }

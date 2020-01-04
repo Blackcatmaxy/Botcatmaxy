@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using BotCatMaxy.Data;
 using Newtonsoft.Json;
+using Discord.Rest;
 using System.Text;
 using System.Linq;
 using BotCatMaxy;
@@ -65,14 +66,14 @@ namespace BotCatMaxy {
                 SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
                 SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
 
-                if (chnl?.Guild == null) return;
+                if (chnl?.Guild == null || (message.Author as SocketGuildUser).CantBeWarned()) return;
                 var Guild = chnl.Guild;
                 ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>();
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
                 List<BadWord> badWords = Guild.LoadFromFile<BadWordList>()?.badWords;
 
                 if (modSettings != null) {
-                    if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id) || (message.Author as SocketGuildUser).CantBeWarned())
+                    if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id))
                         return; //Returns if channel is set as not using automod
 
                     //Checks if a message contains an invite
@@ -187,12 +188,18 @@ namespace BotCatMaxy {
         public static async Task Punish(this SocketCommandContext context, string reason, float warnSize = 0.5f) {
             string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild);
             await ((SocketGuildUser)context.User).Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
-
-            IUserMessage warnMessage = await context.Message.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+            LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
+            Task<RestUserMessage> warnMessage = null;
+            if (context.Guild.GetTextChannel(logSettings?.pubLogChannel ?? 0) != null) {
+                warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+            } else {
+                warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+            }
             try {
+                Logging.AddToDeletedCache(context.Message.Id);
                 await context.Message.DeleteAsync();
             } catch {
-                _ = warnMessage.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
+                _ = warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
             }
         }
     }
@@ -262,10 +269,10 @@ namespace BotCatMaxy {
                                     word = $"[{sizes.Min()}-{sizes.Max()}x] ";
                                 }
                                 if (first.euphemism.NotEmpty()) word += $"{first.euphemism} ";
-                                word += $"({group.Select(badWord => badWord.word).ToArray().ListItems(", ")})";
+                                word += $"({group.Select(badWord => $"{badWord.word}{(badWord.partOfWord? "¤" : "")}").ToArray().ListItems(", ")})";
                             } else if (!first.euphemism.IsNullOrEmpty()) word = first.euphemism;
-                            if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() || useExplicit)) {
-                                word += "⌝";
+                            if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() && !useExplicit)) {
+                                word += "¤";
                             }
                             words.Add(word);
                         } else {
@@ -281,7 +288,7 @@ namespace BotCatMaxy {
                         } 
                         else if (!badWord.euphemism.IsNullOrEmpty()) word = badWord.euphemism;
                         if (badWord.partOfWord && (useExplicit || !badWord.euphemism.IsNullOrEmpty())) {
-                            word += "⌝";
+                            word += "¤";
                         }
                         words.Add(word);
                     }*/
@@ -290,7 +297,7 @@ namespace BotCatMaxy {
                 }
                 IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
                 if (channel != null) {
-                    _ = channel.SendMessageAsync("The symbol '⌝' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
+                    _ = channel.SendMessageAsync("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
                 } else {
                     _ = ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
                 }
@@ -535,8 +542,6 @@ namespace BotCatMaxy {
                 Console.WriteLine(DateTime.Now.ToShortTimeString() + " Creating new mod settings");
             }
             settings.invitesAllowed = !settings.invitesAllowed;
-            Console.WriteLine(DateTime.Now.ToShortTimeString() + " setting invites to " + settings.invitesAllowed);
-
             settings.SaveToFile(Context.Guild);
 
             await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());

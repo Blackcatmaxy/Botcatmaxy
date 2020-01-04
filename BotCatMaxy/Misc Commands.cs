@@ -12,6 +12,9 @@ using BotCatMaxy;
 using System.IO;
 using Discord;
 using System;
+using MongoDB.Driver;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 
 namespace BotCatMaxy {
     public class MiscCommands : ModuleBase<SocketCommandContext> {
@@ -40,6 +43,36 @@ namespace BotCatMaxy {
         [Command("bottest")]
         public async Task TestCommand([RequireHierarchy] SocketGuildUser other) {
             await ReplyAsync("Command success");
+        }
+
+        [RequireOwner]
+        [Command("stats")]
+        [Alias("statistics")]
+        public async Task Statistics() {
+            var embed = new EmbedBuilder();
+            embed.WithTitle("Statistics");
+            embed.AddField($"Part of", $"{Context.Client.Guilds.Count} discord guilds", true);
+            ulong infractions24Hours = 0;
+            ulong totalInfractons = 0;
+            ulong members = 0;
+            foreach (SocketGuild guild in Context.Client.Guilds) {
+                members += (ulong)guild.MemberCount;
+                var collection = guild.GetInfractionsCollection(false);
+
+                if (collection != null) {
+                    using var cursor = collection.Find(new BsonDocument()).ToCursor();
+                    foreach (var doc in cursor.ToList()) {
+                        foreach (Infraction infraction in BsonSerializer.Deserialize<UserInfractions>(doc).infractions) {
+                            if (DateTime.Now - infraction.time < TimeSpan.FromHours(24))
+                                infractions24Hours++;
+                            totalInfractons++;
+                        }
+                    }
+                }
+            }
+            embed.AddField("Totals", $"{members} users || {totalInfractons} total infractions", true);
+            embed.AddField("In the last 24 hours", $"{infractions24Hours} infractions given", true);
+            await ReplyAsync(embed: embed.Build());
         }
     }
 }

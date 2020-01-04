@@ -11,6 +11,9 @@ using System.Text.RegularExpressions;
 using Discord.Addons.Interactive;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
+using System.Collections.Immutable;
+using System.Globalization;
+using Discord.Rest;
 
 namespace BotCatMaxy {
     public class CommandHandler {
@@ -37,6 +40,7 @@ namespace BotCatMaxy {
 
                 //Adds Emoji type reader
                 _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
+                _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
 
                 // See Dependency Injection guide for more information.
                 await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
@@ -138,19 +142,12 @@ namespace Discord.Commands {
             // Hierarchy is only available under the socket variant of the user.
             if (!(context.User is SocketGuildUser guildUser))
                 return PreconditionResult.FromError("This command cannot be used outside of a guild");
-
-            SocketGuildUser targetUser;
-            switch (value) {
-                case SocketGuildUser targetGuildUser:
-                    targetUser = targetGuildUser;
-                    break;
-                case ulong userId:
-                    targetUser = await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
+            var targetUser = value switch
+            {
+                SocketGuildUser targetGuildUser => targetGuildUser,
+                ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
             if (targetUser == null)
                 return PreconditionResult.FromError("Target user not found");
 
@@ -162,6 +159,41 @@ namespace Discord.Commands {
                 return PreconditionResult.FromError("The bot's role is lower than the targeted user.");
 
             return PreconditionResult.FromSuccess();
+        }
+    }
+
+    public class BetterUserTypeReader : UserTypeReader<IUser> {
+        public override async Task<TypeReaderResult> ReadAsync(
+            ICommandContext context,
+            string input,
+            IServiceProvider services) {
+            var result = await base.ReadAsync(context, input, services);
+            if (result.IsSuccess)
+                return result;
+            else {
+                DiscordRestClient restClient = (context.Client as DiscordSocketClient).Rest;
+                if (MentionUtils.TryParseUser(input, out var id)) {
+                    RestUser user = await restClient.GetUserAsync(id);
+                    if (user != null) return TypeReaderResult.FromSuccess(user);
+                }
+                if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id)) {
+                    RestUser user = await restClient.GetUserAsync(id);
+                    if (user != null) return TypeReaderResult.FromSuccess(user);
+                }
+                return TypeReaderResult.FromError(CommandError.ObjectNotFound, "User not found.");
+            }
+            /*
+            if (svc != null) {
+                var game = svc.GetGameFromChannel(context.Channel);
+                if (game != null) {
+                    var player = game.Players.SingleOrDefault(p => p.User.Id == user.Id);
+                    return (player != null)
+                        ? TypeReaderResult.FromSuccess(player)
+                        : TypeReaderResult.FromError(CommandError.ObjectNotFound, "Specified user not a player in this game.");
+                }
+                return TypeReaderResult.FromError(CommandError.ObjectNotFound, "No game going on.");
+            }
+            return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Game service not found.");*/
         }
     }
 }
