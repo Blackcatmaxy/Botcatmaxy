@@ -76,5 +76,12 @@ namespace BotCatMaxy {
             embed.AddField("Uptime", (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).LimitedHumanize());
             await ReplyAsync(embed: embed.Build());
         }
+
+        [Command("setslowmode"), Alias("setcooldown")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        public async Task SetSlowMode(int time) {
+            (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
+            await ReplyAsync($"Set channel slowmode to {time} seconds");
+        }
     }
 }
