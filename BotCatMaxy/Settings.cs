@@ -12,6 +12,7 @@ using Humanizer;
 using Discord.Addons.Interactive;
 
 namespace BotCatMaxy {
+    //I want to move away from vague files like settings since conflicts are annoying
     public class SettingsModule : InteractiveBase<SocketCommandContext> {
         [Command("Settings Info")]
         [RequireContext(ContextType.Guild)]
@@ -47,7 +48,7 @@ namespace BotCatMaxy {
                 _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
             }
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
 
             await ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
         }
@@ -61,7 +62,7 @@ namespace BotCatMaxy {
                     await ReplyAsync("The maximum temp punishment is already none");
                 else {
                     settings.maxTempAction = null;
-                    settings.SaveToFile(Context.Guild);
+                    settings.SaveToFile();
                     await ReplyAsync("The maximum temp punishment is now none");
                 }
                 return;
@@ -72,7 +73,7 @@ namespace BotCatMaxy {
                     await ReplyAsync("The maximum temp punishment is already " + ((TimeSpan)span).LimitedHumanize(4));
                 } else {
                     settings.maxTempAction = span;
-                    settings.SaveToFile(Context.Guild);
+                    settings.SaveToFile();
                     await ReplyAsync("The maximum temp punishment is now " + ((TimeSpan)span).LimitedHumanize(4));
                 }
             } else {
@@ -96,7 +97,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
 
             await ReplyAsync("The role \"" + role.Name + "\" is now the muted role");
         }
@@ -120,7 +121,7 @@ namespace BotCatMaxy {
             } else {
                 _ = ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
             }
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
 
             _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
@@ -147,7 +148,7 @@ namespace BotCatMaxy {
                 settings.logChannel = Context.Channel.Id;
             }
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await message.ModifyAsync(msg => msg.Content = "Set log channel to this channel");
         }
 
@@ -159,7 +160,7 @@ namespace BotCatMaxy {
 
             if (!setNull.IsNullOrEmpty() && (setNull.ToLower() == "none" || setNull.ToLower() == "null")) {
                 settings.pubLogChannel = null;
-                settings.SaveToFile(Context.Guild);
+                settings.SaveToFile();
                 await message.ModifyAsync(msg => msg.Content = "Set public log channel to null");
                 return;
             }
@@ -170,7 +171,7 @@ namespace BotCatMaxy {
                 settings.pubLogChannel = Context.Channel.Id;
             }
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await message.ModifyAsync(msg => msg.Content = "Set public log channel to this channel");
         }
 
@@ -206,7 +207,7 @@ namespace BotCatMaxy {
 
             settings.logDeletes = !settings.logDeletes;
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             if (settings.logDeletes) {
                 await message.ModifyAsync(msg => msg.Content = "Deleted messages will now be logged in the logging channel");
             } else {
@@ -224,7 +225,7 @@ namespace BotCatMaxy {
 
             settings.logEdits = !settings.logEdits;
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             if (settings.logEdits) {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages will now be logged in the logging channel");
             } else {

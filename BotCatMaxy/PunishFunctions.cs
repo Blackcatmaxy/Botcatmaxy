@@ -173,7 +173,7 @@ namespace BotCatMaxy.Moderation {
             TempAct tempBan = new TempAct(user.Id, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempBans.Add(tempBan);
-            actions.SaveToFile(context.Guild);
+            actions.SaveToFile();
             try {
                 await user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
             } catch (Exception e) {
@@ -187,7 +187,7 @@ namespace BotCatMaxy.Moderation {
             TempAct tempMute = new TempAct(user.Id, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempMutes.Add(tempMute);
-            actions.SaveToFile(context.Guild);
+            actions.SaveToFile();
             try {
                 await user.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
             } catch (Exception e) {

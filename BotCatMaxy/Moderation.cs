@@ -196,7 +196,7 @@ namespace BotCatMaxy {
                     _ = query.DeleteAsync();
                     _ = nextMessage.DeleteAsync();
                     actions.tempBans.Remove(oldAct);
-                    actions.SaveToFile(Context.Guild);
+                    actions.SaveToFile();
                 } else {
                     _ = query.DeleteAsync();
                     if (nextMessage != null) _ = nextMessage.DeleteAsync();
@@ -312,7 +312,7 @@ namespace BotCatMaxy {
                     _ = query.DeleteAsync();
                     _ = nextMessage.DeleteAsync();
                     actions.tempMutes.Remove(oldAct);
-                    actions.SaveToFile(Context.Guild);
+                    actions.SaveToFile();
                 } else {
                     _ = query.DeleteAsync();
                     if (nextMessage != null) _ = nextMessage.DeleteAsync();

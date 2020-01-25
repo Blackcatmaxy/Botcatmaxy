@@ -104,7 +104,7 @@ namespace BotCatMaxy {
                                 needSave = true;
                             } else if (debug) Console.Write($"no tempmute changes");
                         } else if (debug) Console.Write("no tempmutes to check or no settings");
-                        if (needSave) actions.SaveToFile(guild);
+                        if (needSave) actions.SaveToFile();
                     }
                 }
                 if (debug) Console.Write("\n");

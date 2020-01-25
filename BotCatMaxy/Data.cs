@@ -12,8 +12,10 @@ using Discord;
 using System;
 
 namespace BotCatMaxy.Data {
-    public static class SettingsData {
-        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) {
+    public static class DataManipulator {
+        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T: DataObject {
+            if (guild == null)
+                throw new ArgumentNullException(nameof(guild));
             var file = default(T);
             var collection = guild.GetCollection(createFile);
             
@@ -23,14 +25,19 @@ namespace BotCatMaxy.Data {
                     var doc = cursor?.FirstOrDefault();
                     if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
-                if (createFile && file == null) return (T)Activator.CreateInstance(typeof(T));
+                if (createFile && file == null) {
+                    var thing = (T)Activator.CreateInstance(typeof(T));
+                    thing.guild = guild;
+                    return thing;
+                }
             }
-
+            if (file != null) file.guild = guild;
             return file;
         }
 
-        public static void SaveToFile<T>(this T file, IGuild guild) {
-            var collection = guild.GetCollection(true);
+        public static void SaveToFile<T>(this T file) where T : DataObject {
+            if (file.guild == null) throw new InvalidOperationException("Data file does not have a guild");
+            var collection = file.guild.GetCollection(true);
             collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name));
             collection.InsertOne(file.ToBsonDocument());
         }
@@ -76,6 +83,11 @@ namespace BotCatMaxy.Data {
         }
     }
 
+    public class DataObject {
+        [BsonIgnore]
+        public IGuild guild;
+    }
+
     //Data classes
     public class Infraction {
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
@@ -92,7 +104,7 @@ namespace BotCatMaxy.Data {
         public BsonDocument CatchAll { get; set; }
     }
 
-    public class TempActionList {
+    public class TempActionList : DataObject {
         [BsonId]
         public string ID = "TempActionList";
         public List<TempAct> tempBans = new List<TempAct>();
@@ -149,13 +161,13 @@ namespace BotCatMaxy.Data {
         public object moreWords;
     }
 
-    public class BadWordList {
+    public class BadWordList : DataObject {
         [BsonId]
         public string Id = "BadWordList";
         public List<BadWord> badWords = new List<BadWord>();
     }
 
-    public class ModerationSettings {
+    public class ModerationSettings : DataObject {
         [BsonId]
         public string Id = "ModerationSettings";
         public List<ulong> ableToWarn = new List<ulong>();
@@ -176,7 +188,7 @@ namespace BotCatMaxy.Data {
         public BsonDocument CatchAll { get; set; }
     }
 
-    public class LogSettings {
+    public class LogSettings : DataObject {
         [BsonId]
         public BsonString Id = "LogSettings";
         public ulong? pubLogChannel = null;
@@ -184,5 +196,12 @@ namespace BotCatMaxy.Data {
         public bool logDeletes = true;
         public bool logEdits = false;
         public BsonDocument CatchAll { get; set; }
+    }
+
+    public class ReportSettings : DataObject {
+        [BsonId]
+        public BsonString Id = "ReportSettings";
+        public TimeSpan? cooldown;
+        public ulong? channelID;
     }
 }

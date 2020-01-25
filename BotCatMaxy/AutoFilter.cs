@@ -294,7 +294,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.maxEmojis = amount;
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             string extraInfo = "";
             if (settings.allowedToLink.NotEmpty()) extraInfo = " except by role allowed to link";
             if (amount == 0) await ReplyAsync("No emojis are allowed" + extraInfo);
@@ -314,14 +314,14 @@ namespace BotCatMaxy {
                         await ReplyAsync("Emoji moderation is already disabled");
                     else {
                         settings.maxEmojis = null;
-                        settings.SaveToFile(Context.Guild);
+                        settings.SaveToFile();
                         await ReplyAsync("Emoji moderation is now disabled");
                     }
                     break;
                 case "all":
                     settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
                     settings.maxEmojis = 0;
-                    settings.SaveToFile(Context.Guild);
+                    settings.SaveToFile();
                     string extraInfo = "";
                     if (settings.allowedToLink.NotEmpty()) extraInfo = " except by role allowed to link";
                     await ReplyAsync("Emojis are now no longer allowed" + extraInfo);
@@ -342,7 +342,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.badUEmojis.Add(emoji.Name);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync($"Emoji {emoji.Name} is now banned");
         }
 
@@ -356,7 +356,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.badUEmojis.Remove(emoji.Name);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync($"Emoji {emoji.Name} is now not banned");
         }
 
@@ -374,7 +374,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.allowedCaps = percent;
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
 
             if (percent == 0) {
                 await ReplyAsync("Disabled capitalization filtering");
@@ -395,7 +395,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.allowedToLink.Add(role.Id);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
 
             await ReplyAsync($"Role '{role.Name}' is now exempt from link filtering");
         }
@@ -412,7 +412,7 @@ namespace BotCatMaxy {
             }
             if (settings.allowedToLink.Contains(role.Id)) {
                 settings.allowedToLink.Remove(role.Id);
-                settings.SaveToFile(Context.Guild);
+                settings.SaveToFile();
                 await ReplyAsync($"Role '{role.Name}' is no longer exempt from link filtering");
                 return;
             }
@@ -435,7 +435,7 @@ namespace BotCatMaxy {
                         await ReplyAsync("Set badword to be filtered even if it's inside of another word");
                     }
                     BadWordList badWordList = new BadWordList { badWords = badWords.all };
-                    badWordList.SaveToFile(Context.Guild);
+                    badWordList.SaveToFile();
                     return;
                 }
             }
@@ -455,7 +455,7 @@ namespace BotCatMaxy {
                 await ReplyAsync("Disabled automod in this channel");
             }
 
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
         }
 
         [Command("addignoredrole")]
@@ -468,7 +468,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.cantBeWarned.Add(role.Id);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
         }
 
@@ -481,7 +481,7 @@ namespace BotCatMaxy {
                 await ReplyAsync($"Role '{role.Name}' is already able to be warned");
             } else {
                 settings.cantBeWarned.Add(role.Id);
-                settings.SaveToFile(Context.Guild);
+                settings.SaveToFile();
                 await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
             }
         }
@@ -492,7 +492,7 @@ namespace BotCatMaxy {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             if (settings.allowedLinks == null) settings.allowedLinks = new List<string>();
             settings.allowedLinks.Add(link);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync("People will now be allowed to use " + link);
         }
 
@@ -506,7 +506,7 @@ namespace BotCatMaxy {
             }
             settings.allowedLinks.Remove(link);
             if (settings.allowedLinks.Count == 0) settings.allowedLinks = null;
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync("People will no longer be allowed to use " + link);
         }
 
@@ -521,7 +521,7 @@ namespace BotCatMaxy {
                 Console.WriteLine(DateTime.Now.ToShortTimeString() + " Creating new mod settings");
             }
             settings.invitesAllowed = !settings.invitesAllowed;
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
 
             await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
         }
@@ -539,7 +539,7 @@ namespace BotCatMaxy {
             BadWord badToRemove = badWordsClass.badWords.FirstOrDefault(badWord => badWord.word == word);
             if (badToRemove != null) {
                 badWordsClass.badWords.Remove(badToRemove);
-                badWordsClass.SaveToFile(Context.Guild);
+                badWordsClass.SaveToFile();
 
                 await ReplyAsync("removed " + word + " from bad word list");
             } else {
@@ -559,7 +559,7 @@ namespace BotCatMaxy {
             //List<BadWord> badWords = Context.Guild.LoadFromFile<BadWordList>().badWords ?? new List<BadWord>();
             BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(true);
             badWordsClass.badWords.Add(badWord);
-            badWordsClass.SaveToFile(Context.Guild);
+            badWordsClass.SaveToFile();
 
             if (euphemism != null) {
                 await ReplyAsync("added " + badWord.word + " also known as " + euphemism + " to bad word list");
@@ -576,7 +576,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.anouncementChannels.Add(Context.Channel.Id);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync("This channel is now an 'anouncement' channel");
         }
 
@@ -588,7 +588,7 @@ namespace BotCatMaxy {
                 return;
             }
             settings.anouncementChannels.Remove(Context.Channel.Id);
-            settings.SaveToFile(Context.Guild);
+            settings.SaveToFile();
             await ReplyAsync("This channel is now not an 'anouncement' channel");
         }
     }

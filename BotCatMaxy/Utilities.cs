@@ -24,6 +24,8 @@ namespace BotCatMaxy {
         public static ILogger logger;
 
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true) {
+            if (guild == null)
+                throw new ArgumentNullException(nameof(guild));
             var db = MainClass.dbClient.GetDatabase("Settings");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
@@ -179,7 +181,7 @@ namespace BotCatMaxy {
 
         public static string NickOrUsername(this SocketGuildUser user) {
             if (user == null) {
-                new LogMessage(LogSeverity.Error, "Utility", "User is null");
+                new LogMessage(LogSeverity.Error, "Utility", "User is null").Log();
                 return "``NULL USER``";
             }
             if (user.Nickname.IsNullOrEmpty()) return user.Username;
@@ -230,7 +232,7 @@ namespace BotCatMaxy {
         public static string JoinAll(this IEnumerable<string> list) {
             string s = "";
             foreach (string element in list) {
-                if (s != "") s += " ";
+                if (s.Length > 0) s += " ";
                 s += element;
             }
             return s;
