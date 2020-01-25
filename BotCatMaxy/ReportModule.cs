@@ -47,16 +47,16 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
                 var messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToList();
                 messages.OrderBy(msg => msg.CreatedAt);
                 while (messages.Last().CreatedAt.Offset > settings.cooldown.Value) {
-                    ReplyAsync("Downloading more messages");
+                    _ = ReplyAsync("Downloading more messages");
                     messageAmount += 100;
                     messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToList();
                     messages.OrderBy(msg => msg.Timestamp.Offset);
                 }
                 foreach (IMessage message in messages) {
                     if (message.Author.IsBot && message.Content == "Report has been sent") {
-                        if (message.Timestamp.Offset > settings.cooldown.Value) break;
+                        if (message.GetTimeAgo() > settings.cooldown.Value) break;
                         else {
-                            ReplyAsync($"You need to wait the full {settings.cooldown.Value.Humanize()}, {message.Timestamp.Offset.Humanize()} have passed");
+                            await ReplyAsync($"You need to wait the full {settings.cooldown.Value.Humanize()}, {message.GetTimeAgo().Humanize()} have passed from {message.GetJumpUrl()}");
                             return;
                         }
                     }

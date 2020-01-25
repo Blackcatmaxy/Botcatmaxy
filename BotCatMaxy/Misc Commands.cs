@@ -14,6 +14,8 @@ using System;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using System.Diagnostics;
+using Humanizer;
 
 namespace BotCatMaxy {
     public class MiscCommands : ModuleBase<SocketCommandContext> {
@@ -71,6 +73,7 @@ namespace BotCatMaxy {
             }
             embed.AddField("Totals", $"{members} users || {totalInfractons} total infractions", true);
             embed.AddField("In the last 24 hours", $"{infractions24Hours} infractions given", true);
+            embed.AddField("Uptime", (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).LimitedHumanize());
             await ReplyAsync(embed: embed.Build());
         }
     }

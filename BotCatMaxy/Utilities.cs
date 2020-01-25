@@ -17,6 +17,7 @@ using Serilog;
 using Humanizer;
 using System.Reflection;
 using System.Globalization;
+using System.Diagnostics.Contracts;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -288,6 +289,11 @@ namespace BotCatMaxy {
 
         public static string LimitedHumanize(this TimeSpan timeSpan, int precision = 2) {
             return timeSpan.Humanize(precision, maxUnit: Humanizer.Localisation.TimeUnit.Day, minUnit: Humanizer.Localisation.TimeUnit.Second);
+        }
+
+        public static TimeSpan GetTimeAgo(this IMessage message) {
+            Contract.Requires(message != null);
+            return DateTime.Now - message.Timestamp;
         }
     }
 }

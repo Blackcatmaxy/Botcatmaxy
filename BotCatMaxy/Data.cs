@@ -153,6 +153,7 @@ namespace BotCatMaxy.Data {
         public DateTime dateBanned;
     }
 
+    [BsonIgnoreExtraElements]
     public class BadWord {
         public string word;
         public string euphemism;
@@ -161,6 +162,7 @@ namespace BotCatMaxy.Data {
         public object moreWords;
     }
 
+    [BsonIgnoreExtraElements]
     public class BadWordList : DataObject {
         [BsonId]
         public string Id = "BadWordList";
