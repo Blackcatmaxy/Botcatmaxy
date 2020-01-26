@@ -64,7 +64,7 @@ namespace BotCatMaxy {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
 #else
                 dbClient ??= new MongoClient(HiddenInfo.mainDB);
-                await _client.LoginAsync(TokenType.Bot, HiddenInfo.Maintoken);
+                await _client.LoginAsync(TokenType.Bot, HiddenInfo.mainToken);
 #endif
             }
             await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();

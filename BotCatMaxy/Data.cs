@@ -205,5 +205,6 @@ namespace BotCatMaxy.Data {
         public BsonString Id = "ReportSettings";
         public TimeSpan? cooldown;
         public ulong? channelID;
+        public ulong? requiredRole;
     }
 }

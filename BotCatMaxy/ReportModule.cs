@@ -41,6 +41,11 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
                 await ReplyAsync("This guild does not currently have reporting set up, command canceled");
                 return;
             }
+            SocketGuildUser gUser = guild.GetUser(Context.Message.Author.Id);
+            if (settings.requiredRole != null && !(gUser.RoleIDs().Contains(settings.requiredRole.Value) || gUser.GuildPermissions.Administrator)) {
+                await ReplyAsync("You are missing required role for reporting");
+                return;
+            }
 
             if (settings.cooldown != null) {
                 int messageAmount = 100;
@@ -53,10 +58,11 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
                     messages.OrderBy(msg => msg.Timestamp.Offset);
                 }
                 foreach (IMessage message in messages) {
+                    TimeSpan timeAgo = message.GetTimeAgo();
                     if (message.Author.IsBot && message.Content == "Report has been sent") {
-                        if (message.GetTimeAgo() > settings.cooldown.Value) break;
+                        if (timeAgo > settings.cooldown.Value) break;
                         else {
-                            await ReplyAsync($"You need to wait the full {settings.cooldown.Value.Humanize()}, {message.GetTimeAgo().Humanize()} have passed from {message.GetJumpUrl()}");
+                            await ReplyAsync($"You need to wait the full {settings.cooldown.Value.Humanize()}, {timeAgo.Humanize()} have passed from {message.GetJumpUrl()}");
                             return;
                         }
                     }
@@ -71,6 +77,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
             embed.WithAuthor(Context.Message.Author);
             embed.WithTitle("Report");
             embed.WithDescription(reportMsg);
+            embed.WithFooter("User ID: " + Context.Message.Author.Id);
             embed.WithCurrentTimestamp();
 
             guild.GetTextChannel(settings.channelID.Value).SendMessageAsync(embed: embed.Build());
@@ -123,6 +130,33 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
             }
         } catch (Exception e) {
             ReplyAsync("Error: " + e);
+        }
+    }
+
+    [Command("setreportrole"), HasAdmin]
+    public async Task SetReportRole(SocketRole role) {
+        ReportSettings settings = Context.Guild.LoadFromFile<ReportSettings>();
+        if (settings.requiredRole == role.Id) ReplyAsync("Reporting is already set to that role");
+        else {
+            settings.requiredRole = role.Id;
+            settings.SaveToFile();
+            ReplyAsync($"Reporting now requires {role.Name} role");
+        }
+    }
+
+    [Command("setreportrole"), HasAdmin]
+    public async Task SetReportRole(string value) {
+        value.ToLower();
+        if (!(value == "null" || value == "none")) {
+            await ReplyAsync("Invalid role");
+            return;
+        }
+        ReportSettings settings = Context.Guild.LoadFromFile<ReportSettings>();
+        if (settings.requiredRole == null) ReplyAsync("Reporting is already set to not need a role");
+        else {
+            settings.requiredRole = null;
+            settings.SaveToFile();
+            ReplyAsync($"Reporting now doesn't require a role");
         }
     }
 }
