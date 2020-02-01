@@ -25,10 +25,10 @@ namespace BotCatMaxy {
         }
 
         public async Task CheckEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
-            => _ = CheckMessage(editedMessage);
+            => Task.Run(() => CheckMessage(editedMessage));
 
         public async Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) 
-            => _ = CheckReaction(cachedMessage, channel, reaction);
+            => Task.Run(() => CheckReaction(cachedMessage, channel, reaction)); 
 
         public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) {
             try {

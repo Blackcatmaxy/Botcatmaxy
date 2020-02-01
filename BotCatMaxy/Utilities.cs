@@ -239,6 +239,10 @@ namespace BotCatMaxy {
             return s;
         }
 
+        public static async Task TryNotify(this Task<RestUser> task, string message) {
+            (await task)?.TryNotify(message);
+        }
+
         public static bool TryNotify(this IUser user, string message) {
             try {
                 var sentMessage = user.GetOrCreateDMChannelAsync()?.Result.SendMessageAsync(message);
