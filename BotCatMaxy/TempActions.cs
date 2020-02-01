@@ -35,7 +35,7 @@ namespace BotCatMaxy {
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
             try {
                 int checkedGuilds = 0;
-                foreach (RestGuild guild in await client.Rest.GetGuildsAsync()) {
+                foreach (RestGuild guild in await client.Rest.GetGuildsAsync(requestOptions)) {
                     if (debug) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         Console.Write($"\nChecking {guild.Name} discord ");
