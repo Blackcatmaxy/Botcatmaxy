@@ -2,19 +2,20 @@
 using Serilog.Sinks.SystemConsole.Themes;
 using MongoDB.Bson.Serialization;
 using System.Collections.Generic;
-using BotCatMaxy.Settings;
 using Discord.WebSocket;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
 using MongoDB.Bson;
+using System.Linq;
 using BotCatMaxy;
 using Discord;
 using System;
-using System.Linq;
 
 namespace BotCatMaxy.Data {
-    public static class SettingsData {
-        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) {
+    public static class DataManipulator {
+        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T: DataObject {
+            if (guild == null)
+                throw new ArgumentNullException(nameof(guild));
             var file = default(T);
             var collection = guild.GetCollection(createFile);
             
@@ -24,14 +25,19 @@ namespace BotCatMaxy.Data {
                     var doc = cursor?.FirstOrDefault();
                     if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
-                if (createFile && file == null) return (T)Activator.CreateInstance(typeof(T));
+                if (createFile && file == null) {
+                    var thing = (T)Activator.CreateInstance(typeof(T));
+                    thing.guild = guild;
+                    return thing;
+                }
             }
-
+            if (file != null) file.guild = guild;
             return file;
         }
 
-        public static void SaveToFile<T>(this T file, IGuild guild) {
-            var collection = guild.GetCollection(true);
+        public static void SaveToFile<T>(this T file) where T : DataObject {
+            if (file.guild == null) throw new InvalidOperationException("Data file does not have a guild");
+            var collection = file.guild.GetCollection(true);
             collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name));
             collection.InsertOne(file.ToBsonDocument());
         }
@@ -77,6 +83,20 @@ namespace BotCatMaxy.Data {
         }
     }
 
+    public class DataObject {
+        [BsonIgnore]
+        public IGuild guild;
+    }
+
+    //Data classes
+    public class Infraction {
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        public DateTime time;
+        public string logLink;
+        public string reason;
+        public float size;
+    }
+
     public class UserInfractions {
         [BsonId]
         public ulong ID = 0;
@@ -84,7 +104,7 @@ namespace BotCatMaxy.Data {
         public BsonDocument CatchAll { get; set; }
     }
 
-    public class TempActionList {
+    public class TempActionList : DataObject {
         [BsonId]
         public string ID = "TempActionList";
         public List<TempAct> tempBans = new List<TempAct>();
@@ -117,5 +137,74 @@ namespace BotCatMaxy.Data {
                 }
             }
         }
+    }
+
+    public class TempAct {
+        public TempAct(ulong userID, TimeSpan length, string reason) {
+            user = userID;
+            this.reason = reason;
+            dateBanned = DateTime.Now;
+            this.length = length;
+        }
+        public string reason;
+        public ulong user;
+        public TimeSpan length;
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        public DateTime dateBanned;
+    }
+
+    [BsonIgnoreExtraElements]
+    public class BadWord {
+        public string word;
+        public string euphemism;
+        public float size = 0.5f;
+        public bool partOfWord = true;
+        public object moreWords;
+    }
+
+    [BsonIgnoreExtraElements]
+    public class BadWordList : DataObject {
+        [BsonId]
+        public string Id = "BadWordList";
+        public List<BadWord> badWords = new List<BadWord>();
+    }
+
+    public class ModerationSettings : DataObject {
+        [BsonId]
+        public string Id = "ModerationSettings";
+        public List<ulong> ableToWarn = new List<ulong>();
+        public List<ulong> cantBeWarned = new List<ulong>();
+        public List<ulong> channelsWithoutAutoMod = new List<ulong>();
+        public List<string> allowedLinks = new List<string>();
+        public List<ulong> allowedToLink = new List<ulong>();
+        public List<string> badUEmojis = new List<string>();
+        public List<ulong> ableToBan = new List<ulong>();
+        public List<ulong> anouncementChannels = new List<ulong>();
+        public TimeSpan? maxTempAction = null;
+        public ulong mutedRole = 0;
+        public ushort allowedCaps = 0;
+        public bool useOwnerID = false;
+        public bool moderateUsernames = false;
+        public bool invitesAllowed = true;
+        public uint? maxEmojis = null;
+        public BsonDocument CatchAll { get; set; }
+    }
+
+    public class LogSettings : DataObject {
+        [BsonId]
+        public BsonString Id = "LogSettings";
+        public ulong? pubLogChannel = null;
+        public ulong logChannel;
+        public bool logDeletes = true;
+        public bool logEdits = false;
+        public BsonDocument CatchAll { get; set; }
+    }
+
+    public class ReportSettings : DataObject {
+        [BsonId]
+        public BsonString Id = "ReportSettings";
+        public TimeSpan? cooldown;
+        public ulong? channelID;
+        public ulong? requiredRole;
     }
 }

@@ -4,7 +4,6 @@ using System.Text;
 using Discord;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
-using BotCatMaxy.Settings;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Rest;
@@ -18,6 +17,7 @@ using Serilog;
 using Humanizer;
 using System.Reflection;
 using System.Globalization;
+using System.Diagnostics.Contracts;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -25,6 +25,8 @@ namespace BotCatMaxy {
         public static ILogger logger;
 
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true) {
+            if (guild == null)
+                throw new ArgumentNullException(nameof(guild));
             var db = MainClass.dbClient.GetDatabase("Settings");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
@@ -180,7 +182,7 @@ namespace BotCatMaxy {
 
         public static string NickOrUsername(this SocketGuildUser user) {
             if (user == null) {
-                new LogMessage(LogSeverity.Error, "Utility", "User is null");
+                new LogMessage(LogSeverity.Error, "Utility", "User is null").Log();
                 return "``NULL USER``";
             }
             if (user.Nickname.IsNullOrEmpty()) return user.Username;
@@ -231,7 +233,7 @@ namespace BotCatMaxy {
         public static string JoinAll(this IEnumerable<string> list) {
             string s = "";
             foreach (string element in list) {
-                if (s != "") s += " ";
+                if (s.Length > 0) s += " ";
                 s += element;
             }
             return s;
@@ -287,6 +289,11 @@ namespace BotCatMaxy {
 
         public static string LimitedHumanize(this TimeSpan timeSpan, int precision = 2) {
             return timeSpan.Humanize(precision, maxUnit: Humanizer.Localisation.TimeUnit.Day, minUnit: Humanizer.Localisation.TimeUnit.Second);
+        }
+
+        public static TimeSpan GetTimeAgo(this IMessage message) {
+            Contract.Requires(message != null);
+            return DateTime.Now - message.Timestamp;
         }
     }
 }

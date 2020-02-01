@@ -1,15 +1,12 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using BotCatMaxy.Moderation;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
-using BotCatMaxy;
-using System.Text;
-using Discord;
-using System.IO;
 using Discord.Rest;
-using BotCatMaxy.Settings;
 using System.Linq;
+using Discord;
+using System;
 
 namespace BotCatMaxy {
     public class TempActions {
@@ -107,7 +104,7 @@ namespace BotCatMaxy {
                                 needSave = true;
                             } else if (debug) Console.Write($"no tempmute changes");
                         } else if (debug) Console.Write("no tempmutes to check or no settings");
-                        if (needSave) actions.SaveToFile(guild);
+                        if (needSave) actions.SaveToFile();
                     }
                 }
                 if (debug) Console.Write("\n");
