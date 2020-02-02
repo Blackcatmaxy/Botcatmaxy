@@ -206,7 +206,7 @@ namespace BotCatMaxy {
                 if (!(warnee is SocketGuildUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
                     embed.AddField($"{warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.LimitedHumanize(2)}, because of {reason}");
                 else
-                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has been warned", "For " + reason);
+                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.LimitedHumanize(2)}, because of {reason}");
                 //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
                 embed.WithColor(Color.Green);
                 embed.WithCurrentTimestamp();
@@ -218,6 +218,53 @@ namespace BotCatMaxy {
             }
             return;
         }
+
+        public static void LogManualEndTempAct(IGuild guild, IUser warnee, string actType, DateTime dateHappened) {
+            try {
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
+                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
+                if (channel == null)
+                    return;
+
+                var embed = new EmbedBuilder();
+                embed.WithAuthor(warnee);
+                if (!(warnee is SocketGuildUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been manually un{actType}ed", $"After {dateHappened.Subtract(DateTime.Now).LimitedHumanize(2)}");
+                else
+                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has manually been un{actType}ed", $"After {DateTime.Now.Subtract(dateHappened).LimitedHumanize(2)}");
+                //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                embed.WithColor(Color.Green);
+                embed.WithCurrentTimestamp();
+
+                channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                return;
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
+            }
+            return;
+        }
+
+        public static void LogManualEndTempAct(IGuild guild, ulong userID, string actType, DateTime dateHappened) {
+            try {
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
+                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
+                if (channel == null)
+                    return;
+
+                var embed = new EmbedBuilder();
+                embed.AddField($"{userID} has manually been un{actType}ed", $"After {DateTime.Now.Subtract(dateHappened).LimitedHumanize(2)}");
+                //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                embed.WithColor(Color.Green);
+                embed.WithCurrentTimestamp();
+
+                channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                return;
+            } catch (Exception e) {
+                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
+            }
+            return;
+        }
+
         private async Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
             _ = LogDelete(message, channel);
         }

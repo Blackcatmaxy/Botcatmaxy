@@ -51,10 +51,17 @@ namespace BotCatMaxy {
                             foreach (TempAct tempBan in actions.tempBans) {
                                 try {
                                     RestBan ban = await restGuild.GetBanAsync(tempBan.user, requestOptions);
-                                    if (ban == null) { //Need to add an embed for when this happens that's distinct
+                                    if (ban == null) { //If manual unban
+                                        var user = client.Rest.GetUserAsync(tempBan.user);
+                                        editedBans.Remove(tempBan);
                                         _ = client.Rest.GetUserAsync(tempBan.user)?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");
                                         //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
-                                        editedBans.Remove(tempBan);
+                                        await user;
+                                        if (user.Result == null) {
+                                            Logging.LogManualEndTempAct(sockGuild, tempBan.user, "bann", tempBan.dateBanned);
+                                        } else {
+                                            Logging.LogManualEndTempAct(sockGuild, user.Result, "bann", tempBan.dateBanned);
+                                        }
                                     } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
                                         RestUser rUser = ban.User;
                                         await restGuild.RemoveBanAsync(tempBan.user, requestOptions);
@@ -86,9 +93,12 @@ namespace BotCatMaxy {
                                     if (gUser != null && !gUser.RoleIds.Contains(settings.mutedRole)) { //User missing muted role, must have been manually unmuted
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
+                                        Logging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.dateBanned);
                                     } else if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) { //Normal mute end
                                         if (gUser != null) {
                                             await gUser.RemoveRoleAsync(mutedRole, requestOptions);
+                                            gUser = sockGuild.GetUser(tempMute.user); //Reload user so it doesn't think user is missing role?
+                                            gUser ??= await restGuild.GetUserAsync(tempMute.user, requestOptions);
                                         } // if user not in guild || if user doesn't contain muted role (successfully removed?
                                         if (gUser == null || !gUser.RoleIds.Contains(settings.mutedRole)) { //Doesn't remove tempmute if unmuting fails
                                             IUser user = gUser; //Gets user to try to message
@@ -125,23 +135,24 @@ namespace BotCatMaxy {
         }
 
         public async Task Timer() {
-            var cts = new CancellationTokenSource();
             while (true) {
+                var cts = new CancellationTokenSource();
                 DateTime start = DateTime.Now;
-                Task timeWarning = TimeWarning(start, cts.Token);
+                _ = Task.Run(() => TimeWarning(start, cts.Token));
                 await CheckTempActs(client);
                 cts.Cancel();
-                int delayMiliseconds = 30000 - start.Subtract(DateTime.Now).Milliseconds;
+                int delayMiliseconds = 30000 - DateTime.Now.Subtract(start).Milliseconds;
                 if (delayMiliseconds < 0)
                     await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete").Log();
                 else
                     await Task.Delay(delayMiliseconds);
+                cts.Dispose();
             }
         }
 
         public async Task TimeWarning(DateTime start, CancellationToken ct) {
             while (!ct.IsCancellationRequested) {
-                if (start.Subtract(DateTime.Now).Milliseconds > 30000)
+                if (DateTime.Now.Subtract(start).Milliseconds > 30000)
                     await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete and still haven't canceled").Log();
                 await Task.Delay(100);
             }
