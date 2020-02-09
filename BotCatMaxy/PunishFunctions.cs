@@ -124,14 +124,14 @@ namespace BotCatMaxy.Moderation {
                         string jumpLink = "";
                         string timeAgo = dateAgo.LimitedHumanize(2);
                         if (showLinks && !infraction.logLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.logLink})]";
-                        string s = "[" + MathF.Abs(i - infractions.Count) + "] " + size + infraction.reason + jumpLink + " - " + timeAgo;
+                        string infracInfo = $"[{MathF.Abs(i - infractions.Count)}] {size}{infraction.reason}{jumpLink} - {timeAgo}";
                         n++;
 
-                        if ((infractionStrings.LastOrDefault() + s).Length < 1024) {
-                            if (infractionStrings.LastOrDefault().IsNullOrEmpty()) infractionStrings[infractionStrings.Count - 1] += "\n";
-                            infractionStrings[infractionStrings.Count - 1] += s;
+                        if ((infractionStrings.LastOrDefault() + infracInfo).Length < 1024) {
+                            if (infractionStrings.LastOrDefault().NotEmpty()) infractionStrings[infractionStrings.Count - 1] += "\n";
+                            infractionStrings[infractionStrings.Count - 1] += infracInfo;
                         } else {
-                            infractionStrings.Add(s);
+                            infractionStrings.Add(infracInfo);
                         }
                     }
                 }
