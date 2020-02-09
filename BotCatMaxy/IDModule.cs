@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Discord.Addons.Interactive;
+using System.Threading.Tasks;
 using Discord.Commands;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ using BotCatMaxy.Moderation;
 
 namespace BotCatMaxy {
     [Group("ID")]
-    public class IDCommands : ModuleBase<SocketCommandContext> {
+    public class IDCommands : InteractiveBase<SocketCommandContext> {
         [RequireContext(ContextType.Guild)]
         [Command("dmwarns")]
         public async Task DMWarns(ulong ID, int amount = 99) {
@@ -101,6 +102,10 @@ namespace BotCatMaxy {
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task Ban(ulong ID, [Remainder] string reason = "Unspecified") {
+            if (Context.Guild.GetUser(ID) != null) {
+                ReplyAsync("User is in guild, please user normal command");
+                return;
+            }
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.user == ID) ?? false) {
                 actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.user == ID));
@@ -111,6 +116,58 @@ namespace BotCatMaxy {
             Context.Client.GetUser(ID)?.TryNotify($"You have been banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(ID);
             Context.Message.DeleteOrRespond($"User has been banned for {reason}", Context.Guild);
+        }
+
+        [Command("tempban")]
+        [Alias("tban", "temp-ban")]
+        [RequireContext(ContextType.Guild)]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
+        public async Task TempBanUser(ulong id, string time, [Remainder] string reason) {
+            if (Context.Guild.GetUser(id) != null) {
+                ReplyAsync("User is in guild, please user normal command");
+                return;
+            }
+            var amount = time.ToTime();
+            if (amount == null) {
+                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                return;
+            }
+            if (amount.Value.TotalMinutes < 1) {
+                await ReplyAsync("Can't temp-ban for less than a minute");
+                return;
+            }
+            if (!(Context.Message.Author as SocketGuildUser).HasAdmin()) {
+                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+                if (settings?.maxTempAction != null && amount > settings.maxTempAction) {
+                    await ReplyAsync("You are not allowed to punish for that long");
+                    return;
+                }
+            }
+            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.user == id);
+            if (oldAct != null) {
+                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.Now - oldAct.dateBanned)) >= amount) {
+                    await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
+                    return;
+                }
+                IUserMessage query = await ReplyAsync(
+                    $"User with ID:{id} is already temp-banned for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.Now - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
+                SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
+                if (nextMessage?.Content?.ToLower() == "!confirm") {
+                    _ = query.DeleteAsync();
+                    _ = nextMessage.DeleteAsync();
+                    actions.tempBans.Remove(oldAct);
+                    actions.SaveToFile();
+                } else {
+                    _ = query.DeleteAsync();
+                    if (nextMessage != null) _ = nextMessage.DeleteAsync();
+                    await ReplyAsync("Command canceled");
+                    return;
+                }
+            }
+            await id.TempBan(amount.Value, reason, Context, actions);
+            Context.Message.DeleteOrRespond($"Temporarily banned user with ID:{id} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
     }
 }

@@ -170,17 +170,24 @@ namespace BotCatMaxy.Moderation {
         }
 
         public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) {
-            TempAct tempBan = new TempAct(user.Id, time, reason);
+            user.Id.TempBan(time, reason, context, actions, user);
+        }
+
+        public static async Task TempBan(this ulong userID, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null, IUser user = null) {
+            user ??= context.Client.GetUser(userID);
+            TempAct tempBan = new TempAct(userID, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempBans.Add(tempBan);
             actions.SaveToFile();
-            try {
-                await user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
-            } catch (Exception e) {
-                if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
+            await context.Guild.AddBanAsync(userID, reason: reason);
+            if (user != null) {
+                Logging.LogTempAct(context.Guild, context.User, user, "bann", reason, context.Message.GetJumpUrl(), time);
+                try {
+                    await user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
+                } catch (Exception e) {
+                    if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
+                }
             }
-            await context.Guild.AddBanAsync(user, reason: reason);
-            Logging.LogTempAct(context.Guild, context.User, user, "bann", reason, context.Message.GetJumpUrl(), time);
         }
 
         public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, TempActionList actions = null) {
