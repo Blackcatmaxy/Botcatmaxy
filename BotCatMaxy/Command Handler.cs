@@ -1,19 +1,19 @@
-﻿using System;
-using Discord;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Text.RegularExpressions;
+using System.Diagnostics.Contracts;
+using System.Collections.Immutable;
+using Discord.Addons.Interactive;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
+using System.Globalization;
+using System.Reflection;
 using Discord.WebSocket;
 using Discord.Commands;
-using System.Threading.Tasks;
-using System.Reflection;
-using BotCatMaxy;
-using System.Text.RegularExpressions;
-using Discord.Addons.Interactive;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
-using System.Collections.Immutable;
-using System.Globalization;
 using Discord.Rest;
+using System.Linq;
+using BotCatMaxy;
+using Discord;
+using System;
 
 namespace BotCatMaxy {
     public class CommandHandler {
@@ -40,6 +40,7 @@ namespace BotCatMaxy {
 
                 //Adds Emoji type reader
                 _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
+                _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
                 _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
 
                 // See Dependency Injection guide for more information.
@@ -53,7 +54,7 @@ namespace BotCatMaxy {
 
         private async Task HandleCommandAsync(SocketMessage messageParam) {
             // Don't process the command if it was a system message
-            var message = messageParam as SocketUserMessage;
+            SocketUserMessage message = messageParam as SocketUserMessage;
             if (message == null)
                 return;
 
@@ -91,6 +92,70 @@ namespace BotCatMaxy {
 }
 
 namespace Discord.Commands {
+    public class UserRef {
+        public readonly IGuildUser gUser;
+        public readonly IUser user;
+        public readonly ulong ID;
+
+        public UserRef(IGuildUser gUser) {
+            Contract.Requires(gUser != null);
+            this.gUser = gUser;
+            user = gUser;
+            ID = gUser.Id;
+        }
+
+        public UserRef(IUser user) {
+            Contract.Requires(user != null);
+            this.user = user;
+            ID = user.Id;
+        }
+
+        public UserRef(ulong ID) => this.ID = ID;
+    }
+
+    public class UserRefTypeReader : TypeReader {
+        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
+            var channelUsers = context.Channel.GetUsersAsync(CacheMode.CacheOnly).Flatten(); // it's better
+            IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
+            IGuildUser gUserResult = null;
+            IUser userResult = null;
+            ulong? IDResult = null;
+
+            if (context.Guild != null)
+                guildUsers = await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false);
+
+            //By Mention (1.0)
+            if (MentionUtils.TryParseUser(input, out var id)) {
+                if (context.Guild != null)
+                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
+                    if (gUserResult != null) 
+                        return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
+                else
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
+                if (userResult != null)
+                    return TypeReaderResult.FromSuccess(new UserRef(userResult));
+                else
+                    return TypeReaderResult.FromSuccess(new UserRef(id));
+            }
+
+            //By Id (0.9)
+            if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id)) {
+                if (context.Guild != null)
+                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
+                if (gUserResult != null)
+                    return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
+                else
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
+                if (userResult != null)
+                    return TypeReaderResult.FromSuccess(new UserRef(userResult));
+                else
+                    return TypeReaderResult.FromSuccess(new UserRef(id));
+            }
+
+            return TypeReaderResult.FromError(CommandError.ObjectNotFound, "User not found.");
+        }
+    }
+
     public class CanWarnAttribute : PreconditionAttribute {
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services) {
             //Makes sure it's in a server
