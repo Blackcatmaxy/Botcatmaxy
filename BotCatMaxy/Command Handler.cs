@@ -128,8 +128,8 @@ namespace Discord.Commands {
             if (MentionUtils.TryParseUser(input, out var id)) {
                 if (context.Guild != null)
                     gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
-                    if (gUserResult != null) 
-                        return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
+                if (gUserResult != null)
+                    return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
                 else
                     userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
                 if (userResult != null)
@@ -209,12 +209,16 @@ namespace Discord.Commands {
                 return PreconditionResult.FromError("This command cannot be used outside of a guild");
             var targetUser = value switch
             {
+                UserRef userRef => userRef.gUser as SocketGuildUser,
                 SocketGuildUser targetGuildUser => targetGuildUser,
                 ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
-                _ => throw new ArgumentOutOfRangeException(),
+                _ => throw new ArgumentOutOfRangeException("Unkown Type used in parameter that requires hierarchy"),
             };
-            if (targetUser == null)
-                return PreconditionResult.FromError("Target user not found");
+            if (targetUser == null) 
+                if (value is UserRef)
+                    return PreconditionResult.FromSuccess();
+                else
+                    return PreconditionResult.FromError("Target user not found");
 
             if (guildUser.Hierarchy < targetUser.Hierarchy)
                 return PreconditionResult.FromError("You cannot target anyone else whose roles are higher than yours");
