@@ -36,7 +36,7 @@ namespace BotCatMaxy {
             await ReplyAsync("This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
         }
 
-        [Command("allowwarn")]
+        [Command("allowwarn"), Alias("allowtowarn")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task AddWarnRole(SocketRole role) {
@@ -53,7 +53,7 @@ namespace BotCatMaxy {
             await ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
         }
 
-        [Command("setmaxpunishment"), Alias("setmaxpunish")]
+        [Command("setmaxpunishment"), Alias("setmaxpunish", "maxpunishmentset")]
         [RequireContext(ContextType.Guild), HasAdmin()]
         public async Task SetMaxPunishment(string length) {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
@@ -81,7 +81,7 @@ namespace BotCatMaxy {
             }
         }
 
-        [Command("setmutedrole")]
+        [Command("setmutedrole"), Alias("mutedroleset")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task SetMutedRole(SocketRole role) {
@@ -130,7 +130,7 @@ namespace BotCatMaxy {
     [Group("logs")]
     [RequireContext(ContextType.Guild)]
     public class LogSettingCommands : ModuleBase<SocketCommandContext> {
-        [Command("setchannel")]
+        [Command("setchannel"), Alias("sethere")]
         [HasAdmin]
         public async Task SetLogChannel() {
             IUserMessage message = await ReplyAsync("Setting...");
@@ -152,7 +152,7 @@ namespace BotCatMaxy {
             await message.ModifyAsync(msg => msg.Content = "Set log channel to this channel");
         }
 
-        [Command("setpubchannel")]
+        [Command("setpubchannel"), Alias("setpublog", "publogset", "setpublogchannel")]
         [HasAdmin]
         public async Task SetPubLogChannel(string setNull = null) {
             IUserMessage message = await ReplyAsync("Setting...");
@@ -175,7 +175,7 @@ namespace BotCatMaxy {
             await message.ModifyAsync(msg => msg.Content = "Set public log channel to this channel");
         }
 
-        [Command("info")]
+        [Command("info"), Alias("settings")]
         public async Task DebugLogSettings() {
             LogSettings settings = Context.Guild.LoadFromFile<LogSettings>();
 

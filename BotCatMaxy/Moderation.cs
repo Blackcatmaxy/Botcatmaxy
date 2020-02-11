@@ -36,7 +36,7 @@ namespace BotCatMaxy {
         }
 
         [Command("dmwarns", RunMode = RunMode.Async)]
-        [RequireContext(ContextType.DM)]
+        [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         [Alias("dminfractions", "dmwarnings", "warns", "infractions", "warnings")]
         public async Task DMUserWarnsAsync(IUser user = null, int amount = 50) {
             if (amount < 1) {
@@ -209,7 +209,7 @@ namespace BotCatMaxy {
         }
 
         [Command("tempbanwarn")]
-        [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn")]
+        [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn", "tbw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -241,7 +241,7 @@ namespace BotCatMaxy {
         }
 
         [Command("tempbanwarn")]
-        [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban")]
+        [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban", "tbw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -326,7 +326,7 @@ namespace BotCatMaxy {
         }
 
         [Command("tempmutewarn")]
-        [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
+        [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -363,7 +363,7 @@ namespace BotCatMaxy {
         }
 
         [Command("tempmutewarn")]
-        [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn")]
+        [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]

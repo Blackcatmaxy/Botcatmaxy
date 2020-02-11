@@ -527,7 +527,7 @@ namespace BotCatMaxy {
         }
 
         [Command("removeword")]
-        [Alias("removebadword")]
+        [Alias("removebadword", "badremove", "removebadword")]
         [HasAdmin]
         public async Task RemoveBadWord(string word) {
             BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(false);
@@ -548,7 +548,7 @@ namespace BotCatMaxy {
         }
 
         [Command("addword")]
-        [Alias("addbadword")]
+        [Alias("addbadword", "wordadd", "badwordadd")]
         [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f) {
             BadWord badWord = new BadWord {
@@ -584,7 +584,7 @@ namespace BotCatMaxy {
         public async Task RemoveAnouncementChannel() {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
             if (!settings?.anouncementChannels?.Contains(Context.Channel.Id) ?? true) {
-                await ReplyAsync("This not an 'anouncement' channel or the settings are null");
+                await ReplyAsync("This already not an 'anouncement' channel");
                 return;
             }
             settings.anouncementChannels.Remove(Context.Channel.Id);

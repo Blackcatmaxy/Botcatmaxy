@@ -19,7 +19,7 @@ using Humanizer;
 
 namespace BotCatMaxy {
     public class MiscCommands : ModuleBase<SocketCommandContext> {
-        [Command("help")]
+        [Command("help"), Alias("botinfo", "commands")]
         public async Task Help() {
             var embed = new EmbedBuilder();
             embed.AddField("To see commands", "[Click here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
@@ -77,7 +77,7 @@ namespace BotCatMaxy {
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("setslowmode"), Alias("setcooldown")]
+        [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(int time) {
             (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
