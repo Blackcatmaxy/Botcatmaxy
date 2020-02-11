@@ -3,6 +3,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 using MongoDB.Bson.Serialization;
 using System.Collections.Generic;
 using Discord.WebSocket;
+using Discord.Commands;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
 using MongoDB.Bson;
@@ -55,9 +56,12 @@ namespace BotCatMaxy.Data {
             return null;
         }
 
-        public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) {
-            return user?.Id.LoadInfractions(user.Guild, createDir);
-        }
+        public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) => 
+            user?.Id.LoadInfractions(user.Guild, createDir);
+        
+
+        public static List<Infraction> LoadInfractions(this UserRef userRef, IGuild guild, bool createDir = false) =>
+            userRef?.ID.LoadInfractions(guild, createDir);
 
         public static List<Infraction> LoadInfractions(this ulong userID, IGuild guild, bool createDir = false) {
             var collection = guild.GetInfractionsCollection(createDir);
@@ -72,9 +76,10 @@ namespace BotCatMaxy.Data {
             return infractions;
         }
 
-        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) {
+        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) => 
             user.Id.SaveInfractions(user.Guild, infractions);
-        }
+        public static void SaveInfractions(this UserRef userRef, List<Infraction> infractions, IGuild guild) =>
+            userRef.ID.SaveInfractions(guild, infractions);
 
         public static void SaveInfractions(this ulong userID, IGuild guild, List<Infraction> infractions) {
             var collection = guild.GetInfractionsCollection(true);

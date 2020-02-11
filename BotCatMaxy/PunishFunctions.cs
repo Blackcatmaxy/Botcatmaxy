@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics.Contracts;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord.Commands;
@@ -12,6 +13,15 @@ using System;
 
 namespace BotCatMaxy.Moderation {
     public static class PunishFunctions {
+        public static async Task Warn(this UserRef userRef, float size, string reason, SocketTextChannel channel, string logLink = null) {
+            Contract.Requires(userRef != null);
+            if (userRef.gUser != null)
+                await userRef.gUser.Warn(size, reason, channel, logLink);
+            else
+                await userRef.ID.Warn(size, reason, channel, userRef.user, logLink);
+
+        }
+
         public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null) {
             try {
                 if (user.CantBeWarned()) {
@@ -47,7 +57,7 @@ namespace BotCatMaxy.Moderation {
                     IUser[] users = null;
                     if (logSettings?.pubLogChannel != null && channel.Guild.TryGetChannel(logSettings.pubLogChannel.Value, out IGuildChannel logChannel))
                         users = await (logChannel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
-                    else 
+                    else
                         users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
                     if (!users.Any(xUser => xUser.Id == userID)) {
                         warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");
@@ -143,7 +153,7 @@ namespace BotCatMaxy.Moderation {
             }
         }
 
-        public static Embed GetEmbed(this List<Infraction> infractions, SocketGuildUser user = null, int amount = 5, bool showLinks = false) {
+        public static Embed GetEmbed(this List<Infraction> infractions, UserRef userRef, int amount = 5, bool showLinks = false) {
             InfractionInfo data = new InfractionInfo(infractions, amount, showLinks);
 
             //Builds infraction embed
@@ -160,12 +170,10 @@ namespace BotCatMaxy.Moderation {
             foreach (string s in data.infractionStrings) {
                 embed.AddField("------------------------------------------------------------", s);
             }
-            if (user != null) {
-                embed.WithAuthor(user)
-                .WithFooter("ID: " + user.Id)
-                .WithColor(Color.Blue)
-                .WithCurrentTimestamp();
-            }
+            if (userRef.user != null) embed.WithAuthor(userRef.user);
+            embed.WithFooter("ID: " + userRef.ID)
+            .WithColor(Color.Blue)
+            .WithCurrentTimestamp();
 
             return embed.Build();
         }

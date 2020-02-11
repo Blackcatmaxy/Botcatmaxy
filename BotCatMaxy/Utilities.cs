@@ -1,23 +1,19 @@
-﻿using System;
+﻿using System.Diagnostics.Contracts;
 using System.Collections.Generic;
-using System.Text;
-using Discord;
-using Discord.WebSocket;
-using BotCatMaxy.Data;
-using System.Linq;
 using System.Threading.Tasks;
-using Discord.Rest;
-using System.IO;
-using MongoDB.Bson;
-using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
-using MongoDB.Driver;
 using System.Collections;
-using Serilog;
+using Discord.WebSocket;
+using Discord.Commands;
+using BotCatMaxy.Data;
+using MongoDB.Driver;
+using Discord.Rest;
+using MongoDB.Bson;
+using System.Linq;
+using System.Text;
 using Humanizer;
-using System.Reflection;
-using System.Globalization;
-using System.Diagnostics.Contracts;
+using Serilog;
+using Discord;
+using System;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -304,6 +300,28 @@ namespace BotCatMaxy {
             Contract.Requires(guild != null);
             channel = guild.GetChannelAsync(id).GetAwaiter().GetResult();
             return channel != null;
+        }
+
+        public static string Name(this UserRef userRef, bool showIDWithUser = false, bool showRealName = false) {
+            if (userRef == null) return "``ERROR``";
+            string name = null;
+            if (userRef.gUser != null) {
+                name = userRef.gUser.Nickname.StrippedOfPing();
+                if (showRealName) //done since people with nicknames might have an innapropriate name under the nickname
+                    name += $" aka {userRef.gUser.Username.StrippedOfPing()}";
+            }
+            if (userRef.user != null) name = userRef.user.Username.StrippedOfPing();
+            if (name != null) {
+                if (showIDWithUser) name += $" ({userRef.ID})";
+                return name;
+            }
+            return $"User with ID:{userRef.ID}";
+        }
+
+        public static string Mention(this UserRef userRef) {
+            if (userRef == null) return "``ERROR``";
+            if (userRef.user != null) return userRef.user.Mention;
+            return $"User with ID:{userRef.ID}";
         }
     }
 }

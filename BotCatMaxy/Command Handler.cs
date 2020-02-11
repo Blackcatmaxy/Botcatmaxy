@@ -93,32 +93,37 @@ namespace BotCatMaxy {
 
 namespace Discord.Commands {
     public class UserRef {
-        public readonly IGuildUser gUser;
-        public readonly IUser user;
+        public readonly SocketGuildUser gUser;
+        public readonly SocketUser user;
         public readonly ulong ID;
 
-        public UserRef(IGuildUser gUser) {
+        public UserRef(SocketGuildUser gUser) {
             Contract.Requires(gUser != null);
             this.gUser = gUser;
             user = gUser;
             ID = gUser.Id;
         }
 
-        public UserRef(IUser user) {
+        public UserRef(SocketUser user) {
             Contract.Requires(user != null);
             this.user = user;
             ID = user.Id;
         }
 
         public UserRef(ulong ID) => this.ID = ID;
+
+        public UserRef(UserRef userRef, SocketGuild guild) {
+            user = userRef.user;
+            ID = userRef.ID;
+            gUser = guild.GetUser(ID);
+        }
     }
 
     public class UserRefTypeReader : TypeReader {
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
-            var channelUsers = context.Channel.GetUsersAsync(CacheMode.CacheOnly).Flatten(); // it's better
             IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
-            IGuildUser gUserResult = null;
-            IUser userResult = null;
+            SocketGuildUser gUserResult = null;
+            SocketUser userResult = null;
             ulong? IDResult = null;
 
             if (context.Guild != null)
@@ -127,11 +132,11 @@ namespace Discord.Commands {
             //By Mention (1.0)
             if (MentionUtils.TryParseUser(input, out var id)) {
                 if (context.Guild != null)
-                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
+                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
                 if (gUserResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
                 else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser;
                 if (userResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(userResult));
                 else
@@ -141,11 +146,11 @@ namespace Discord.Commands {
             //By Id (0.9)
             if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id)) {
                 if (context.Guild != null)
-                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
+                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
                 if (gUserResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
                 else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser; 
                 if (userResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(userResult));
                 else

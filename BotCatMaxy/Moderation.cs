@@ -18,51 +18,39 @@ namespace BotCatMaxy {
         [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnUserAsync([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified") {
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
-            await user.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
+        public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified") {
+            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
+            await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
 
-            Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {userRef.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
         [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [CanWarn()]
-        public async Task WarnWithSizeUserAsync([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified") {
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl());
-            await user.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
+        public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason = "Unspecified") {
+            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
+            await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
 
-            Context.Message.DeleteOrRespond($"{user.Mention} has gotten their {user.LoadInfractions().Count.Suffix()} infraction for {reason}", Context.Guild);
+            Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {userRef.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
         }
 
         [Command("dmwarns", RunMode = RunMode.Async)]
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         [Alias("dminfractions", "dmwarnings", "warns", "infractions", "warnings")]
-        public async Task DMUserWarnsAsync(IUser user = null, int amount = 50) {
+        public async Task DMUserWarnsAsync(UserRef userRef = null, int amount = 50) {
             if (amount < 1) {
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
             }
             var mutualGuilds = Context.Message.Author.MutualGuilds.ToArray();
-            if (user == null) {
-                user = Context.Message.Author;
-            } else {
-                SocketUser sUser = user as SocketUser ?? Context.Client.GetUser(user.Id);
-                if (sUser == null) {
-                    await ReplyAsync("User exists but isn't cached and won't work with this command");
-                    return;
-                }
-                mutualGuilds = sUser.MutualGuilds.Intersect(mutualGuilds).ToArray();
-                if (mutualGuilds.Length == 0) {
-                    await ReplyAsync("You do not share any guilds that I moderate with that user");
-                    return;
-                }
-            }
-            
+            if (userRef == null)
+                userRef = new UserRef(Context.Message.Author);
+
             var guildsEmbed = new EmbedBuilder();
             guildsEmbed.WithTitle("Reply with the the number next to the guild you want to check the infractions from");
-            
-            for (int i = 0; i < mutualGuilds.Length; i++) { 
+
+            for (int i = 0; i < mutualGuilds.Length; i++) {
                 guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
             }
             await ReplyAsync(embed: guildsEmbed.Build());
@@ -80,46 +68,45 @@ namespace BotCatMaxy {
                     await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
                 }
             }
-            SocketGuildUser gUser = guild.GetUser(user.Id);
-            string username;
-            if (!gUser.Nickname.IsNullOrEmpty()) username = gUser.Nickname.StrippedOfPing();
-            else username = user.Username.StrippedOfPing();
 
-            List<Infraction> infractions = gUser.LoadInfractions(false);
-            if (!infractions.IsNullOrEmpty()) {
-                await ReplyAsync($"Here are {username}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
-                embed: infractions.GetEmbed(gUser, amount: amount));
-            } else {
-                await ReplyAsync($"{gUser.NickOrUsername()} has no infractions");
+            List<Infraction> infractions = userRef.LoadInfractions(guild, false);
+            if (infractions.IsNullOrEmpty()) {
+                string message = $"{userRef.Mention()} has no infractions";
+                if (userRef.user == null) message += " or doesn't exist";
+                await ReplyAsync(message);
                 return;
             }
+            userRef = new UserRef(userRef, guild);
+            await ReplyAsync($"Here are {userRef.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
+                embed: infractions.GetEmbed(userRef, amount: amount));
         }
+
 
         [Command("warns")]
         [RequireContext(ContextType.Guild)]
         [Alias("infractions", "warnings")]
-        public async Task CheckUserWarnsAsync(SocketGuildUser user = null, int amount = 5) {
-            if (user == null) {
-                user = Context.Message.Author as SocketGuildUser;
-            }
+        public async Task CheckUserWarnsAsync(UserRef userRef = null, int amount = 5) {
             if (!(Context.Message.Author as SocketGuildUser).CanWarn()) {
                 await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead");
                 return;
             }
-
-            List<Infraction> infractions = user.LoadInfractions(false);
+            List<Infraction> infractions = null;
+            if (userRef == null)
+                (Context.Message.Author as SocketGuildUser).LoadInfractions(false);
+            else
+                userRef.LoadInfractions(Context.Guild, false);
             if (infractions.IsNullOrEmpty()) {
-                await ReplyAsync($"{user.NickOrUsername().StrippedOfPing()} has no infractions");
+                await ReplyAsync($"{userRef.Name()} has no infractions");
                 return;
             }
-            await ReplyAsync(embed: infractions.GetEmbed(user, amount: amount, showLinks: true));
+            await ReplyAsync(embed: infractions.GetEmbed(userRef, amount: amount, showLinks: true));
         }
 
         [Command("removewarn")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task RemoveWarnAsync([RequireHierarchy] SocketGuildUser user, int index) {
-            List<Infraction> infractions = user.LoadInfractions();
+        public async Task RemoveWarnAsync([RequireHierarchy] UserRef userRef, int index) {
+            List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
             if (infractions.IsNullOrEmpty()) {
                 await ReplyAsync("Infractions are null");
                 return;
@@ -131,9 +118,9 @@ namespace BotCatMaxy {
             string reason = infractions[index - 1].reason;
             infractions.RemoveAt(index - 1);
 
-            user.SaveInfractions(infractions);
-            user.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
-            await ReplyAsync("Removed " + user.Mention + "'s warning for " + reason);
+            userRef.SaveInfractions(infractions, Context.Guild);
+            userRef?.user.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
+            await ReplyAsync("Removed " + userRef.Mention() + "'s warning for " + reason);
         }
 
         [Command("kickwarn")]
