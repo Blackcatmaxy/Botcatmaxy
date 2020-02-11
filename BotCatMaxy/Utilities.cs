@@ -299,5 +299,11 @@ namespace BotCatMaxy {
             Contract.Requires(message != null);
             return DateTime.Now - message.Timestamp;
         }
+
+        public static bool TryGetChannel(this IGuild guild, ulong id, out IGuildChannel channel) {
+            Contract.Requires(guild != null);
+            channel = guild.GetChannelAsync(id).GetAwaiter().GetResult();
+            return channel != null;
+        }
     }
 }

@@ -43,7 +43,12 @@ namespace BotCatMaxy.Moderation {
 
             try {
                 if (warnee != null) {
-                    IUser[] users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
+                    LogSettings logSettings = channel.Guild.LoadFromFile<LogSettings>(false);
+                    IUser[] users = null;
+                    if (logSettings?.pubLogChannel != null && channel.Guild.TryGetChannel(logSettings.pubLogChannel.Value, out IGuildChannel logChannel))
+                        users = await (logChannel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
+                    else 
+                        users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArray();
                     if (!users.Any(xUser => xUser.Id == userID)) {
                         warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");
                     }
