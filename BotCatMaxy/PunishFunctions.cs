@@ -178,13 +178,8 @@ namespace BotCatMaxy.Moderation {
             return embed.Build();
         }
 
-        public struct EmbedResult {
-            public Embed embed;
-        }
-
-        public static async Task TempBan(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) {
-            user.Id.TempBan(time, reason, context, actions, user);
-        }
+        public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) =>
+            userRef.ID.TempBan(time, reason, context, actions, userRef.user);
 
         public static async Task TempBan(this ulong userID, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null, IUser user = null) {
             user ??= context.Client.GetUser(userID);
@@ -203,18 +198,20 @@ namespace BotCatMaxy.Moderation {
             }
         }
 
-        public static async Task TempMute(this SocketGuildUser user, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, TempActionList actions = null) {
-            TempAct tempMute = new TempAct(user.Id, time, reason);
+        public static async Task TempMute(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, TempActionList actions = null) {
+            TempAct tempMute = new TempAct(userRef.ID, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile();
-            try {
-                await user.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
-            } catch (Exception e) {
-                if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
+            await userRef.gUser?.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
+            if (userRef.user != null) {
+                Logging.LogTempAct(context.Guild, context.User, userRef.user, "mut", reason, context.Message.GetJumpUrl(), time);
+                try {
+                    await userRef.user?.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
+                } catch (Exception e) {
+                    if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
+                }
             }
-            await user.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
-            Logging.LogTempAct(context.Guild, context.User, user, "mut", reason, context.Message.GetJumpUrl(), time);
         }
 
         public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null, string article = "from") {
