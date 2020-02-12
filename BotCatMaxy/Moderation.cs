@@ -94,7 +94,7 @@ namespace BotCatMaxy {
             if (userRef == null)
                 (Context.Message.Author as SocketGuildUser).LoadInfractions(false);
             else
-                userRef.LoadInfractions(Context.Guild, false);
+                infractions = userRef.LoadInfractions(Context.Guild, false);
             if (infractions.IsNullOrEmpty()) {
                 await ReplyAsync($"{userRef.Name()} has no infractions");
                 return;
