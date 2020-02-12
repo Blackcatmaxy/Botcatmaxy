@@ -170,7 +170,7 @@ namespace BotCatMaxy.Moderation {
             foreach (string s in data.infractionStrings) {
                 embed.AddField("------------------------------------------------------------", s);
             }
-            if (userRef.user != null) embed.WithAuthor(userRef.user);
+            embed.WithAuthor(userRef);
             embed.WithFooter("ID: " + userRef.ID)
             .WithColor(Color.Blue)
             .WithCurrentTimestamp();

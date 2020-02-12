@@ -323,5 +323,12 @@ namespace BotCatMaxy {
             if (userRef.user != null) return userRef.user.Mention;
             return $"User with ID:{userRef.ID}";
         }
+
+        public static EmbedBuilder WithAuthor(this EmbedBuilder embed, UserRef userRef) {
+            Contract.Requires(embed != null);
+            if (userRef.user != null) embed.WithAuthor(userRef.user);
+            else embed.WithAuthor($"Unkown user with ID:{userRef.ID}");
+            return embed;
+        }
     }
 }
