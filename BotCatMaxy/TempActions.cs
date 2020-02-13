@@ -50,7 +50,7 @@ namespace BotCatMaxy {
                             List<TempAct> editedBans = new List<TempAct>(actions.tempBans);
                             foreach (TempAct tempBan in actions.tempBans) {
                                 try {
-                                    RestBan ban = await restGuild.GetBanAsync(tempBan.user, requestOptions);
+                                    RestBan ban = (await sockGuild.GetBansAsync(requestOptions)).FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
                                     if (ban == null) { //If manual unban
                                         var user = client.Rest.GetUserAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
