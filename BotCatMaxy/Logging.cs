@@ -129,7 +129,7 @@ namespace BotCatMaxy {
                     }
                 }
 
-                embed.WithFooter("ID: " + message.Id)
+                embed.WithFooter($"Message ID:{message.Id} • User ID:{message.Author.Id}")
                     .WithAuthor(message.Author)
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp();
