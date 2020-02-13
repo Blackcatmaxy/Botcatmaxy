@@ -225,7 +225,7 @@ namespace Discord.Commands {
                 else
                     return PreconditionResult.FromError("Target user not found");
 
-            if (guildUser.Hierarchy < targetUser.Hierarchy)
+            if (guildUser.Hierarchy <= targetUser.Hierarchy)
                 return PreconditionResult.FromError("You cannot target anyone else whose roles are higher than yours");
 
             var currentUser = await context.Guild.GetCurrentUserAsync().ConfigureAwait(false) as SocketGuildUser;
