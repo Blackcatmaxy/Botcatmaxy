@@ -194,6 +194,11 @@ namespace BotCatMaxy {
 
             embed.AddField("Log channel", logChannel.Mention, true);
             embed.AddField("Log deleted messages", settings.logDeletes, true);
+            if (settings.pubLogChannel != null) {
+                var pubLogChannel = Context.Guild.GetTextChannel(settings.pubLogChannel.Value);
+                if (pubLogChannel == null) embed.AddField("Public Log Channel", "Improper value set", true);
+                else embed.AddField("Public Log Channel", pubLogChannel.Mention, true);
+            }
             await ReplyAsync(embed: embed.Build());
         }
 
