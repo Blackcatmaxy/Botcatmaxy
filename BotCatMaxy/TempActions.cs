@@ -47,11 +47,12 @@ namespace BotCatMaxy {
                     checkedGuilds++;
                     if (actions != null) {
                         if (!actions.tempBans.IsNullOrEmpty()) {
+                            var bans = await sockGuild.GetBansAsync(requestOptions);
                             List<TempAct> editedBans = new List<TempAct>(actions.tempBans);
                             foreach (TempAct tempBan in actions.tempBans) {
                                 try {
-                                    RestBan ban = (await sockGuild.GetBansAsync(requestOptions)).FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
-                                    if (ban == null) { //If manual unban
+                                    RestBan ban = bans.FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
+                                    if (ban == null && bans != null) { //If manual unban
                                         var user = client.Rest.GetUserAsync(tempBan.user);
                                         editedBans.Remove(tempBan);
                                         _ = client.Rest.GetUserAsync(tempBan.user)?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");

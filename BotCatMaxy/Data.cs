@@ -151,6 +151,13 @@ namespace BotCatMaxy.Data {
             dateBanned = DateTime.Now;
             this.length = length;
         }
+        public TempAct(UserRef userRef, TimeSpan length, string reason) {
+            user = userRef.ID;
+            this.reason = reason;
+            dateBanned = DateTime.Now;
+            this.length = length;
+        }
+
         public string reason;
         public ulong user;
         public TimeSpan length;

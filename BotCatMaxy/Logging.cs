@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using BotCatMaxy.Data;
+using Discord.Commands;
 using Discord.Rest;
 using System.Text;
 using BotCatMaxy;
@@ -170,7 +171,7 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static void LogTempAct(IGuild guild, IUser warner, IUser warnee, string actType, string reason, string warnLink, TimeSpan length) {
+        public static void LogTempAct(IGuild guild, IUser warner, UserRef subject, string actType, string reason, string warnLink, TimeSpan length) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
@@ -178,10 +179,10 @@ namespace BotCatMaxy {
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
-                if (!(warnee is SocketGroupUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
-                else
-                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
+                if (length != TimeSpan.Zero) //if not for forever
+                    embed.AddField($"{subject.Name(true, true)} has been perm {actType}ed", $"Because of {reason}");
+                else 
+                    embed.AddField($"{subject.Name(true, true)} has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
                 if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Red);
                 embed.WithCurrentTimestamp();

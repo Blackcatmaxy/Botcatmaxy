@@ -386,21 +386,28 @@ namespace BotCatMaxy {
             Context.Message.DeleteOrRespond($"Temporarily muted {userRef.Mention()} for {amount.Value.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
-        [Command("ban")]
+        [Command("ban", RunMode = RunMode.Async)]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified") {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.user == userRef.ID) ?? false) {
+                var query = await ReplyAsync("User is already tempbanned. Reply with !confirm if you want to override?");
+                var reply = await NextMessageAsync(timeout: TimeSpan.FromMinutes(5));
+                if (reply?.Content?.ToLower() != "!confirm") {
+                    Context.Channel.DeleteMessageAsync(query);
+                    ReplyAsync("Command Canceled");
+                }
                 actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.user == userRef.ID));
             } else if (Context.Guild.GetBansAsync().Result.Any(ban => ban.User.Id == userRef.ID)) {
                 await ReplyAsync("User has already been banned permanently");
                 return;
             }
-            userRef.user?.TryNotify($"You have been banned in the {Context.Guild.Name} discord for {reason}");
+            userRef.user?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID);
             Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
+            Logging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
         }
     }
 }

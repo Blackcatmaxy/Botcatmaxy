@@ -178,20 +178,16 @@ namespace BotCatMaxy.Moderation {
             return embed.Build();
         }
 
-        public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) =>
-            userRef.ID.TempBan(time, reason, context, actions, userRef.user);
-
-        public static async Task TempBan(this ulong userID, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null, IUser user = null) {
-            user ??= context.Client.GetUser(userID);
-            TempAct tempBan = new TempAct(userID, time, reason);
+        public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null) {
+            TempAct tempBan = new TempAct(userRef, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempBans.Add(tempBan);
             actions.SaveToFile();
-            await context.Guild.AddBanAsync(userID, reason: reason);
-            if (user != null) {
-                Logging.LogTempAct(context.Guild, context.User, user, "bann", reason, context.Message.GetJumpUrl(), time);
+            await context.Guild.AddBanAsync(userRef.ID, reason: reason);
+            Logging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
+            if (userRef.user != null) {
                 try {
-                    await user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
+                    await userRef.user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
                 } catch (Exception e) {
                     if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
                 }
@@ -204,8 +200,8 @@ namespace BotCatMaxy.Moderation {
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile();
             await userRef.gUser?.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
+            Logging.LogTempAct(context.Guild, context.User, userRef, "mut", reason, context.Message.GetJumpUrl(), time);
             if (userRef.user != null) {
-                Logging.LogTempAct(context.Guild, context.User, userRef.user, "mut", reason, context.Message.GetJumpUrl(), time);
                 try {
                     await userRef.user?.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
                 } catch (Exception e) {
