@@ -179,7 +179,7 @@ namespace BotCatMaxy {
 
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
-                if (length != TimeSpan.Zero) //if not for forever
+                if (length == TimeSpan.Zero) //if not for forever
                     embed.AddField($"{subject.Name(true, true)} has been perm {actType}ed", $"Because of {reason}");
                 else 
                     embed.AddField($"{subject.Name(true, true)} has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
