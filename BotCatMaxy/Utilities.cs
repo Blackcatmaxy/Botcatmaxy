@@ -305,12 +305,12 @@ namespace BotCatMaxy {
         public static string Name(this UserRef userRef, bool showIDWithUser = false, bool showRealName = false) {
             if (userRef == null) return "``ERROR``";
             string name = null;
-            if (userRef.gUser != null) {
+            if (userRef.gUser?.Nickname != null) {
                 name = userRef.gUser.Nickname.StrippedOfPing();
                 if (showRealName) //done since people with nicknames might have an innapropriate name under the nickname
                     name += $" aka {userRef.gUser.Username.StrippedOfPing()}";
             }
-            if (userRef.user != null) name = userRef.user.Username.StrippedOfPing();
+            if (name == null && userRef.user != null) name = userRef.user.Username.StrippedOfPing();
             if (name != null) {
                 if (showIDWithUser) name += $" ({userRef.ID})";
                 return name;

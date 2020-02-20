@@ -38,6 +38,10 @@ namespace BotCatMaxy {
                 // Hook the MessageReceived event into our command handler
                 _client.MessageReceived += HandleCommandAsync;
 
+                //Post Execution handling
+                _commands.Log += Utilities.Log;
+                _commands.CommandExecuted += CommandExecuted;
+
                 //Adds Emoji type reader
                 _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
                 _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
@@ -81,11 +85,12 @@ namespace BotCatMaxy {
                 context: context,
                 argPos: argPos,
                 services: services);
+        }
 
-            //may clog up the request queue should a user spam a command.
+        private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result) {
             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                if (ignoredCMDErrors.Contains(result.ErrorReason)) await new LogMessage(LogSeverity.Warning, "CMDs", result.ErrorReason).Log();
+                if (!(ignoredCMDErrors.Contains(result.ErrorReason))) await new LogMessage(LogSeverity.Warning, "CMDs", $"Command {command.Value?.Name} encountered {result.ErrorReason}").Log();
             }
         }
     }

@@ -90,11 +90,8 @@ namespace BotCatMaxy {
                 await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead");
                 return;
             }
-            List<Infraction> infractions = null;
-            if (userRef == null)
-                (Context.Message.Author as SocketGuildUser).LoadInfractions(false);
-            else
-                infractions = userRef.LoadInfractions(Context.Guild, false);
+            userRef ??= new UserRef(Context.User as SocketGuildUser);
+            List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
             if (infractions.IsNullOrEmpty()) {
                 await ReplyAsync($"{userRef.Name()} has no infractions");
                 return;

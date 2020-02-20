@@ -35,7 +35,8 @@ namespace BotCatMaxy {
                 AlwaysDownloadUsers = true,
                 ConnectionTimeout = 6000,
                 MessageCacheSize = 120,
-                ExclusiveBulkDelete = false
+                ExclusiveBulkDelete = false,
+                DefaultRetryMode = RetryMode.AlwaysRetry
             };
 
             //Maps all the classes
@@ -91,7 +92,12 @@ namespace BotCatMaxy {
                 await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
             }
 
-            CommandService service = new CommandService();
+            var serviceConfig = new CommandServiceConfig {
+                DefaultRunMode = RunMode.Async,
+                IgnoreExtraArgs = true
+            };
+
+            CommandService service = new CommandService(serviceConfig);
             CommandHandler handler = new CommandHandler(_client, service);
 
             Logging logger = new Logging(_client);
