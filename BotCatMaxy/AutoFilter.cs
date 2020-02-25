@@ -434,7 +434,7 @@ namespace BotCatMaxy {
                         badWord.partOfWord = true;
                         await ReplyAsync("Set badword to be filtered even if it's inside of another word");
                     }
-                    BadWordList badWordList = new BadWordList { badWords = badWords.all };
+                    BadWordList badWordList = new BadWordList { badWords = badWords.all, guild = Context.Guild };
                     badWordList.SaveToFile();
                     return;
                 }
