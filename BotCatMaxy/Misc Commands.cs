@@ -42,8 +42,8 @@ namespace BotCatMaxy {
 
         [RequireOwner()]
         [Command("bottest")]
-        public async Task TestCommand([RequireHierarchy] SocketGuildUser other) {
-            await ReplyAsync("Command success");
+        public async Task TestCommand() {
+            throw new NullReferenceException("Pizza is missing");
         }
 
         [RequireOwner]

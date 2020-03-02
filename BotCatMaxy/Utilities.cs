@@ -109,14 +109,21 @@ namespace BotCatMaxy {
 
         public static async Task Log(this LogMessage message) {
             string finalMessage = message.Source.PadRight(8) + message.Message;
+            if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
+                Console.Beep();
+                var errorEmbed = new EmbedBuilder()
+                    .WithAuthor(BotInfo.user)
+                    .WithTitle(message.Source)
+                    .AddField(message.Severity.ToString(), message.Message.ToString())
+                    .WithCurrentTimestamp();
+                await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
+            }
             switch (message.Severity) {
                 case LogSeverity.Critical:
-                    Console.Beep();
                     if (message.Exception != null) logger.Fatal(message.Exception, finalMessage);
                     else logger.Fatal(finalMessage);
                     break;
                 case LogSeverity.Error:
-                    Console.Beep();
                     if (message.Exception != null) logger.Error(message.Exception, finalMessage);
                     else logger.Error(finalMessage);
                     break;

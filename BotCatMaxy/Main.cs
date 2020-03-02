@@ -27,10 +27,10 @@ namespace BotCatMaxy {
 #endif
                 .CreateLogger();
 #if DEBUG
+            BotInfo.debug = true;
             Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
             dbClient = new MongoClient(HiddenInfo.debugDB);
 #endif
-
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
                 ConnectionTimeout = 6000,
@@ -60,6 +60,7 @@ namespace BotCatMaxy {
             if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary") {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
                 dbClient = new MongoClient(HiddenInfo.debugDB);
+                BotInfo.debug = true;
             } else {
 #if DEBUG
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
@@ -112,7 +113,20 @@ namespace BotCatMaxy {
 
         private static async Task Ready() {
             _client.Ready -= Ready;
+            BotInfo.user = _client.CurrentUser;
+            SocketGuild guild = _client.GetGuild(285529027383525376);
+            if (BotInfo.debug) {
+                BotInfo.logChannel = guild.GetTextChannel(593126666356785177);
+            } else {
+                BotInfo.logChannel = guild.GetTextChannel(572542024453062659);
+            }
             await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
         }
+    }
+
+    public static class BotInfo {
+        public static SocketTextChannel logChannel;
+        public static bool debug = false;
+        public static ISelfUser user;
     }
 }
