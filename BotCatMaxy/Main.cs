@@ -115,11 +115,8 @@ namespace BotCatMaxy {
             _client.Ready -= Ready;
             BotInfo.user = _client.CurrentUser;
             SocketGuild guild = _client.GetGuild(285529027383525376);
-            if (BotInfo.debug) {
-                BotInfo.logChannel = guild.GetTextChannel(593126666356785177);
-            } else {
-                BotInfo.logChannel = guild.GetTextChannel(572542024453062659);
-            }
+            BotInfo.logChannel = guild.GetTextChannel(593126666356785177);
+
             await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
         }
     }

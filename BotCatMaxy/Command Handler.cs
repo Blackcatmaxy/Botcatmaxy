@@ -81,7 +81,7 @@ namespace BotCatMaxy {
 
             // Keep in mind that result does not indicate a return value
             // rather an object stating if the command executed successfully.
-            var result = await _commands.ExecuteAsync(
+            await _commands.ExecuteAsync(
                 context: context,
                 argPos: argPos,
                 services: services);
@@ -90,7 +90,7 @@ namespace BotCatMaxy {
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result) {
             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                if (!(ignoredCMDErrors.Contains(result.ErrorReason))) await new LogMessage(LogSeverity.Warning, "CMDs", $"Command {command.Value?.Name} encountered {result.ErrorReason}").Log();
+                if (!(ignoredCMDErrors.Contains(result.ErrorReason))) await new LogMessage(LogSeverity.Error, "CMDs", $"Command {command.Value?.Name} encountered {result.ErrorReason}").Log();
             }
         }
     }
@@ -155,7 +155,7 @@ namespace Discord.Commands {
                 if (gUserResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
                 else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser; 
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser;
                 if (userResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(userResult));
                 else
@@ -224,7 +224,7 @@ namespace Discord.Commands {
                 ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
                 _ => throw new ArgumentOutOfRangeException("Unkown Type used in parameter that requires hierarchy"),
             };
-            if (targetUser == null) 
+            if (targetUser == null)
                 if (value is UserRef)
                     return PreconditionResult.FromSuccess();
                 else

@@ -26,7 +26,7 @@ namespace BotCatMaxy {
             embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
             await ReplyAsync(embed: embed.Build());
         }
-        
+
         [Command("checkperms")]
         [RequireUserPermission(GuildPermission.BanMembers, Group = "Permission")]
         [RequireOwner(Group = "Permission")]
@@ -43,7 +43,12 @@ namespace BotCatMaxy {
         [RequireOwner()]
         [Command("bottest")]
         public async Task TestCommand() {
-            throw new NullReferenceException("Pizza is missing");
+            ErrorTest();
+        }
+
+        public void ErrorTest()
+        {
+            throw new InvalidOperationException();
         }
 
         [RequireOwner]
