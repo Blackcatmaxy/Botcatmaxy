@@ -61,6 +61,8 @@ namespace BotCatMaxy {
             ulong infractions24Hours = 0;
             ulong totalInfractons = 0;
             ulong members = 0;
+            uint tempBannedPeople = 0;
+            uint tempMutedPeople = 0;
             foreach (SocketGuild guild in Context.Client.Guilds) {
                 members += (ulong)guild.MemberCount;
                 var collection = guild.GetInfractionsCollection(false);
@@ -75,9 +77,14 @@ namespace BotCatMaxy {
                         }
                     }
                 }
+
+                TempActionList tempActionList = guild.LoadFromFile<TempActionList>(false);
+                tempBannedPeople += (uint)(tempActionList?.tempBans?.Count ?? 0);
+                tempMutedPeople += (uint)(tempActionList?.tempMutes?.Count ?? 0);
             }
             embed.AddField("Totals", $"{members} users || {totalInfractons} total infractions", true);
             embed.AddField("In the last 24 hours", $"{infractions24Hours} infractions given", true);
+            embed.AddField("Temp Actions", $"{tempMutedPeople} tempmuted, {tempBannedPeople} tempbanned", true);
             embed.AddField("Uptime", (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).LimitedHumanize());
             await ReplyAsync(embed: embed.Build());
         }
