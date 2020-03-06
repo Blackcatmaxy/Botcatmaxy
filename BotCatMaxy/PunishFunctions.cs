@@ -82,8 +82,9 @@ namespace BotCatMaxy.Moderation {
             try {
                 Logging.AddToDeletedCache(context.Message.Id);
                 await context.Message.DeleteAsync();
-            } catch {
-                _ = warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
+            } catch (Exception e) {
+                new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e);
+                await warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
             }
         }
 

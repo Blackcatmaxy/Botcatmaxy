@@ -90,7 +90,16 @@ namespace BotCatMaxy {
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result) {
             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                if (!(ignoredCMDErrors.Contains(result.ErrorReason))) await new LogMessage(LogSeverity.Error, "CMDs", $"Command {command.Value?.Name} encountered {result.ErrorReason}").Log();
+                if (!(ignoredCMDErrors.Contains(result.ErrorReason))) {
+                    string message = $"Command !{command.Value?.Name} in";
+                    if (context.Guild != null) {
+                        message += $" {context.Guild?.Name} guild";
+                    } else {
+                        message += $" {context.User.Username}'s ({context.User.Id}) DMs";
+                    }
+                    message += $" used as \"{context.Message}\" encountered: \"{result.ErrorReason}\"";
+                    await new LogMessage(LogSeverity.Error, "CMDs", message).Log();
+                }
             }
         }
     }

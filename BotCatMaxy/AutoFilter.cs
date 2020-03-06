@@ -19,23 +19,26 @@ namespace BotCatMaxy {
         public Filter(DiscordSocketClient client) {
             this.client = client;
             client.MessageReceived += CheckMessage;
-            client.MessageUpdated += CheckEdit;
+            client.MessageUpdated += HandleEdit;
             client.ReactionAdded += HandleReaction;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
-        public async Task CheckEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
-            => Task.Run(() => CheckMessage(editedMessage));
+        public async Task HandleEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
+            => await Task.Run(() => CheckMessage(editedMessage)).ConfigureAwait(false);
 
         public async Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
-            => Task.Run(() => CheckReaction(cachedMessage, channel, reaction));
+            => await Task.Run(() => CheckReaction(cachedMessage, channel, reaction)).ConfigureAwait(false);
+
+        public async Task HandleMessage(SocketMessage message)
+            => await Task.Run(() => CheckMessage(message)).ConfigureAwait(false);
 
         public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) {
             try {
                 if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is SocketGuildChannel)) {
                     return; //Makes sure it's not logging a message from a bot and that it's in a discord server
                 }
-                var message = cachedMessage.GetOrDownloadAsync().Result;
+                IUserMessage message = await cachedMessage.GetOrDownloadAsync();
                 SocketGuildChannel chnl = channel as SocketGuildChannel;
                 SocketGuild guild = chnl?.Guild;
                 if (guild == null) return;
@@ -83,7 +86,7 @@ namespace BotCatMaxy {
 
                     //Checks for links
                     if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any())) {
-                        const string linkRegex = @"^((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
+                        const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
                         MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
                         //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                         foreach (Match match in matches) {
@@ -248,7 +251,7 @@ namespace BotCatMaxy {
                             }
                             if (first.euphemism.NotEmpty()) word += $"{first.euphemism} ";
                             word += $"({group.Select(badWord => $"{badWord.word}{(badWord.partOfWord ? "¤" : "")}").ToArray().ListItems(", ")})";
-                        } else if (!first.euphemism.IsNullOrEmpty()) 
+                        } else if (!first.euphemism.IsNullOrEmpty())
                             word = first.euphemism;
                         if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() && !useExplicit)) {
                             word += "¤";
