@@ -41,7 +41,8 @@ namespace BotCatMaxy {
                 //Just makes sure that it's not logged when it shouldn't be
                 if (!(channel is SocketGuildChannel)) return;
                 SocketGuild guild = (channel as SocketGuildChannel).Guild;
-                IMessage oldMessage = cachedMessage.GetOrDownloadAsync().Result;
+                IMessage oldMessage = await cachedMessage.GetOrDownloadAsync();
+                if (oldMessage == null || newMessage == null) throw new NullReferenceException("Message is null");
                 if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || !settings.logEdits) return;
@@ -73,7 +74,7 @@ namespace BotCatMaxy {
 
                 logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
             } catch (Exception exception) {
-                _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
+                await new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
             }
         }
 
@@ -181,7 +182,7 @@ namespace BotCatMaxy {
                 embed.WithAuthor(warner);
                 if (length == TimeSpan.Zero) //if not for forever
                     embed.AddField($"{subject.Name(true, true)} has been perm {actType}ed", $"Because of {reason}");
-                else 
+                else
                     embed.AddField($"{subject.Name(true, true)} has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
                 if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Red);
