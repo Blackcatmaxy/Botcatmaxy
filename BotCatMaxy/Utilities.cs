@@ -337,5 +337,17 @@ namespace BotCatMaxy {
             else embed.WithAuthor($"Unkown user with ID:{userRef.ID}");
             return embed;
         }
+
+        public static void RecordAct(this ulong userID, IGuild guild, TempAct tempAct, string type, string loglink = null) {
+            var acts = userID.LoadActRecord(guild, true);
+            acts.Add(new ActRecord() {
+                type = type,
+                length = tempAct.length,
+                logLink = loglink,
+                reason = tempAct.reason,
+                time = tempAct.dateBanned
+            });
+            userID.SaveActRecord(guild, acts);
+        }
     }
 }

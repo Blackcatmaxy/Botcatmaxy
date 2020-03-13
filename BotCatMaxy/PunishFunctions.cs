@@ -193,6 +193,7 @@ namespace BotCatMaxy.Moderation {
                     if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
                 }
             }
+            userRef.ID.RecordAct(context.Guild, tempBan, "tempban", context.Message.GetJumpUrl());
         }
 
         public static async Task TempMute(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, TempActionList actions = null) {
@@ -209,6 +210,7 @@ namespace BotCatMaxy.Moderation {
                     if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
                 }
             }
+            userRef.ID.RecordAct(context.Guild, tempMute, "tempmute", context.Message.GetJumpUrl());
         }
 
         public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null, string article = "from") {

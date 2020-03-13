@@ -19,7 +19,7 @@ namespace BotCatMaxy.Data {
                 throw new ArgumentNullException(nameof(guild));
             var file = default(T);
             var collection = guild.GetCollection(createFile);
-            
+
             if (collection != null) {
                 var filter = Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name);
                 using (var cursor = collection.Find(filter).ToCursor()) {
@@ -56,9 +56,22 @@ namespace BotCatMaxy.Data {
             return null;
         }
 
-        public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) => 
+        public static IMongoCollection<BsonDocument> GetActHistoryCollection(this IGuild guild, bool createDir = true) {
+            var db = MainClass.dbClient.GetDatabase("ActHistory");
+            var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
+            var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
+            if (guildCollection.CountDocuments(new BsonDocument()) > 0) {
+                return guildCollection;
+            } else if (ownerCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
+                return ownerCollection;
+            }
+
+            return null;
+        }
+
+        public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) =>
             user?.Id.LoadInfractions(user.Guild, createDir);
-        
+
 
         public static List<Infraction> LoadInfractions(this UserRef userRef, IGuild guild, bool createDir = false) =>
             userRef?.ID.LoadInfractions(guild, createDir);
@@ -76,7 +89,25 @@ namespace BotCatMaxy.Data {
             return infractions;
         }
 
-        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) => 
+        public static List<ActRecord> LoadActRecord(this ulong userID, IGuild guild, bool createDir = false) {
+            var collection = guild.GetActHistoryCollection(createDir);
+            if (collection == null) return null;
+            List<ActRecord> actRecord = null;
+
+            using (var cursor = collection.Find(Builders<BsonDocument>.Filter.Eq("_id", userID)).ToCursor()) {
+                var doc = cursor.FirstOrDefault();
+                if (doc != null) actRecord = BsonSerializer.Deserialize<UserActs>(doc).acts;
+            }
+            if (actRecord == null && createDir) actRecord = new List<ActRecord>();
+            return actRecord;
+        }
+        public static void SaveActRecord(this ulong userID, IGuild guild, List<ActRecord> acts) {
+            var collection = guild.GetActHistoryCollection(true);
+            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", userID));
+            collection.InsertOne(new UserActs { ID = userID, acts = acts }.ToBsonDocument());
+        }
+
+        public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) =>
             user.Id.SaveInfractions(user.Guild, infractions);
         public static void SaveInfractions(this UserRef userRef, List<Infraction> infractions, IGuild guild) =>
             userRef.ID.SaveInfractions(guild, infractions);
@@ -129,7 +160,7 @@ namespace BotCatMaxy.Data {
             onlyAlone = new List<BadWord>();
             insideWords = new List<BadWord>();
             grouped = new List<List<BadWord>>();
-            
+
             foreach (BadWord badWord in all) {
                 if (badWord.partOfWord) insideWords.Add(badWord);
                 else onlyAlone.Add(badWord);
@@ -218,5 +249,20 @@ namespace BotCatMaxy.Data {
         public TimeSpan? cooldown;
         public ulong? channelID;
         public ulong? requiredRole;
+    }
+
+    public class ActRecord {
+        public string type;
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        public DateTime time;
+        public string logLink;
+        public string reason;
+        public TimeSpan length;
+    }
+
+    public class UserActs {
+        [BsonId]
+        public ulong ID = 0;
+        public List<ActRecord> acts = new List<ActRecord>();
     }
 }
