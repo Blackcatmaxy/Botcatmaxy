@@ -15,6 +15,7 @@ using Serilog;
 using Discord;
 using System;
 using Discord.Net;
+using System.Collections.Concurrent;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -276,10 +277,10 @@ namespace BotCatMaxy {
             }
         }
 
-        public static string ListItems(this ICollection<string> list, string joiner = " ") {
+        public static string ListItems(this IEnumerable<string> list, string joiner = " ") {
             string items = null;
             if (list.NotEmpty()) {
-                list.RemoveNullEntries();
+                (list as ICollection<string>)?.RemoveNullEntries();
                 foreach (string item in list) {
                     if (items == null) items = "";
                     else items += joiner;
@@ -380,6 +381,25 @@ namespace BotCatMaxy {
                 }
             }
             throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
+        }
+    }
+
+    public class FixedSizedQueue<T> : ConcurrentQueue<T> {
+        private readonly object syncObject = new object();
+
+        public int Size { get; private set; }
+
+        public FixedSizedQueue(int size) {
+            Size = size;
+        }
+
+        public new void Enqueue(T obj) {
+            base.Enqueue(obj);
+            lock (syncObject) {
+                while (Count > Size) {
+                    TryDequeue(out _);
+                }
+            }
         }
     }
 }

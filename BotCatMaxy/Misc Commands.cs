@@ -101,7 +101,7 @@ namespace BotCatMaxy {
         public async Task DisplayTempActionTimes() {
             var embed = new EmbedBuilder();
             embed.WithTitle("Temp Action Check Execution Times");
-            embed.AddField("Times", TempActions.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize()).ToArray().ListItems("\n"));
+            embed.AddField("Times", TempActions.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
             await ReplyAsync(embed: embed.Build());
         }
     }

@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace BotCatMaxy {
     public class TempActions {
-        public static Stack<TimeSpan> checkExecutionTimes = new Stack<TimeSpan>(5);
+        public static FixedSizedQueue<TimeSpan> checkExecutionTimes = new FixedSizedQueue<TimeSpan>(5);
         readonly DiscordSocketClient client;
         public TempActions(DiscordSocketClient client) {
             this.client = client;
@@ -141,7 +141,7 @@ namespace BotCatMaxy {
                 await CheckTempActs(client);
                 TimeSpan execTime = DateTime.Now.Subtract(start);
                 cts.Cancel();
-                checkExecutionTimes.Push(execTime);
+                checkExecutionTimes.Enqueue(execTime);
                 int delayMiliseconds = 30000 - execTime.Milliseconds;
                 if (delayMiliseconds < 0)
                     await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete").Log();
