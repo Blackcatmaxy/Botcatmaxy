@@ -12,6 +12,7 @@ using System.Threading;
 
 namespace BotCatMaxy {
     public class TempActions {
+        public static Stack<TimeSpan> checkExecutionTimes = new Stack<TimeSpan>(5);
         readonly DiscordSocketClient client;
         public TempActions(DiscordSocketClient client) {
             this.client = client;
@@ -89,8 +90,7 @@ namespace BotCatMaxy {
                             foreach (TempAct tempMute in actions.tempMutes) {
                                 checkedMutes++;
                                 try {
-                                    IGuildUser gUser = sockGuild.GetUser(tempMute.user);
-                                    gUser ??= await restGuild.GetUserAsync(tempMute.user, requestOptions);
+                                    IGuildUser gUser = await client.SuperGetUser(sockGuild, tempMute.user);
                                     if (gUser != null && !gUser.RoleIds.Contains(settings.mutedRole)) { //User missing muted role, must have been manually unmuted
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
@@ -98,12 +98,10 @@ namespace BotCatMaxy {
                                     } else if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) { //Normal mute end
                                         if (gUser != null) {
                                             await gUser.RemoveRoleAsync(mutedRole, requestOptions);
-                                            gUser = sockGuild.GetUser(tempMute.user); //Reload user so it doesn't think user is missing role?
-                                            gUser ??= await restGuild.GetUserAsync(tempMute.user, requestOptions);
                                         } // if user not in guild || if user doesn't contain muted role (successfully removed?
                                         if (gUser == null || !gUser.RoleIds.Contains(settings.mutedRole)) { //Doesn't remove tempmute if unmuting fails
                                             IUser user = gUser; //Gets user to try to message
-                                            user ??= await client.Rest.GetUserAsync(tempMute.user, requestOptions);
+                                            user ??= await client.SuperGetUser(tempMute.user);
                                             if (user != null) { // if possible to message, message and log
                                                 Logging.LogEndTempAct(sockGuild, user, "mut", tempMute.reason, tempMute.length);
                                                 _ = user.Notify($"untemp-muted", tempMute.reason, sockGuild);
@@ -141,8 +139,10 @@ namespace BotCatMaxy {
                 DateTime start = DateTime.Now;
                 _ = Task.Run(() => TimeWarning(start, cts.Token));
                 await CheckTempActs(client);
+                TimeSpan execTime = DateTime.Now.Subtract(start);
                 cts.Cancel();
-                int delayMiliseconds = 30000 - DateTime.Now.Subtract(start).Milliseconds;
+                checkExecutionTimes.Push(execTime);
+                int delayMiliseconds = 30000 - execTime.Milliseconds;
                 if (delayMiliseconds < 0)
                     await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete").Log();
                 else

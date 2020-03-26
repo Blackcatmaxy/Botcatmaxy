@@ -14,6 +14,7 @@ using Humanizer;
 using Serilog;
 using Discord;
 using System;
+using Discord.Net;
 
 namespace BotCatMaxy {
     public static class Utilities {
@@ -348,6 +349,37 @@ namespace BotCatMaxy {
                 time = tempAct.dateBanned
             });
             userID.SaveActRecord(guild, acts);
+        }
+
+        public static async Task<IUser> SuperGetUser(this DiscordSocketClient client, ulong ID) {
+            for (int i = 0; i < 3; i++) {
+                try {
+                    IUser user = client.GetUser(ID);
+                    user ??= await client.Rest.GetUserAsync(ID, new RequestOptions() { RetryMode = RetryMode.AlwaysRetry });
+                    return user;
+                } catch (HttpException e) {
+                    if (i == 2 || e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable) throw;
+                }
+            }
+            throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
+        }
+
+
+        public static async Task<IGuildUser> SuperGetUser(this DiscordSocketClient client, SocketGuild guild, ulong ID) {
+            var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
+            for (int i = 0; i < 3; i++) {
+                try {
+                    IGuildUser user = guild.GetUser(ID);
+                    if (user == null) {
+                        RestGuild restGuild = await client.Rest.GetGuildAsync(guild.Id, requestOptions);
+                        user = await restGuild.GetUserAsync(ID, requestOptions);
+                    }
+                    return user;
+                } catch (HttpException e) {
+                    if (i == 2 || e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable) throw;
+                }
+            }
+            throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
         }
     }
 }

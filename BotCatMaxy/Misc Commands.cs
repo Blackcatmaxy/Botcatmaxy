@@ -95,5 +95,14 @@ namespace BotCatMaxy {
             (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
             await ReplyAsync($"Set channel slowmode to {time} seconds");
         }
+
+        [Command("tempactexectime")]
+        [RequireOwner]
+        public async Task DisplayTempActionTimes() {
+            var embed = new EmbedBuilder();
+            embed.WithTitle("Temp Action Check Execution Times");
+            embed.AddField("Times", TempActions.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize()).ToArray().ListItems("\n"));
+            await ReplyAsync(embed: embed.Build());
+        }
     }
 }
