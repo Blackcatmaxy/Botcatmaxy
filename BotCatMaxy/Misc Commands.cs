@@ -71,7 +71,7 @@ namespace BotCatMaxy {
                     using var cursor = collection.Find(new BsonDocument()).ToCursor();
                     foreach (var doc in cursor.ToList()) {
                         foreach (Infraction infraction in BsonSerializer.Deserialize<UserInfractions>(doc).infractions) {
-                            if (DateTime.Now - infraction.time < TimeSpan.FromHours(24))
+                            if (DateTime.UtcNow - infraction.time < TimeSpan.FromHours(24))
                                 infractions24Hours++;
                             totalInfractons++;
                         }

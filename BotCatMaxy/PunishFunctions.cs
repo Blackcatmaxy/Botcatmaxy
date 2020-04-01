@@ -44,7 +44,7 @@ namespace BotCatMaxy.Moderation {
             List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
             Infraction newInfraction = new Infraction {
                 reason = reason,
-                time = DateTime.Now,
+                time = DateTime.UtcNow,
                 size = size
             };
             if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
@@ -115,7 +115,7 @@ namespace BotCatMaxy.Moderation {
                     Infraction infraction = infractions[i];
 
                     //Gets how long ago all the infractions were
-                    TimeSpan dateAgo = DateTime.Now.Subtract(infraction.time);
+                    TimeSpan dateAgo = DateTime.UtcNow.Subtract(infraction.time);
                     totalInfractions.sum += infraction.size;
                     totalInfractions.count++;
                     if (dateAgo.Days <= 7) {

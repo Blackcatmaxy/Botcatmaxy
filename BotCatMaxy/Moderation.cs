@@ -169,12 +169,12 @@ namespace BotCatMaxy {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.user == userRef.ID);
             if (oldAct != null) {
-                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.Now - oldAct.dateBanned)) >= amount) {
+                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)) >= amount) {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
                 IUserMessage query = await ReplyAsync(
-                    $"{userRef.Name(true)} is already temp-banned for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.Now - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
+                    $"{userRef.Name(true)} is already temp-banned for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
                 SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
                 if (nextMessage?.Content?.ToLower() == "!confirm") {
                     _ = query.DeleteAsync();
@@ -285,12 +285,12 @@ namespace BotCatMaxy {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             TempAct oldAct = actions.tempMutes.FirstOrDefault(tempMute => tempMute.user == userRef.ID);
             if (oldAct != null) {
-                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.Now - oldAct.dateBanned)) >= amount) {
+                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)) >= amount) {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
                 IUserMessage query = await ReplyAsync(
-                    $"{userRef.Name()} is already temp-muted for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.Now - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
+                    $"{userRef.Name()} is already temp-muted for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
                 SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
                 if (nextMessage?.Content?.ToLower() == "!confirm") {
                     _ = query.DeleteAsync();

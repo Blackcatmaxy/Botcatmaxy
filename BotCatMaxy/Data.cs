@@ -126,7 +126,7 @@ namespace BotCatMaxy.Data {
 
     //Data classes
     public class Infraction {
-        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime time;
         public string logLink;
         public string reason;
@@ -179,20 +179,20 @@ namespace BotCatMaxy.Data {
         public TempAct(ulong userID, TimeSpan length, string reason) {
             user = userID;
             this.reason = reason;
-            dateBanned = DateTime.Now;
+            dateBanned = DateTime.UtcNow;
             this.length = length;
         }
         public TempAct(UserRef userRef, TimeSpan length, string reason) {
             user = userRef.ID;
             this.reason = reason;
-            dateBanned = DateTime.Now;
+            dateBanned = DateTime.UtcNow;
             this.length = length;
         }
 
         public string reason;
         public ulong user;
         public TimeSpan length;
-        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime dateBanned;
     }
 
@@ -253,7 +253,7 @@ namespace BotCatMaxy.Data {
 
     public class ActRecord {
         public string type;
-        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime time;
         public string logLink;
         public string reason;

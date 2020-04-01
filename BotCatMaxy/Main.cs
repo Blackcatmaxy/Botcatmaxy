@@ -82,15 +82,15 @@ namespace BotCatMaxy {
                 if (index > 0) {
                     value = value.Substring(index + BuildVersionMetadataPrefix.Length);
                     if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result)) {
-                        buildDate = result.ToLocalTime();
+                        buildDate = result.ToUniversalTime();
                     }
                 }
             }
             if (args.Length > 0 && args[0].NotEmpty()) {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]} built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]} built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
                 await _client.SetGameAsync("version " + args[0]);
             } else {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num built {buildDate.ToShortDateString()}, {(DateTime.Now - buildDate).LimitedHumanize()} ago").Log();
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
             }
 
             var serviceConfig = new CommandServiceConfig {

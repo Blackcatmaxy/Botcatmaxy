@@ -64,7 +64,7 @@ namespace BotCatMaxy {
                                         } else {
                                             Logging.LogManualEndTempAct(sockGuild, user.Result, "bann", tempBan.dateBanned);
                                         }
-                                    } else if (DateTime.Now >= tempBan.dateBanned.Add(tempBan.length)) {
+                                    } else if (DateTime.UtcNow >= tempBan.dateBanned.Add(tempBan.length)) {
                                         RestUser rUser = ban.User;
                                         await restGuild.RemoveBanAsync(tempBan.user, requestOptions);
                                         editedBans.Remove(tempBan);
@@ -95,7 +95,7 @@ namespace BotCatMaxy {
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
                                         Logging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.dateBanned);
-                                    } else if (DateTime.Now >= tempMute.dateBanned.Add(tempMute.length)) { //Normal mute end
+                                    } else if (DateTime.UtcNow >= tempMute.dateBanned.Add(tempMute.length)) { //Normal mute end
                                         if (gUser != null) {
                                             await gUser.RemoveRoleAsync(mutedRole, requestOptions);
                                         } // if user not in guild || if user doesn't contain muted role (successfully removed?
@@ -136,10 +136,10 @@ namespace BotCatMaxy {
         public async Task Timer() {
             while (true) {
                 var cts = new CancellationTokenSource();
-                DateTime start = DateTime.Now;
+                DateTime start = DateTime.UtcNow;
                 _ = Task.Run(() => TimeWarning(start, cts.Token));
                 await CheckTempActs(client);
-                TimeSpan execTime = DateTime.Now.Subtract(start);
+                TimeSpan execTime = DateTime.UtcNow.Subtract(start);
                 cts.Cancel();
                 checkExecutionTimes.Enqueue(execTime);
                 int delayMiliseconds = 30000 - execTime.Milliseconds;
@@ -153,7 +153,7 @@ namespace BotCatMaxy {
 
         public async Task TimeWarning(DateTime start, CancellationToken ct) {
             while (!ct.IsCancellationRequested) {
-                if (DateTime.Now.Subtract(start).Milliseconds > 30000)
+                if (DateTime.UtcNow.Subtract(start).Milliseconds > 30000)
                     await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete and still haven't canceled").Log();
                 await Task.Delay(100);
             }

@@ -302,7 +302,7 @@ namespace BotCatMaxy {
 
         public static TimeSpan GetTimeAgo(this IMessage message) {
             Contract.Requires(message != null);
-            return DateTime.Now - message.Timestamp;
+            return DateTime.UtcNow - message.Timestamp;
         }
 
         public static bool TryGetChannel(this IGuild guild, ulong id, out IGuildChannel channel) {

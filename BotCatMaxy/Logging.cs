@@ -231,9 +231,9 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warnee);
                 if (!(warnee is SocketGuildUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been manually un{actType}ed", $"After {dateHappened.Subtract(DateTime.Now).LimitedHumanize(2)}");
+                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been manually un{actType}ed", $"After {dateHappened.Subtract(DateTime.UtcNow).LimitedHumanize(2)}");
                 else
-                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has manually been un{actType}ed", $"After {DateTime.Now.Subtract(dateHappened).LimitedHumanize(2)}");
+                    embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has manually been un{actType}ed", $"After {DateTime.UtcNow.Subtract(dateHappened).LimitedHumanize(2)}");
                 //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
                 embed.WithColor(Color.Green);
                 embed.WithCurrentTimestamp();
@@ -254,7 +254,7 @@ namespace BotCatMaxy {
                     return;
 
                 var embed = new EmbedBuilder();
-                embed.AddField($"{userID} has manually been un{actType}ed", $"After {DateTime.Now.Subtract(dateHappened).LimitedHumanize(2)}");
+                embed.AddField($"{userID} has manually been un{actType}ed", $"After {DateTime.UtcNow.Subtract(dateHappened).LimitedHumanize(2)}");
                 //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
                 embed.WithColor(Color.Green);
                 embed.WithCurrentTimestamp();
