@@ -59,11 +59,8 @@ namespace BotCatMaxy.Data {
         public static IMongoCollection<BsonDocument> GetActHistoryCollection(this IGuild guild, bool createDir = true) {
             var db = MainClass.dbClient.GetDatabase("ActHistory");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
-            var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
-            if (guildCollection.CountDocuments(new BsonDocument()) > 0) {
+            if (guildCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
                 return guildCollection;
-            } else if (ownerCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
-                return ownerCollection;
             }
 
             return null;
