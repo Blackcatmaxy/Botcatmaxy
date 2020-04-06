@@ -172,6 +172,19 @@ namespace BotCatMaxy.Data {
         }
     }
 
+    public enum TempActs {
+        TempMute,
+        TempBan
+    }
+
+    public class TypedTempAct : TempAct {
+        public TempActs type;
+
+        public TypedTempAct(TempAct tempAct, TempActs type) : base(tempAct.user, tempAct.length, tempAct.reason) {
+            this.type = type;
+        }
+    }
+
     public class TempAct {
         public TempAct(ulong userID, TimeSpan length, string reason) {
             user = userID;
@@ -185,6 +198,8 @@ namespace BotCatMaxy.Data {
             dateBanned = DateTime.UtcNow;
             this.length = length;
         }
+
+        public DateTime End => dateBanned.Add(length);
 
         public string reason;
         public ulong user;

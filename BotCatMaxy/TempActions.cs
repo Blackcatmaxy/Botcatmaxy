@@ -71,7 +71,7 @@ namespace BotCatMaxy {
                                         Logging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.reason, tempBan.length);
                                     }
                                 } catch (Exception e) {
-                                    _ = new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unbanning someone, continuing", e).Log();
+                                    await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unbanning someone, continuing", e).Log();
                                 }
                             }
 
@@ -110,7 +110,7 @@ namespace BotCatMaxy {
                                         }
                                     }
                                 } catch (Exception e) {
-                                    _ = new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unmuting someone, continuing", e).Log();
+                                    await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unmuting someone, continuing", e).Log();
                                 }
                             }
 

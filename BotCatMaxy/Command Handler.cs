@@ -17,7 +17,7 @@ using System;
 
 namespace BotCatMaxy {
     public class CommandHandler {
-        public readonly string[] ignoredCMDErrors = { "User not found.", "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild." };
+        public readonly string[] ignoredCMDErrors = { "User not found.", "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.", "User requires guild permission BanMembers.", "This command now only works in the bot's DMs", "Failed to parse Int32.", "User requires guild permission KickMembers.", "Bot requires guild permission ManageRoles." };
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;

@@ -16,6 +16,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using System.Diagnostics;
 using Humanizer;
+using Discord.Rest;
 
 namespace BotCatMaxy {
     public class MiscCommands : ModuleBase<SocketCommandContext> {
@@ -46,8 +47,7 @@ namespace BotCatMaxy {
             ErrorTest();
         }
 
-        public void ErrorTest()
-        {
+        public void ErrorTest() {
             throw new InvalidOperationException();
         }
 
@@ -102,6 +102,49 @@ namespace BotCatMaxy {
             var embed = new EmbedBuilder();
             embed.WithTitle("Temp Action Check Execution Times");
             embed.AddField("Times", TempActions.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
+            await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("Checktempacts")]
+        [RequireOwner]
+        public async Task ActSanityCheck() {
+            List<TypedTempAct> tempActsToEnd = new List<TypedTempAct>();
+            RequestOptions requestOptions = RequestOptions.Default;
+            requestOptions.RetryMode = RetryMode.AlwaysRetry;
+            foreach (SocketGuild sockGuild in Context.Client.Guilds) {
+                TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
+                if (actions != null) {
+                    if (!actions.tempBans.IsNullOrEmpty()) {
+                        var bans = await sockGuild.GetBansAsync(requestOptions);
+                        foreach (TempAct tempBan in actions.tempBans) {
+                            RestBan ban = bans.FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
+                            if (DateTime.UtcNow >= tempBan.dateBanned.Add(tempBan.length)) {
+                                tempActsToEnd.Add(new TypedTempAct(tempBan, TempActs.TempBan));
+                            }
+                        }
+                    }
+
+                    ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
+                    if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty()) {
+                        SocketRole mutedRole = sockGuild.GetRole(settings.mutedRole);
+                        foreach (TempAct tempMute in actions.tempMutes) {
+                            if (DateTime.UtcNow >= tempMute.dateBanned.Add(tempMute.length)) { //Normal mute end
+                                tempActsToEnd.Add(new TypedTempAct(tempMute, TempActs.TempMute));
+                            }
+                        }
+                    }
+                }
+            }
+            if (tempActsToEnd.Count == 0) {
+                await ReplyAsync("No acts should've ended already");
+                return;
+            }
+
+            var embed = new EmbedBuilder();
+            embed.Title = $"{tempActsToEnd.Count} tempacts should've ended (longest one ended ago is {tempActsToEnd.Select(tempAct => DateTime.UtcNow.Subtract(tempAct.End)).Max().Humanize(2)}";
+            foreach (TypedTempAct tempAct in tempActsToEnd) {
+                embed.AddField($"{tempAct.type} started on {tempAct.dateBanned.ToShortDateString()} for {tempAct.length.LimitedHumanize()}", $"Should've ended {DateTime.UtcNow.Subtract(tempAct.End).LimitedHumanize()}");
+            }
             await ReplyAsync(embed: embed.Build());
         }
     }
