@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Reflection;
 using Discord.WebSocket;
 using Discord.Commands;
+using BotCatMaxy.Cache;
 using BotCatMaxy.Data;
 using MongoDB.Driver;
 using Serilog;
@@ -71,6 +72,8 @@ namespace BotCatMaxy {
             }
             await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();
             await _client.StartAsync();
+            SettingsCache cacher = new SettingsCache();
+            cacher.SetUp(_client);
 
             //Gets build date
             const string BuildVersionMetadataPrefix = "+build";

@@ -147,5 +147,41 @@ namespace BotCatMaxy {
             }
             await ReplyAsync(embed: embed.Build());
         }
+
+        [Command("CheckCache")]
+        [HasAdmin]
+        public async Task CheckCache() {
+            string modSettings;
+            if (Context.Guild.GetFromCache<ModerationSettings>(out _, out _) != null)
+                modSettings = "In cache";
+            else {
+                if (Context.Guild.LoadFromFile<ModerationSettings>(false) != null) {
+                    if (Context.Guild.GetFromCache<ModerationSettings>(out _, out _) != null)
+                        modSettings = "Loaded into cache";
+                    else
+                        modSettings = "Cache failed";
+                } else
+                    modSettings = "Not set";
+            }
+
+            string logSettings;
+            if (Context.Guild.GetFromCache<LogSettings>(out _, out _) != null)
+                logSettings = "In cache";
+            else {
+                if (Context.Guild.LoadFromFile<LogSettings>(false) != null) {
+                    if (Context.Guild.GetFromCache<LogSettings>(out _, out _) != null)
+                        logSettings = "Loaded into cache";
+                    else
+                        logSettings = "Cache failed";
+                } else
+                    logSettings = "Not set";
+            }
+
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithColor(Color.LighterGrey);
+            embed.AddField("Moderation settings", modSettings, true);
+            embed.AddField("Logging settings", logSettings, true);
+            await ReplyAsync(embed: embed.Build());
+        }
     }
 }

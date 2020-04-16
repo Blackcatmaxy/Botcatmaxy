@@ -4,22 +4,68 @@ using MongoDB.Bson.Serialization;
 using System.Collections.Generic;
 using Discord.WebSocket;
 using Discord.Commands;
+using System.Reflection;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
+using BotCatMaxy.Cache;
 using MongoDB.Bson;
 using System.Linq;
 using BotCatMaxy;
 using Discord;
 using System;
+using System.Globalization;
 
 namespace BotCatMaxy.Data {
     public static class DataManipulator {
-        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T: DataObject {
+        static readonly Type cacheType = typeof(GuildSettings);
+
+        //checks and gets from cache if it's there
+        public static T GetFromCache<T>(this IGuild guild, out FieldInfo field, out GuildSettings gCache) where T : DataObject {
             if (guild == null)
                 throw new ArgumentNullException(nameof(guild));
-            var file = default(T);
-            var collection = guild.GetCollection(createFile);
 
+            string tName = typeof(T).Name;
+            tName = char.ToLower(tName[0], CultureInfo.InvariantCulture) + tName.Substring(1);
+            field = cacheType.GetField(tName);
+            gCache = null;
+            if (SettingsCache.guildSettings == null || SettingsCache.guildSettings.Count == 0) return null;
+            gCache = SettingsCache.guildSettings.FirstOrDefault(g => g.ID == guild.Id);
+            if (gCache == null) return null;
+            object cached = field.GetValue(gCache);
+            return cached as T;
+        }
+
+        public static void AddToCache<T>(this T file, FieldInfo field = null, GuildSettings gCache = null) where T : DataObject {
+            try {
+                if (field == null) {
+                    string tName = typeof(T).Name;
+                    tName = char.ToLower(tName[0], CultureInfo.InvariantCulture) + tName.Substring(1);
+                    field = cacheType.GetField(tName);
+                }
+                if (file == null || file.guild == null) throw new NullReferenceException();
+                if (gCache == null && SettingsCache.guildSettings != null && SettingsCache.guildSettings.Count > 0) {
+                    if (file?.guild?.Id == null || SettingsCache.guildSettings.Any(g => g?.ID == null)) throw new NullReferenceException();
+                    SettingsCache.guildSettings.FirstOrDefault(g => g.ID == file.guild.Id);
+                }
+                if (gCache == null) {
+                    SettingsCache.guildSettings.Add(new GuildSettings(file.guild));
+                    gCache = SettingsCache.guildSettings.First(g => g.ID == file.guild.Id);
+                }
+                if (field == null) throw new NullReferenceException();
+                field.SetValue(gCache, file);
+            } catch (Exception e) {
+                new LogMessage(LogSeverity.Error, "Cache", "Something went wrong with cache", e).Log();
+            }
+        }
+
+        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T : DataObject {
+            if (guild == null)
+                throw new ArgumentNullException(nameof(guild));
+
+            T file = guild.GetFromCache<T>(out FieldInfo field, out GuildSettings gCache);
+            if (file != null) return file;
+
+            var collection = guild.GetCollection(createFile);
             if (collection != null) {
                 var filter = Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name);
                 using (var cursor = collection.Find(filter).ToCursor()) {
@@ -27,17 +73,25 @@ namespace BotCatMaxy.Data {
                     if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
                 if (createFile && file == null) {
-                    var thing = (T)Activator.CreateInstance(typeof(T));
-                    thing.guild = guild;
-                    return thing;
+                    file = (T)Activator.CreateInstance(typeof(T));
+                    file.guild = guild;
+                    return file;
                 }
             }
-            if (file != null) file.guild = guild;
+
+            //small things like set cache
+            if (file != null) {
+                file.guild = guild;
+                file.AddToCache(field, gCache);
+            }
+
             return file;
         }
 
         public static void SaveToFile<T>(this T file) where T : DataObject {
             if (file.guild == null) throw new InvalidOperationException("Data file does not have a guild");
+
+            file.AddToCache();
             var collection = file.guild.GetCollection(true);
             collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name));
             collection.InsertOne(file.ToBsonDocument());
