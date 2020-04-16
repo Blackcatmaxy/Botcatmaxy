@@ -17,7 +17,7 @@ using System;
 
 namespace BotCatMaxy {
     public class CommandHandler {
-        public readonly string[] ignoredCMDErrors = { "User not found.", "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.", "User requires guild permission BanMembers.", "This command now only works in the bot's DMs", "Failed to parse Int32.", "User requires guild permission KickMembers.", "Bot requires guild permission ManageRoles." };
+        public readonly string[] ignoredCMDErrors = { "User not found.", "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.", "User requires guild permission BanMembers.", "This command now only works in the bot's DMs", "Failed to parse Int32.", "User requires guild permission KickMembers.", "Bot requires guild permission ManageRoles.", "Command can only be run by the owner of the bot.", "You don't have the permissions to use this." };
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;
@@ -90,7 +90,7 @@ namespace BotCatMaxy {
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result) {
             if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                if (!(ignoredCMDErrors.Contains(result.ErrorReason))) {
+                if (!ignoredCMDErrors.Contains(result.ErrorReason, StringComparer.InvariantCultureIgnoreCase)) {
                     string message = $"Command !{command.Value?.Name} in";
                     if (context.Guild != null) {
                         message += $" {context.Guild?.Name} guild";

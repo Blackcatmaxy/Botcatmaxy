@@ -118,6 +118,8 @@ namespace BotCatMaxy {
                     .WithTitle(message.Source)
                     .AddField(message.Severity.ToString(), message.Message.ToString())
                     .WithCurrentTimestamp();
+                if (message.Exception != null)
+                    errorEmbed.AddField("Exception", message.Exception.ToString());
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
             }
             switch (message.Severity) {
