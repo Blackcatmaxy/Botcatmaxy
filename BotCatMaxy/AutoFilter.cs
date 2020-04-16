@@ -121,30 +121,32 @@ namespace BotCatMaxy {
                 if (badWords != null) {
                     StringBuilder sb = new StringBuilder();
                     foreach (char c in message.Content) {
-                        if (sb.ToString().Length + 1 == message.Content.Length) {
+                        if (sb.Length + 1 == message.Content.Length) {
                             sb.Append(c);
                             break;
                         }
                         switch (c) {
-                            case '1':
+                            case '@':
+                            case '4':
+                                sb.Append('a');
+                                break;
+                            case '8':
+                                sb.Append('b');
+                                break;
+                            case '¢':
+                                sb.Append('c');
+                                break;
+                            case '3':
+                                sb.Append('e');
+                                break;
                             case '!':
                                 sb.Append('i');
                                 break;
                             case '0':
                                 sb.Append('o');
                                 break;
-                            case '8':
-                                sb.Append('b');
-                                break;
-                            case '3':
-                                sb.Append('e');
-                                break;
                             case '$':
                                 sb.Append('s');
-                                break;
-                            case '@':
-                            case '4':
-                                sb.Append('a');
                                 break;
                             default:
                                 if (!char.IsPunctuation(c) && !char.IsSymbol(c)) sb.Append(c);
@@ -152,12 +154,13 @@ namespace BotCatMaxy {
                         }
                     }
 
-                    string strippedMessage = sb.ToString().ToLower();
-
+                    string strippedMessage = sb.ToString();
+                    //splits string into words separated by space, '-' or '_'
+                    string[] messageParts = strippedMessage.Split("_- ", StringSplitOptions.RemoveEmptyEntries);
                     foreach (BadWord badWord in badWords) {
                         if (badWord.partOfWord) {
-                            if (strippedMessage.Contains(badWord.word.ToLower())) {
-                                if (badWord.euphemism != null && badWord.euphemism != "") {
+                            if (strippedMessage.Contains(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
+                                if (badWord.euphemism != null && !string.IsNullOrEmpty(badWord.euphemism)) {
                                     await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", modSettings);
                                 } else {
                                     await context.FilterPunish("Bad word used", modSettings);
@@ -165,11 +168,10 @@ namespace BotCatMaxy {
 
                                 return;
                             }
-                        } else {
-                            string[] messageParts = strippedMessage.Split(' ');
+                        } else { //If bad word is ignored inside of words
                             foreach (string word in messageParts) {
-                                if (word == badWord.word.ToLower()) {
-                                    if (badWord.euphemism != null && badWord.euphemism != "") {
+                                if (word.Equals(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
+                                    if (badWord.euphemism != null && !string.IsNullOrEmpty(badWord.euphemism)) {
                                         await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", modSettings, badWord.size);
                                     } else {
                                         await context.FilterPunish("Bad word used", modSettings, badWord.size);
