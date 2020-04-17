@@ -12,7 +12,7 @@ using Discord;
 using System;
 
 namespace BotCatMaxy {
-    class Logging {
+    public class Logging {
         public static List<ulong> deletedMessagesCache = new List<ulong>();
         private readonly DiscordSocketClient _client;
         public Logging(DiscordSocketClient client) {
@@ -24,12 +24,13 @@ namespace BotCatMaxy {
         public async Task SetUpAsync() {
             _client.MessageDeleted += HandleDelete;
             _client.MessageUpdated += LogEdit;
-            _client.MessageReceived += LogNew;
+            _client.MessageReceived += HandleNew;
 
             await new LogMessage(LogSeverity.Info, "Logs", "Logging set up").Log();
         }
 
-        async Task LogNew(IMessage message) {
+        public async Task HandleNew(IMessage message) => await Task.Run(() => LogNew(message)).ConfigureAwait(false);
+        public async Task LogNew(IMessage message) {
             if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0) {
                 SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
                 LogMessage("Role ping", message, guild, true);
