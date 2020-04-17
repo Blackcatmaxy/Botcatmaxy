@@ -46,7 +46,7 @@ namespace BotCatMaxy {
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;
-                if (settings?.badUEmojis.IsNullOrEmpty() ?? true || (reaction.User.Value as SocketGuildUser).CantBeWarned() || reaction.User.Value.IsBot) {
+                if (settings?.badUEmojis?.Count == null || settings.badUEmojis.Count == 0 || (reaction.User.Value as SocketGuildUser).CantBeWarned() || reaction.User.Value.IsBot) {
                     return;
                 }
                 if (settings.badUEmojis.Select(emoji => new Emoji(emoji)).Contains(reaction.Emote)) {
@@ -476,11 +476,21 @@ namespace BotCatMaxy {
             }
         }
 
+        public const string validLinkRegex = @"^[\w\d]+\.[\w\d]+$";
+
         [Command("addallowedlink")]
         [HasAdmin]
         public async Task AddAllowedLink(string link) {
+            if (!Regex.IsMatch(link, validLinkRegex)) {
+                await ReplyAsync("Link is not valid");
+                return;
+            }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
-            if (settings.allowedLinks == null) settings.allowedLinks = new List<string>();
+            if (settings.allowedLinks == null) settings.allowedLinks = new HashSet<string>();
+            else if (settings.allowedLinks.Contains(link)) {
+                await ReplyAsync("Link is already in whitelist");
+                return;
+            }
             settings.allowedLinks.Add(link);
             settings.SaveToFile();
             await ReplyAsync("People will now be allowed to use " + link);

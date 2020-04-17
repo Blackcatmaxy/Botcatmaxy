@@ -284,9 +284,9 @@ namespace BotCatMaxy.Data {
         public List<ulong> ableToWarn = new List<ulong>();
         public List<ulong> cantBeWarned = new List<ulong>();
         public List<ulong> channelsWithoutAutoMod = new List<ulong>();
-        public List<string> allowedLinks = new List<string>();
+        public HashSet<string> allowedLinks = new HashSet<string>();
         public List<ulong> allowedToLink = new List<ulong>();
-        public List<string> badUEmojis = new List<string>();
+        public HashSet<string> badUEmojis = new HashSet<string>();
         public List<ulong> ableToBan = new List<ulong>();
         public List<ulong> anouncementChannels = new List<ulong>();
         public TimeSpan? maxTempAction = null;
