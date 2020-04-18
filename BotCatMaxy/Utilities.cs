@@ -378,8 +378,8 @@ namespace BotCatMaxy {
                         user = await restGuild.GetUserAsync(ID, requestOptions);
                     }
                     return user;
-                } catch (HttpException e) {
-                    if (i == 2 || e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable) throw;
+                } catch (HttpException e) { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
+                    if (i == 2 || (e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable && e.HttpCode != System.Net.HttpStatusCode.InternalServerError && (int)e.HttpCode != 530)) throw;
                 }
             }
             throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
