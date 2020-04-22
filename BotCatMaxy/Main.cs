@@ -19,19 +19,17 @@ namespace BotCatMaxy {
         private static DiscordSocketClient _client;
         public static MongoClient dbClient;
         public static async Task Main(string[] args) {
-            Utilities.logger = new LoggerConfiguration()
+            var logConfig = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.File($"{AppDomain.CurrentDomain}/log.txt", rollingInterval: RollingInterval.Day)
+                .WriteTo.File($"{AppDomain.CurrentDomain.BaseDirectory}/log.txt", rollingInterval: RollingInterval.Day);
 #if DEBUG
-                .WriteTo.File($"C:/Users/bobth/Documents/Bmax-test/log.txt", rollingInterval: RollingInterval.Day)
-#endif
-                .CreateLogger();
-#if DEBUG
+            logConfig.WriteTo.File($"C:/Users/bobth/Documents/Bmax-test/log.txt", rollingInterval: RollingInterval.Day);
             BotInfo.debug = true;
-            Utilities.BasePath = @"C:\Users\bobth\Documents\Bmax-test";
             dbClient = new MongoClient(HiddenInfo.debugDB);
 #endif
+            Utilities.logger = logConfig.CreateLogger();
+            await new LogMessage(LogSeverity.Info, "Log", $"Program log logging at {AppDomain.CurrentDomain.BaseDirectory}").Log();
             var config = new DiscordSocketConfig {
                 AlwaysDownloadUsers = true,
                 ConnectionTimeout = 6000,
@@ -72,8 +70,7 @@ namespace BotCatMaxy {
             }
             await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();
             await _client.StartAsync();
-            SettingsCache cacher = new SettingsCache();
-            cacher.SetUp(_client);
+            SettingsCache cacher = new SettingsCache(_client);
 
             //Gets build date
             const string BuildVersionMetadataPrefix = "+build";
@@ -90,10 +87,10 @@ namespace BotCatMaxy {
                 }
             }
             if (args.Length > 0 && args[0].NotEmpty()) {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]} built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
                 await _client.SetGameAsync("version " + args[0]);
             } else {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
             }
 
             var serviceConfig = new CommandServiceConfig {

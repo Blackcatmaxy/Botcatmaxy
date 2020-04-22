@@ -19,7 +19,6 @@ using System.Collections.Concurrent;
 
 namespace BotCatMaxy {
     public static class Utilities {
-        public static string BasePath = "/home/bob_the_daniel/Data/";
         public static ILogger logger;
 
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true) {

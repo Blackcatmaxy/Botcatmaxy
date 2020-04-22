@@ -11,14 +11,16 @@ using System.Threading.Tasks;
 
 namespace BotCatMaxy.Cache {
     public class SettingsCache {
-        public static List<GuildSettings> guildSettings = new List<GuildSettings>();
-
-        public void SetUp(DiscordSocketClient client) {
-            client.LeftGuild += RemoveGuild;
+        public static HashSet<GuildSettings> guildSettings = new HashSet<GuildSettings>();
+        private DiscordSocketClient client;
+        public SettingsCache(DiscordSocketClient client) {
+            this.client = client;
+            this.client.LeftGuild += RemoveGuild;
         }
 
+
         public async Task RemoveGuild(SocketGuild guild) {
-            guildSettings.RemoveAll(g => g.ID == guild.Id);
+            guildSettings.RemoveWhere(g => g.ID == guild.Id);
         }
     }
 
