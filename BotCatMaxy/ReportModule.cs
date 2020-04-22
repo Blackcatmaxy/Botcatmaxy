@@ -49,12 +49,12 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
 
             if (settings.cooldown != null) {
                 int messageAmount = 100;
-                var messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToList();
+                var messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToListAsync();
                 messages.OrderBy(msg => msg.CreatedAt);
                 while (messages.Last().CreatedAt.Offset > settings.cooldown.Value) {
                     _ = ReplyAsync("Downloading more messages");
                     messageAmount += 100;
-                    messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToList();
+                    messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToListAsync();
                     messages.OrderBy(msg => msg.Timestamp.Offset);
                 }
                 foreach (IMessage message in messages) {
