@@ -12,6 +12,7 @@ using BotCatMaxy;
 using Humanizer;
 using Discord;
 using System;
+using System.Diagnostics;
 
 namespace BotCatMaxy {
     public class DiscordModModule : InteractiveBase<SocketCommandContext> {
@@ -405,6 +406,69 @@ namespace BotCatMaxy {
             await Context.Guild.AddBanAsync(userRef.ID);
             Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
             Logging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
+        }
+
+        [Command("delete")]
+        [Alias("clean", "clear", "deletemany", "purge")]
+        [RequireUserPermission(ChannelPermission.ManageMessages)]
+        public async Task DeleteMany(uint number, UserRef user = null) {
+            if (number == 0 || number > 300) {
+                await ReplyAsync("Invalid number");
+                return;
+            }
+            if (user?.gUser != null && user.gUser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy) {
+                await ReplyAsync("Can't target deleted messages belonging to people with higher hierarchy");
+                return;
+            }
+
+            uint searchedMessages = number;
+            List<IMessage> messages = null;
+            if (user == null) messages = await Context.Channel.GetMessagesAsync((int)number).Flatten().ToListAsync();
+            else {
+                searchedMessages = 100;
+                messages = (await Context.Channel.GetMessagesAsync(100).Flatten().ToListAsync());
+                for (int i = 0; i < 3; i++) {
+                    if (messages.Last().GetTimeAgo() > TimeSpan.FromDays(14)) break;
+                    messages.RemoveAll(message => message.Author.Id != user.ID);
+                    if (messages.Count >= number) {
+                        break;
+                    }
+                    searchedMessages += 100;
+                    messages.Concat(await Context.Channel.GetMessagesAsync(messages.Last(), Direction.After, 100).Flatten().ToListAsync());
+                }
+                if (messages.Count > 0) {
+                    messages.RemoveAll(message => message.Author.Id != user.ID);
+                    if (messages.Count > number) messages.RemoveRange((int)number, messages.Count - (int)number);
+                }
+            }
+
+            bool timeRanOut = false;
+            if (messages.Count > 0) {
+                if (messages.Last().GetTimeAgo() > TimeSpan.FromDays(14)) {
+                    timeRanOut = true;
+                    messages.RemoveAll(message => message.GetTimeAgo() > TimeSpan.FromDays(14));
+                }
+                await Utilities.AssertAsync(messages.Count <= number);
+
+                //No need to delete messages or log if no actual messages deleted
+                await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+                LogSettings logSettings = Context.Guild.LoadFromFile<LogSettings>(false);
+                if (Context.Guild.TryGetChannel(logSettings?.logChannel ?? 0, out IGuildChannel logChannel)) {
+                    var embed = new EmbedBuilder();
+                    embed.WithColor(Color.DarkRed);
+                    embed.WithCurrentTimestamp();
+                    embed.WithAuthor(Context.User);
+                    embed.WithTitle("Mass message deletion");
+                    embed.AddField("Messages searched", $"{searchedMessages} messages", true);
+                    embed.AddField("Messages deleted", $"{messages.Count} messages", true);
+                    embed.AddField("Channel", ((SocketTextChannel)Context.Channel).Mention, true);
+                    await ((ISocketMessageChannel)logChannel).SendMessageAsync(embed: embed.Build());
+                }
+            }
+            string extra = "";
+            if (searchedMessages != messages.Count) extra = $" out of {searchedMessages} searched messages";
+            if (timeRanOut) extra = " (note, due to ratelimits and discord limitations, only messages in the last two weeks can be mass deleted)";
+            Context.Message.DeleteOrRespond($"{Context.User.Mention} deleted {messages.Count} messages{extra}", Context.Guild);
         }
     }
 }

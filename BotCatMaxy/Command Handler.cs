@@ -21,7 +21,8 @@ namespace BotCatMaxy {
                             "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.",
                             "User requires guild permission BanMembers.", "This command now only works in the bot's DMs", "Failed to parse Int32.",
                             "User requires guild permission KickMembers.", "Bot requires guild permission ManageRoles.",
-                            "Command can only be run by the owner of the bot.", "You don't have the permissions to use this." };
+                            "Command can only be run by the owner of the bot.", "You don't have the permissions to use this.",
+                            "User requires channel permission ManageMessages.", "Failed to parse UInt32." };
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;

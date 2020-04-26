@@ -104,13 +104,16 @@ namespace BotCatMaxy {
             string finalMessage = message.Source.PadRight(8) + message.Message;
             if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
                 Console.Beep();
+                if (string.IsNullOrEmpty(message.Message)) message = new LogMessage(LogSeverity.Critical, "NULL", "NULL");
                 var errorEmbed = new EmbedBuilder()
                     .WithAuthor(BotInfo.user)
                     .WithTitle(message.Source)
                     .AddField(message.Severity.ToString(), message.Message.ToString())
                     .WithCurrentTimestamp();
-                if (message.Exception != null)
+                if (message.Exception != null) {
                     errorEmbed.AddField("Exception", message.Exception.ToString());
+                    errorEmbed.AddField("Trace", message.Exception.StackTrace ?? "");
+                }
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
             }
             switch (message.Severity) {
