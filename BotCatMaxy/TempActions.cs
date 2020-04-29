@@ -38,7 +38,7 @@ namespace BotCatMaxy {
             try {
                 int checkedGuilds = 0;
                 foreach (SocketGuild sockGuild in client.Guilds) {
-                    RestGuild restGuild = await client.Rest.GetGuildAsync(sockGuild.Id);
+                    RestGuild restGuild = await client.Rest.SuperGetRestGuild(sockGuild.Id);
                     if (debug) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         Console.Write($"\nChecking {sockGuild.Name} discord ");
@@ -107,7 +107,7 @@ namespace BotCatMaxy {
                                                 _ = user.Notify($"untemp-muted", tempMute.reason, sockGuild);
                                             }
                                             editedMutes.Remove(tempMute);
-                                        }
+                                        } else if (gUser != null) await new LogMessage(LogSeverity.Warning, "TempAct", "User should've had role removed").Log();
                                     }
                                 } catch (Exception e) {
                                     await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unmuting someone, continuing", e).Log();

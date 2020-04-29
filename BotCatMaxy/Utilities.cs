@@ -349,24 +349,38 @@ namespace BotCatMaxy {
         }
 
         public static async Task<IUser> SuperGetUser(this DiscordSocketClient client, ulong ID) {
-            for (int i = 0; i < 3; i++) {
-                try {
-                    IUser user = client.GetUser(ID);
-                    user ??= await client.Rest.GetUserAsync(ID, new RequestOptions() { RetryMode = RetryMode.AlwaysRetry });
-                    return user;
-                } catch (HttpException e) {
-                    if (i == 2 || e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable) throw;
-                }
-            }
-            throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
+            IUser user = client.GetUser(ID);
+            if (user != null) return user;
+            var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
+            Func<Task<IUser>> func = async () => {
+                return await client.Rest.GetUserAsync(ID, requestOptions);
+            };
+            return await func.SuperGet();
         }
 
-
-        public static async Task<IGuildUser> SuperGetUser(this DiscordSocketClient client, SocketGuild guild, ulong ID) {
-            var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
+        public static T SuperGet<T>(this Func<T> action) {
             for (int i = 0; i < 3; i++) {
                 try {
-                    IGuildUser user = guild.GetUser(ID);
+                    return action();
+                } catch (HttpException e) { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
+                    if (i == 2 || (e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable && e.HttpCode != System.Net.HttpStatusCode.InternalServerError && (int)e.HttpCode != 530)) throw;
+                }
+            }
+            throw new Exception($"SuperGet<{typeof(T).Name}> ran out of tries without throwing proper exception?");
+        }
+
+        public static async Task<IGuildUser> SuperGetUser(this DiscordSocketClient client, SocketGuild guild, ulong ID) {
+            IGuildUser user = guild.GetUser(ID);
+            if (user != null) return user;
+            var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
+            Func<Task<IGuildUser>> func = async () => {
+                RestGuild restGuild = await client.Rest.GetGuildAsync(guild.Id, requestOptions);
+                return await restGuild.GetUserAsync(ID, requestOptions);
+            };
+            return await func.SuperGet();
+            /*for (int i = 0; i < 3; i++) {
+                try {
+
                     if (user == null) {
                         RestGuild restGuild = await client.Rest.GetGuildAsync(guild.Id, requestOptions);
                         user = await restGuild.GetUserAsync(ID, requestOptions);
@@ -375,8 +389,16 @@ namespace BotCatMaxy {
                 } catch (HttpException e) { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
                     if (i == 2 || (e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable && e.HttpCode != System.Net.HttpStatusCode.InternalServerError && (int)e.HttpCode != 530)) throw;
                 }
-            }
+            }*/
             throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
+        }
+
+        public static async Task<RestGuild> SuperGetRestGuild(this DiscordRestClient client, ulong ID) {
+            var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
+            Func<Task<RestGuild>> func = async () => {
+                return await client.GetGuildAsync(ID, requestOptions);
+            };
+            return await func.SuperGet();
         }
     }
 
