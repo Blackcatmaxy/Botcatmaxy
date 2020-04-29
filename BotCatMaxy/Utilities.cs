@@ -101,10 +101,10 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
+            if (string.IsNullOrEmpty(message.Message)) message = new LogMessage(LogSeverity.Critical, "NULL", "NULL");
             string finalMessage = message.Source.PadRight(8) + message.Message;
             if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
                 Console.Beep();
-                if (string.IsNullOrEmpty(message.Message)) message = new LogMessage(LogSeverity.Critical, "NULL", "NULL");
                 var errorEmbed = new EmbedBuilder()
                     .WithAuthor(BotInfo.user)
                     .WithTitle(message.Source)
@@ -139,7 +139,7 @@ namespace BotCatMaxy {
                     logger.Debug(finalMessage);
                     break;
             }
-            //Console.Write("> ");
+            if (message.Exception != null) Console.WriteLine($"Stacktrace:\n{message.Exception.StackTrace}");
         }
 
         public static string Suffix(this int num) {

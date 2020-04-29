@@ -17,12 +17,12 @@ using System;
 
 namespace BotCatMaxy {
     public class CommandHandler {
-        public readonly HashSet<string> ignoredCMDErrors = new HashSet<string>() { "User not found.",
+        /*public readonly HashSet<string> ignoredCMDErrors = new HashSet<string>() { "User not found.",
                             "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.",
                             "User requires guild permission BanMembers.", "This command now only works in the bot's DMs", "Failed to parse Int32.",
                             "User requires guild permission KickMembers.", "Bot requires guild permission ManageRoles.",
                             "Command can only be run by the owner of the bot.", "You don't have the permissions to use this.",
-                            "User requires channel permission ManageMessages.", "Failed to parse UInt32." };
+                            "User requires channel permission ManageMessages.", "Failed to parse UInt32." };*/
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;
@@ -93,17 +93,17 @@ namespace BotCatMaxy {
         }
 
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result) {
-            if (!result.IsSuccess && result.ErrorReason != "Unknown command.") {
+            if (!result.IsSuccess && result.Error != CommandError.UnknownCommand) {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                if (!ignoredCMDErrors.Contains(result.ErrorReason, StringComparer.InvariantCultureIgnoreCase)) {
+                if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful)) {
                     string message = $"Command !{command.Value?.Name} in";
                     if (context.Guild != null) {
                         message += $" {context.Guild?.Name} guild";
                     } else {
                         message += $" {context.User.Username}'s ({context.User.Id}) DMs";
                     }
-                    message += $" used as \"{context.Message}\" encountered: \"{result.ErrorReason}\"";
-                    await new LogMessage(LogSeverity.Error, "CMDs", message).Log();
+                    message += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
+                    await new LogMessage(LogSeverity.Error, "CMDs", message, (result as ExecuteResult?)?.Exception).Log();
                 }
             }
         }
