@@ -101,7 +101,9 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
-            if (string.IsNullOrEmpty(message.Message)) message = new LogMessage(LogSeverity.Critical, "NULL", "NULL");
+            if (string.IsNullOrEmpty(message.Message)) {
+                message = new LogMessage(LogSeverity.Critical, "NULL", "NULL logMessage from " + Environment.StackTrace);
+            }
             string finalMessage = message.Source.PadRight(8) + message.Message;
             if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
                 Console.Beep();
