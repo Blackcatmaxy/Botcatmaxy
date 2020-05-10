@@ -143,7 +143,7 @@ namespace BotCatMaxy {
             var embed = new EmbedBuilder();
             embed.Title = $"{tempActsToEnd.Count} tempacts should've ended (longest one ended ago is {TimeSpan.FromMilliseconds(tempActsToEnd.Select(tempAct => DateTime.UtcNow.Subtract(tempAct.End).TotalMilliseconds).Max()).Humanize(2)}";
             foreach (TypedTempAct tempAct in tempActsToEnd) {
-                embed.AddField($"{tempAct.type} started on {tempAct.dateBanned.ToShortDateString()} for {tempAct.length.LimitedHumanize()}",
+                embed.AddField($"{tempAct.type} started on {tempAct.dateBanned.ToShortTimeString()} {tempAct.dateBanned.ToShortDateString()} for {tempAct.length.LimitedHumanize()}",
                     $"Should've ended {DateTime.UtcNow.Subtract(tempAct.End).LimitedHumanize()}");
             }
             await ReplyAsync(embed: embed.Build());
