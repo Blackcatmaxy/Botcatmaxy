@@ -269,7 +269,7 @@ namespace BotCatMaxy {
             if (settings == null) settings = guild.LoadFromFile<LogSettings>(false);
             if (guild.GetChannelAsync(settings?.pubLogChannel ?? 0).Result == null) message.Channel.SendMessageAsync(toSay);
             else {
-                Logging.AddToDeletedCache(message.Id);
+                Logging.deletedMessagesCache.Enqueue(message.Id);
                 _ = message.DeleteAsync();
                 guild.GetTextChannelAsync(settings.pubLogChannel ?? 0).Result.SendMessageAsync($"{message.Author.Mention}, {toSay}");
             }

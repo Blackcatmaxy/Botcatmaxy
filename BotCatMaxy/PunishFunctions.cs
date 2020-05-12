@@ -10,35 +10,53 @@ using BotCatMaxy;
 using Humanizer;
 using Discord;
 using System;
+using System.Security.Cryptography;
 
 namespace BotCatMaxy.Moderation {
+    public struct WarnResult {
+        public readonly bool success;
+        public readonly string description;
+        public readonly int warnsAmount;
+
+        public WarnResult(int warnsAmount) {
+            success = true;
+            description = null;
+            this.warnsAmount = warnsAmount;
+        }
+
+        public WarnResult(string error) {
+            success = false;
+            description = error;
+            warnsAmount = -1; //to denote error
+        }
+    }
+
     public static class PunishFunctions {
-        public static async Task Warn(this UserRef userRef, float size, string reason, SocketTextChannel channel, string logLink = null) {
+        public static async Task<WarnResult> Warn(this UserRef userRef, float size, string reason, SocketTextChannel channel, string logLink = null) {
             Contract.Requires(userRef != null);
             if (userRef.gUser != null)
-                await userRef.gUser.Warn(size, reason, channel, logLink);
+                return await userRef.gUser.Warn(size, reason, channel, logLink);
             else
-                await userRef.ID.Warn(size, reason, channel, userRef.user, logLink);
+                return await userRef.ID.Warn(size, reason, channel, userRef.user, logLink);
 
         }
 
-        public static async Task Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null) {
+        public static async Task<WarnResult> Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null) {
             try {
                 if (user.CantBeWarned()) {
-                    await channel.SendMessageAsync("This person can't be warned");
-                    return;
+                    return new WarnResult("This person can't be warned");
                 }
 
-                await user.Id.Warn(size, reason, channel, user, logLink);
+                return await user.Id.Warn(size, reason, channel, user, logLink);
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
+                return new WarnResult(e.ToString());
             }
         }
 
-        public static async Task Warn(this ulong userID, float size, string reason, SocketTextChannel channel, IUser warnee = null, string logLink = null) {
+        public static async Task<WarnResult> Warn(this ulong userID, float size, string reason, SocketTextChannel channel, IUser warnee = null, string logLink = null) {
             if (size > 999 || size < 0.01) {
-                await channel.SendMessageAsync("Why would you need to warn someone with that size?");
-                return;
+                return new WarnResult("Why would you need to warn someone with that size?");
             }
 
             List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
@@ -64,6 +82,7 @@ namespace BotCatMaxy.Moderation {
                     }
                 }
             } catch { }
+            return new WarnResult(infractions.Count);
         }
 
         public static async Task FilterPunish(this SocketCommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f) {
@@ -80,7 +99,7 @@ namespace BotCatMaxy.Moderation {
                     warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
             }
             try {
-                Logging.AddToDeletedCache(context.Message.Id);
+                Logging.deletedMessagesCache.Enqueue(context.Message.Id);
                 await context.Message.DeleteAsync();
             } catch (Exception e) {
                 new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e);

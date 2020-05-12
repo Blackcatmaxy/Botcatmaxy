@@ -20,20 +20,31 @@ namespace BotCatMaxy {
         [Command("warn")]
         [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified") {
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
+            IUserMessage logMessage = await Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
+            WarnResult result = await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: logMessage.GetJumpUrl());
 
-            Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {userRef.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
+            if (result.success)
+                Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
+            else {
+                Logging.deletedMessagesCache.Enqueue(logMessage.Id);
+                await logMessage.DeleteAsync();
+                await ReplyAsync(result.description);
+            }
         }
 
         [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason = "Unspecified") {
-            string jumpLink = Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: jumpLink);
-
-            Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {userRef.LoadInfractions(Context.Guild).Count.Suffix()} infraction for {reason}", Context.Guild);
+            IUserMessage logMessage = await Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
+            WarnResult result = await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: logMessage.GetJumpUrl());
+            if (result.success)
+                Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
+            else {
+                Logging.deletedMessagesCache.Enqueue(logMessage.Id);
+                await logMessage.DeleteAsync();
+                await ReplyAsync(result.description);
+            }
         }
 
         [Command("dmwarns", RunMode = RunMode.Async)]

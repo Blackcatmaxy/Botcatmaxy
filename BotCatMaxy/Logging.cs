@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using BotCatMaxy.Data;
 using Discord.Commands;
 using Discord.Rest;
+using System.Linq;
 using System.Text;
 using BotCatMaxy;
 using Humanizer;
@@ -13,7 +14,7 @@ using System;
 
 namespace BotCatMaxy {
     public class Logging {
-        public static List<ulong> deletedMessagesCache = new List<ulong>();
+        public static FixedSizedQueue<ulong> deletedMessagesCache = new FixedSizedQueue<ulong>(10);
         private readonly DiscordSocketClient _client;
         public Logging(DiscordSocketClient client) {
             _client = client;
@@ -79,23 +80,10 @@ namespace BotCatMaxy {
             }
         }
 
-        public static void AddToDeletedCache(ulong ID) {
-            if (deletedMessagesCache == null) {
-                deletedMessagesCache = new List<ulong>();
-            }
-            if (deletedMessagesCache.Count > 0 && deletedMessagesCache.Contains(ID)) {
-                return;
-            }
-            if (deletedMessagesCache.Count == 10) {
-                deletedMessagesCache.RemoveAt(9);
-            }
-            deletedMessagesCache.Insert(0, ID);
-        }
-
         public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
             try {
                 if (message == null) return null;
-                if (deletedMessagesCache?.Contains(message.Id) ?? false) return null;
+                if (deletedMessagesCache.Any(delMsg => delMsg == message.Id)) return null;
 
                 if (guild == null) {
                     guild = Utilities.GetGuild(message.Channel as SocketGuildChannel);
@@ -145,7 +133,7 @@ namespace BotCatMaxy {
             return null;
         }
 
-        public static string LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink) {
+        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink) {
             try {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
@@ -166,7 +154,7 @@ namespace BotCatMaxy {
                 embed.WithColor(Color.Gold);
                 embed.WithCurrentTimestamp();
 
-                return channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                return await channel.SendMessageAsync(embed: embed.Build());
             } catch (Exception e) {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
