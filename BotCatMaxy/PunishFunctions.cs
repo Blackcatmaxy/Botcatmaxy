@@ -38,7 +38,6 @@ namespace BotCatMaxy.Moderation {
                 return await userRef.gUser.Warn(size, reason, channel, logLink);
             else
                 return await userRef.ID.Warn(size, reason, channel, userRef.user, logLink);
-
         }
 
         public static async Task<WarnResult> Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null) {
@@ -65,7 +64,7 @@ namespace BotCatMaxy.Moderation {
                 time = DateTime.UtcNow,
                 size = size
             };
-            if (!logLink.IsNullOrEmpty()) newInfraction.logLink = logLink;
+            if (!string.IsNullOrEmpty(logLink)) newInfraction.logLink = logLink;
             infractions.Add(newInfraction);
             userID.SaveInfractions(channel.Guild, infractions);
 

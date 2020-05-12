@@ -156,7 +156,7 @@ namespace BotCatMaxy {
 
                 return await channel.SendMessageAsync(embed: embed.Build());
             } catch (Exception e) {
-                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
+                await new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return null;
         }

@@ -21,13 +21,15 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified") {
             IUserMessage logMessage = await Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: logMessage.GetJumpUrl());
+            WarnResult result = await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
 
             if (result.success)
                 Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
             else {
-                Logging.deletedMessagesCache.Enqueue(logMessage.Id);
-                await logMessage.DeleteAsync();
+                if (logMessage != null) {
+                    Logging.deletedMessagesCache.Enqueue(logMessage.Id);
+                    await logMessage.DeleteAsync();
+                }
                 await ReplyAsync(result.description);
             }
         }
@@ -37,12 +39,14 @@ namespace BotCatMaxy {
         [CanWarn()]
         public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason = "Unspecified") {
             IUserMessage logMessage = await Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: logMessage.GetJumpUrl());
+            WarnResult result = await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
             if (result.success)
                 Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
             else {
-                Logging.deletedMessagesCache.Enqueue(logMessage.Id);
-                await logMessage.DeleteAsync();
+                if (logMessage != null) {
+                    Logging.deletedMessagesCache.Enqueue(logMessage.Id);
+                    await logMessage.DeleteAsync();
+                }
                 await ReplyAsync(result.description);
             }
         }
