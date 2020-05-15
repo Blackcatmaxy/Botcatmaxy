@@ -104,6 +104,7 @@ namespace BotCatMaxy {
             if (string.IsNullOrEmpty(message.Message)) {
                 message = new LogMessage(LogSeverity.Critical, "NULL", "NULL logMessage from " + Environment.StackTrace);
             }
+            System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
             string finalMessage = message.Source.PadRight(8) + message.Message;
             if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
                 Console.Beep();
@@ -115,7 +116,7 @@ namespace BotCatMaxy {
                 if (message.Exception != null) 
                     errorEmbed.AddField("Exception", message.Exception.ToString());
                 else
-                    errorEmbed.AddField("Trace", message.Exception.StackTrace ?? "");
+                    errorEmbed.AddField("Trace", trace);
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
             }
             switch (message.Severity) {
@@ -141,7 +142,7 @@ namespace BotCatMaxy {
                     logger.Debug(finalMessage);
                     break;
             }
-            if (message.Exception == null) Console.WriteLine($"Stacktrace:\n{message.Exception.StackTrace}");
+            if (message.Exception != null) Console.WriteLine($"Stacktrace:\n{trace}");
         }
 
         public static string Suffix(this int num) {
