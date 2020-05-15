@@ -235,6 +235,7 @@ namespace BotCatMaxy.Data {
         public TempActs type;
 
         public TypedTempAct(TempAct tempAct, TempActs type) : base(tempAct.user, tempAct.length, tempAct.reason) {
+            dateBanned = tempAct.dateBanned;
             this.type = type;
         }
     }

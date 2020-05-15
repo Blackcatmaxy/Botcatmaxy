@@ -115,9 +115,7 @@ namespace BotCatMaxy {
                 TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                 if (actions != null) {
                     if (!actions.tempBans.IsNullOrEmpty()) {
-                        var bans = await sockGuild.GetBansAsync(requestOptions);
                         foreach (TempAct tempBan in actions.tempBans) {
-                            RestBan ban = bans.FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
                             if (DateTime.UtcNow >= tempBan.End) {
                                 tempActsToEnd.Add(new TypedTempAct(tempBan, TempActs.TempBan));
                             }
@@ -126,7 +124,6 @@ namespace BotCatMaxy {
 
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
                     if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty()) {
-                        SocketRole mutedRole = sockGuild.GetRole(settings.mutedRole);
                         foreach (TempAct tempMute in actions.tempMutes) {
                             if (DateTime.UtcNow >= tempMute.End) { //Normal mute end
                                 tempActsToEnd.Add(new TypedTempAct(tempMute, TempActs.TempMute));
