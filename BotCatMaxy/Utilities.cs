@@ -112,10 +112,10 @@ namespace BotCatMaxy {
                     .WithTitle(message.Source)
                     .AddField(message.Severity.ToString(), message.Message.ToString())
                     .WithCurrentTimestamp();
-                if (message.Exception != null) {
+                if (message.Exception != null) 
                     errorEmbed.AddField("Exception", message.Exception.ToString());
+                else
                     errorEmbed.AddField("Trace", message.Exception.StackTrace ?? "");
-                }
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
             }
             switch (message.Severity) {
@@ -141,7 +141,7 @@ namespace BotCatMaxy {
                     logger.Debug(finalMessage);
                     break;
             }
-            if (message.Exception != null) Console.WriteLine($"Stacktrace:\n{message.Exception.StackTrace}");
+            if (message.Exception == null) Console.WriteLine($"Stacktrace:\n{message.Exception.StackTrace}");
         }
 
         public static string Suffix(this int num) {
