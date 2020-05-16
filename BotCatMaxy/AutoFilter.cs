@@ -12,6 +12,7 @@ using System.Linq;
 using BotCatMaxy;
 using Discord;
 using System;
+using Discord.Addons.Interactive;
 
 namespace BotCatMaxy {
     public class Filter {
@@ -191,17 +192,40 @@ namespace BotCatMaxy {
 
     [Group("automod")]
     [Alias("auto-mod", "filter")]
-    [RequireContext(ContextType.Guild)]
-    public class FilterSettingCommands : ModuleBase<SocketCommandContext> {
+    public class FilterSettingCommands : InteractiveBase<SocketCommandContext> {
         [Command("list")]
         [Alias("info")]
-        [RequireContext(ContextType.Guild)]
-        public async Task ListAutoMod(string extension = "", [Remainder] string whoCaresWhatGoesHere = null) {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
-            BadWords badWords = new BadWords(Context.Guild);
+        [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
+        public async Task ListAutoMod(string extension = "") {
+            var mutualGuilds = Context.Message.Author.MutualGuilds.ToArray();
+
+            var guildsEmbed = new EmbedBuilder();
+            guildsEmbed.WithTitle("Reply with the the number next to the guild you want to check the filter info from");
+
+            for (int i = 0; i < mutualGuilds.Length; i++) {
+                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
+            }
+            await ReplyAsync(embed: guildsEmbed.Build());
+            SocketGuild guild;
+            while (true) {
+                SocketMessage reply = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                if (reply == null || reply.Content == "cancel") {
+                    await ReplyAsync("You have timed out or canceled");
+                    return;
+                }
+                try {
+                    guild = mutualGuilds[ushort.Parse(reply.Content) - 1];
+                    break;
+                } catch {
+                    await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
+                }
+            }
+
+            ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
+            BadWords badWords = new BadWords(guild);
 
             var embed = new EmbedBuilder();
-            embed.Author = new EmbedAuthorBuilder().WithName("Automod information for " + Context.Guild.Name + " discord");
+            embed.Author = new EmbedAuthorBuilder().WithName("Automod information for " + guild.Name + " discord");
             string message = "";
 
             bool useExplicit = false;
@@ -224,7 +248,7 @@ namespace BotCatMaxy {
                     message = settings.allowedLinks.ListItems("\n");
                     if (message.NotEmpty()) embed.AddField("Allowed links", message, true);
                     if (settings.allowedToLink != null && settings.allowedToLink.Count > 0) {
-                        message = Context.Guild.Roles.Where(
+                        message = guild.Roles.Where(
                             role => (role.Permissions.Administrator && !role.IsManaged) || settings.allowedToLink.Contains(role.Id)).Select(role => role.Name).ToArray().ListItems("\n");
                         if (message.NotEmpty()) embed.AddField("Roles that can post links", message, true);
                     }
@@ -268,12 +292,7 @@ namespace BotCatMaxy {
                 embed.AddField("Badword euphemisms (not an exhaustive list)", message, false);
             }
 
-            IDMChannel channel = Context.Message.Author.GetOrCreateDMChannelAsync().Result;
-            if (channel != null) {
-                await channel.SendMessageAsync("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
-            } else {
-                await ReplyAsync(Context.Message.Author.Mention + " we can't send a message to your DMs");
-            }
+            await ReplyAsync("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
         }
 
         [HasAdmin]
