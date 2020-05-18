@@ -183,5 +183,12 @@ namespace BotCatMaxy {
             embed.AddField("Logging settings", logSettings, true);
             await ReplyAsync(embed: embed.Build());
         }
+
+        [Command("verboseactcheck")]
+        [RequireOwner]
+        public async Task VerboseActCheck() {
+            await TempActions.CheckTempActs(Context.Client, true);
+            await ReplyAsync("Checked temp acts. Info is in console");
+        } 
     }
 }
