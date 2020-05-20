@@ -103,7 +103,7 @@ namespace BotCatMaxy {
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(UserRef userRef = null, int amount = 5) {
             if (!(Context.Message.Author as SocketGuildUser).CanWarn()) {
-                await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead");
+                await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead (use in bot's DMs)");
                 return;
             }
             userRef ??= new UserRef(Context.User as SocketGuildUser);
