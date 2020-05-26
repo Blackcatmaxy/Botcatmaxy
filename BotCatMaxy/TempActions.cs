@@ -14,7 +14,9 @@ namespace BotCatMaxy {
     public class TempActions {
         public static FixedSizedQueue<TimeSpan> checkExecutionTimes = new FixedSizedQueue<TimeSpan>(5);
         public static DateTime lastCheck;
+        public static Timer timer;
         readonly DiscordSocketClient client;
+        private bool checking;
         public TempActions(DiscordSocketClient client) {
             this.client = client;
             client.Ready += Ready;
@@ -23,7 +25,8 @@ namespace BotCatMaxy {
 
         public async Task Ready() {
             client.Ready -= Ready;
-            _ = Task.Run(() => Timer());
+            timer = new Timer((_) => _ = ActCheckExec());
+            timer.Change(0, 30000);
         }
 
         async Task CheckNewUser(SocketGuildUser user) {
@@ -134,31 +137,16 @@ namespace BotCatMaxy {
             }
         }
 
-        public async Task Timer() {
-            while (true) {
-                var cts = new CancellationTokenSource();
-                DateTime start = DateTime.UtcNow;
-                _ = Task.Run(() => TimeWarning(start, cts.Token));
-                await CheckTempActs(client);
-                TimeSpan execTime = DateTime.UtcNow.Subtract(start);
-                cts.Cancel();
-                checkExecutionTimes.Enqueue(execTime);
-                lastCheck = DateTime.UtcNow;
-                int delayMiliseconds = 30000 - execTime.Milliseconds;
-                if (delayMiliseconds < 0)
-                    await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete").Log();
-                else
-                    await Task.Delay(delayMiliseconds);
-                cts.Dispose();
-            }
-        }
+        public async Task ActCheckExec() {
+            if (checking) await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete and still haven't canceled").Log();
 
-        public async Task TimeWarning(DateTime start, CancellationToken ct) {
-            while (!ct.IsCancellationRequested) {
-                if (DateTime.UtcNow.Subtract(start).Milliseconds > 30000)
-                    await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete and still haven't canceled").Log();
-                await Task.Delay(100);
-            }
+            checking = true;
+            DateTime start = DateTime.UtcNow;
+            await CheckTempActs(client);
+            TimeSpan execTime = DateTime.UtcNow.Subtract(start);
+            checkExecutionTimes.Enqueue(execTime);
+            lastCheck = DateTime.UtcNow;
+            checking = false;
         }
     }
 }
