@@ -16,7 +16,7 @@ using Discord.Addons.Interactive;
 
 namespace BotCatMaxy {
     public class Filter {
-        readonly char[] splitters = "_- ".ToCharArray();
+        readonly char[] splitters = @"#.,;/\|=_- ".ToCharArray();
         readonly DiscordSocketClient client;
         public Filter(DiscordSocketClient client) {
             this.client = client;
@@ -158,7 +158,7 @@ namespace BotCatMaxy {
 
                     string strippedMessage = sb.ToString();
                     //splits string into words separated by space, '-' or '_'
-                    string[] messageParts = strippedMessage.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
+                    string[] messageParts = message.Content.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
                     foreach (BadWord badWord in badWords) {
                         if (badWord.partOfWord) {
                             if (strippedMessage.Contains(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
