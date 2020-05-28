@@ -123,10 +123,6 @@ namespace BotCatMaxy {
                 if (badWords != null) {
                     StringBuilder sb = new StringBuilder();
                     foreach (char c in message.Content) {
-                        if (sb.Length + 1 == message.Content.Length) {
-                            sb.Append(c);
-                            break;
-                        }
                         switch (c) {
                             case '@':
                             case '4':
