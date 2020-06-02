@@ -13,10 +13,10 @@ using BotCatMaxy;
 using Discord;
 using System;
 using Discord.Addons.Interactive;
+using System.Dynamic;
 
 namespace BotCatMaxy {
     public class Filter {
-        readonly char[] splitters = @"#.,;/\|=_- ".ToCharArray();
         readonly DiscordSocketClient client;
         public Filter(DiscordSocketClient client) {
             this.client = client;
@@ -119,71 +119,79 @@ namespace BotCatMaxy {
                     }
                 } //End of stuff from mod settings
 
-                //Checks for bad words
-                if (badWords != null) {
-                    StringBuilder sb = new StringBuilder();
-                    foreach (char c in message.Content) {
-                        switch (c) {
-                            case '@':
-                            case '4':
-                                sb.Append('a');
-                                break;
-                            case '8':
-                                sb.Append('b');
-                                break;
-                            case '¢':
-                                sb.Append('c');
-                                break;
-                            case '3':
-                                sb.Append('e');
-                                break;
-                            case '!':
-                                sb.Append('i');
-                                break;
-                            case '0':
-                                sb.Append('o');
-                                break;
-                            case '$':
-                                sb.Append('s');
-                                break;
-                            default:
-                                if (!char.IsPunctuation(c) && !char.IsSymbol(c)) sb.Append(c);
-                                break;
-                        }
-                    }
-
-                    string strippedMessage = sb.ToString();
-                    //splits string into words separated by space, '-' or '_'
-                    string[] messageParts = message.Content.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (BadWord badWord in badWords) {
-                        if (badWord.partOfWord) {
-                            if (strippedMessage.Contains(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
-                                if (badWord.euphemism != null && !string.IsNullOrEmpty(badWord.euphemism)) {
-                                    await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", modSettings);
-                                } else {
-                                    await context.FilterPunish("Bad word used", modSettings);
-                                }
-
-                                return;
-                            }
-                        } else { //If bad word is ignored inside of words
-                            foreach (string word in messageParts) {
-                                if (word.Equals(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
-                                    if (badWord.euphemism != null && !string.IsNullOrEmpty(badWord.euphemism)) {
-                                        await context.FilterPunish("Bad word used (" + badWord.euphemism + ")", modSettings, badWord.size);
-                                    } else {
-                                        await context.FilterPunish("Bad word used", modSettings, badWord.size);
-                                    }
-                                    return;
-                                }
-                            }
-                        }
-                    }
+                BadWord detectedBadWord = message.Content.CheckForBadWords(badWords.ToArray());
+                if (detectedBadWord != null) {
+                    if (!string.IsNullOrEmpty(detectedBadWord.euphemism))
+                        await context.FilterPunish("Bad word used (" + detectedBadWord.euphemism + ")", modSettings, detectedBadWord.size);
+                    else
+                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.size);
                 }
+
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the message filter", e).Log();
             }
         }
+
+    }
+
+    public static class FilterFunctions {
+        readonly static char[] splitters = @"#.,;/\|=_- ".ToCharArray();
+
+        public static BadWord CheckForBadWords(this string message, BadWord[] badWords) {
+            if (badWords.IsNullOrEmpty()) return null;
+
+            //Checks for bad words
+            StringBuilder sb = new StringBuilder();
+            foreach (char c in message) {
+                switch (c) {
+                    case '@':
+                    case '4':
+                        sb.Append('a');
+                        break;
+                    case '8':
+                        sb.Append('b');
+                        break;
+                    case '¢':
+                        sb.Append('c');
+                        break;
+                    case '3':
+                        sb.Append('e');
+                        break;
+                    case '!':
+                        sb.Append('i');
+                        break;
+                    case '0':
+                        sb.Append('o');
+                        break;
+                    case '$':
+                        sb.Append('s');
+                        break;
+                    default:
+                        if (!char.IsPunctuation(c) && !char.IsSymbol(c)) sb.Append(c);
+                        break;
+                }
+            }
+
+            string strippedMessage = sb.ToString();
+            //splits string into words separated by space, '-' or '_'
+            string[] messageParts = message.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (BadWord badWord in badWords) {
+                if (badWord.partOfWord) {
+                    if (strippedMessage.Contains(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
+                        return badWord;
+                    }
+                } else { //If bad word is ignored inside of words
+                    foreach (string word in messageParts) {
+                        if (word.Equals(badWord.word, StringComparison.InvariantCultureIgnoreCase)) {
+                            return badWord;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 
     [Group("automod")]

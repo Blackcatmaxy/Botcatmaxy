@@ -83,7 +83,6 @@ namespace BotCatMaxy {
                                 actions.tempBans = currentInfo.editedBans;
                             } else if (debug) Console.Write($"tempbans checked, none over, ");
                         } else if (debug) Console.Write($"no tempbans, ");
-                        await Task.Delay(-1);
                         ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
                         if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty()) {
                             RestRole mutedRole = restGuild.GetRole(settings.mutedRole);
