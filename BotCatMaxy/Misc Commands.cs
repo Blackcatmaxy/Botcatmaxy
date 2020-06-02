@@ -100,8 +100,8 @@ namespace BotCatMaxy {
         [RequireOwner]
         public async Task DisplayTempActionTimes() {
             var embed = new EmbedBuilder();
-            embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(TempActions.lastCheck).Humanize(2)} ago)");
-            embed.AddField("Times", TempActions.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
+            embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(TempActions.cachedInfo.lastCheck).Humanize(2)} ago)");
+            embed.AddField("Times", TempActions.cachedInfo.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -189,6 +189,6 @@ namespace BotCatMaxy {
         public async Task VerboseActCheck() {
             await TempActions.CheckTempActs(Context.Client, true);
             await ReplyAsync("Checked temp acts. Info is in console");
-        } 
+        }
     }
 }

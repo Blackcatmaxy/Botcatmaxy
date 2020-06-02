@@ -12,11 +12,11 @@ using System.Threading;
 
 namespace BotCatMaxy {
     public class TempActions {
-        public static FixedSizedQueue<TimeSpan> checkExecutionTimes = new FixedSizedQueue<TimeSpan>(5);
-        public static DateTime lastCheck;
-        public static Timer timer;
         readonly DiscordSocketClient client;
-        private bool checking;
+        public static CurrentTempActionInfo currentInfo = new CurrentTempActionInfo();
+        public static CachedTempActionInfo cachedInfo = new CachedTempActionInfo();
+        public Timer timer;
+
         public TempActions(DiscordSocketClient client) {
             this.client = client;
             client.Ready += Ready;
@@ -40,7 +40,6 @@ namespace BotCatMaxy {
             RequestOptions requestOptions = RequestOptions.Default;
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
             try {
-                int checkedGuilds = 0;
                 foreach (SocketGuild sockGuild in client.Guilds) {
                     RestGuild restGuild = await client.Rest.SuperGetRestGuild(sockGuild.Id);
                     if (debug) {
@@ -49,29 +48,28 @@ namespace BotCatMaxy {
                     }
                     TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                     bool needSave = false;
-                    checkedGuilds++;
+                    currentInfo.checkedGuilds++;
                     if (actions != null) {
                         if (!actions.tempBans.IsNullOrEmpty()) {
                             var bans = await sockGuild.GetBansAsync(requestOptions);
-                            List<TempAct> editedBans = new List<TempAct>(actions.tempBans);
+                            currentInfo.editedBans = new List<TempAct>(actions.tempBans);
                             foreach (TempAct tempBan in actions.tempBans) {
                                 try {
                                     RestBan ban = bans.FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
                                     if (ban == null && bans != null) { //If manual unban
-                                        var user = client.Rest.GetUserAsync(tempBan.user);
-                                        editedBans.Remove(tempBan);
-                                        _ = client.Rest.GetUserAsync(tempBan.user)?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");
+                                        var user = await client.Rest.GetUserAsync(tempBan.user);
+                                        currentInfo.editedBans.Remove(tempBan);
+                                        user?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");
                                         //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
-                                        await user;
-                                        if (user.Result == null) {
+                                        if (user == null) {
                                             Logging.LogManualEndTempAct(sockGuild, tempBan.user, "bann", tempBan.dateBanned);
                                         } else {
-                                            Logging.LogManualEndTempAct(sockGuild, user.Result, "bann", tempBan.dateBanned);
+                                            Logging.LogManualEndTempAct(sockGuild, user, "bann", tempBan.dateBanned);
                                         }
                                     } else if (DateTime.UtcNow >= tempBan.dateBanned.Add(tempBan.length)) {
                                         RestUser rUser = ban.User;
                                         await restGuild.RemoveBanAsync(tempBan.user, requestOptions);
-                                        editedBans.Remove(tempBan);
+                                        currentInfo.editedBans.Remove(tempBan);
                                         Logging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.reason, tempBan.length);
                                     }
                                 } catch (Exception e) {
@@ -79,20 +77,19 @@ namespace BotCatMaxy {
                                 }
                             }
 
-                            if (editedBans != actions.tempBans) {
-                                if (debug) Console.Write($"{actions.tempBans.Count - editedBans.Count} tempbans are over, ");
+                            if (currentInfo.editedBans.All(actions.tempBans.Equals)) {
+                                if (debug) Console.Write($"{actions.tempBans.Count - currentInfo.editedBans.Count} tempbans are over, ");
                                 needSave = true;
-                                actions.tempBans = editedBans;
+                                actions.tempBans = currentInfo.editedBans;
                             } else if (debug) Console.Write($"tempbans checked, none over, ");
                         } else if (debug) Console.Write($"no tempbans, ");
-
+                        await Task.Delay(-1);
                         ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
                         if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty()) {
                             RestRole mutedRole = restGuild.GetRole(settings.mutedRole);
                             List<TempAct> editedMutes = new List<TempAct>(actions.tempMutes);
-                            uint checkedMutes = 0;
                             foreach (TempAct tempMute in actions.tempMutes) {
-                                checkedMutes++;
+                                currentInfo.checkedMutes++;
                                 try {
                                     IGuildUser gUser = await client.SuperGetUser(sockGuild, tempMute.user);
                                     if (gUser != null && !gUser.RoleIds.Contains(settings.mutedRole)) { //User missing muted role, must have been manually unmuted
@@ -118,9 +115,9 @@ namespace BotCatMaxy {
                                 }
                             }
 
-                            _ = (checkedMutes == actions.tempMutes.Count || checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
+                            _ = (currentInfo.checkedMutes == actions.tempMutes.Count || currentInfo.checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
 
-                            if (editedMutes != actions.tempMutes) {
+                            if (editedMutes.All(actions.tempMutes.Equals)) {
                                 if (debug) Console.Write($"{actions.tempMutes.Count - editedMutes.Count}/{actions.tempMutes.Count} tempmutes are over");
                                 actions.tempMutes = editedMutes;
                                 needSave = true;
@@ -130,7 +127,7 @@ namespace BotCatMaxy {
                     }
                 }
                 if (debug) Console.Write("\n");
-                _ = (checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
+                _ = (currentInfo.checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
 
             } catch (Exception e) {
                 await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong checking temp actions", e).Log();
@@ -138,15 +135,31 @@ namespace BotCatMaxy {
         }
 
         public async Task ActCheckExec() {
-            if (checking) await new LogMessage(LogSeverity.Critical, "TempAct", "Temp actions took longer than 30 seconds to complete and still haven't canceled").Log();
+            if (currentInfo.checking) {
+                await new LogMessage(LogSeverity.Critical, "TempAct", $"Temp actions took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
+                return;
+            }
 
-            checking = true;
+            currentInfo.checking = true;
             DateTime start = DateTime.UtcNow;
             await CheckTempActs(client);
             TimeSpan execTime = DateTime.UtcNow.Subtract(start);
-            checkExecutionTimes.Enqueue(execTime);
-            lastCheck = DateTime.UtcNow;
-            checking = false;
+            cachedInfo.checkExecutionTimes.Enqueue(execTime);
+            cachedInfo.lastCheck = DateTime.UtcNow;
+            currentInfo.checking = false;
         }
+    }
+
+    public class CachedTempActionInfo {
+        public FixedSizedQueue<TimeSpan> checkExecutionTimes = new FixedSizedQueue<TimeSpan>(8);
+        public DateTime lastCheck;
+    }
+
+    public class CurrentTempActionInfo {
+        public bool checking = false;
+        public int checkedGuilds = 0;
+        public uint checkedMutes = 0;
+
+        public List<TempAct> editedBans = null;
     }
 }

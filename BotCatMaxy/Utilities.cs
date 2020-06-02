@@ -107,17 +107,17 @@ namespace BotCatMaxy {
             System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
             string finalMessage = message.Source.PadRight(8) + message.Message;
             if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
-                Console.Beep();
                 var errorEmbed = new EmbedBuilder()
                     .WithAuthor(BotInfo.user)
                     .WithTitle(message.Source)
                     .AddField(message.Severity.ToString(), message.Message.ToString())
                     .WithCurrentTimestamp();
-                if (message.Exception != null) 
+                if (message.Exception != null)
                     errorEmbed.AddField("Exception", message.Exception.ToString());
                 else
                     errorEmbed.AddField("Trace", trace);
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
+                Console.Beep();
             }
             switch (message.Severity) {
                 case LogSeverity.Critical:
