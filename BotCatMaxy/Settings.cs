@@ -58,7 +58,7 @@ namespace BotCatMaxy {
         public async Task SetMaxPunishment(string length) {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             if (length == "none") { //Maybe add more options that mean none
-                if (settings.maxTempAction == null) 
+                if (settings.maxTempAction == null)
                     await ReplyAsync("The maximum temp punishment is already none");
                 else {
                     settings.maxTempAction = null;
@@ -141,7 +141,7 @@ namespace BotCatMaxy {
                 return;
             }
 
-            if (Context.Client.GetChannel(settings.logChannel) == Context.Channel) {
+            if (Context.Client.GetChannel(settings.logChannel ?? 0) == Context.Channel) {
                 await message.ModifyAsync(msg => msg.Content = "This channel already is the logging channel");
                 return;
             } else {
@@ -186,7 +186,7 @@ namespace BotCatMaxy {
 
             var embed = new EmbedBuilder();
 
-            SocketTextChannel logChannel = Context.Guild.GetTextChannel(settings.logChannel);
+            SocketTextChannel logChannel = Context.Guild.GetTextChannel(settings.logChannel ?? 0);
             if (logChannel == null) {
                 _ = ReplyAsync("Logging channel is null");
                 return;
@@ -226,7 +226,7 @@ namespace BotCatMaxy {
             IUserMessage message = await ReplyAsync("Setting...");
             LogSettings settings = null;
 
-            settings = Context.Guild.LoadFromFile<LogSettings>(true); 
+            settings = Context.Guild.LoadFromFile<LogSettings>(true);
 
             settings.logEdits = !settings.logEdits;
 
@@ -236,6 +236,28 @@ namespace BotCatMaxy {
             } else {
                 await message.ModifyAsync(msg => msg.Content = "Edited messages won't be logged now");
             }
+        }
+
+        [Command("setemergencychannel"), Alias("setbackupchannel", "backupset", "setbackup")]
+        [HasAdmin]
+        public async Task SetBackupLogChannel(string setNull = null) {
+            LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
+
+            if (!setNull.IsNullOrEmpty() && (setNull.ToLower() == "none" || setNull.ToLower() == "null")) {
+                settings.backupChannel = null;
+                settings.SaveToFile();
+                await ReplyAsync("Set public log channel to null");
+                return;
+            }
+            if (Context.Client.GetChannel(settings.backupChannel ?? 0) == Context.Channel) {
+                await ReplyAsync("This channel already is the logging channel");
+                return;
+            } else {
+                settings.backupChannel = Context.Channel.Id;
+            }
+
+            settings.SaveToFile();
+            await ReplyAsync("Set public log channel to this channel");
         }
     }
 }

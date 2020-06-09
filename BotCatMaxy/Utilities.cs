@@ -249,7 +249,7 @@ namespace BotCatMaxy {
 
         public static bool TryNotify(this IUser user, string message) {
             try {
-                var sentMessage = user.GetOrCreateDMChannelAsync()?.Result.SendMessageAsync(message);
+                var sentMessage = user.GetOrCreateDMChannelAsync()?.Result.SendMessageAsync(message).Result;
                 if (sentMessage == null) return false;
                 return true;
             } catch {
@@ -307,6 +307,13 @@ namespace BotCatMaxy {
         public static bool TryGetChannel(this IGuild guild, ulong id, out IGuildChannel channel) {
             Contract.Requires(guild != null);
             channel = guild.GetChannelAsync(id).GetAwaiter().GetResult();
+            return channel != null;
+        }
+
+        public static bool TryGetTextChannel(this IGuild guild, ulong? id, out ITextChannel channel) {
+            channel = null;
+            if ((id ?? 0) == 0) return false;
+            channel = guild.GetTextChannelAsync(id ?? 0).GetAwaiter().GetResult();
             return channel != null;
         }
 

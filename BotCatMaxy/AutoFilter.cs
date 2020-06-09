@@ -14,6 +14,7 @@ using Discord;
 using System;
 using Discord.Addons.Interactive;
 using System.Dynamic;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace BotCatMaxy {
     public class Filter {
@@ -23,6 +24,7 @@ namespace BotCatMaxy {
             client.MessageReceived += CheckMessage;
             client.MessageUpdated += HandleEdit;
             client.ReactionAdded += HandleReaction;
+            client.UserJoined += HandleUserJoin;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
@@ -32,8 +34,53 @@ namespace BotCatMaxy {
         public async Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
             => await Task.Run(() => CheckReaction(cachedMessage, channel, reaction)).ConfigureAwait(false);
 
+        public async Task HandleUserJoin(SocketGuildUser user)
+            => await Task.Run(async () => CheckNameInGuild(user, user.Guild));
+
         public async Task HandleMessage(SocketMessage message)
             => await Task.Run(() => CheckMessage(message)).ConfigureAwait(false);
+
+        public async Task CheckNameInGuild(IUser user, SocketGuild guild) {
+            try {
+                ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
+                //Has to check if not equal to true since it's nullable
+                if (settings?.moderateNames != true) return;
+                BadWord detectedBadWord = user.Username.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
+                if (detectedBadWord == null) return;
+
+                LogSettings logSettings = guild.LoadFromFile<LogSettings>(false);
+                if (logSettings?.logChannel != null && guild.TryGetChannel(logSettings.logChannel ?? 0, out IGuildChannel channel)) {
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.WithColor(Color.DarkMagenta);
+                    embed.WithAuthor(user);
+                    embed.WithTitle("User kicked for bad username");
+                    embed.WithDescription($"Name '{user.Username}' contained '{detectedBadWord.word}'");
+                    embed.WithCurrentTimestamp();
+                    embed.WithFooter("User ID: " + user.Id);
+                    await (channel as SocketTextChannel).SendMessageAsync(embed: embed.Build());
+                }
+                //If user's DMs aren't blocked
+                if (user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord")) {
+                    SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
+                    await gUser.KickAsync($"Username '{user.Username}' triggered autofilter for '{detectedBadWord.word}'");
+                    user.Id.AddWarn(1, "Username with filtered word", guild, null);
+                    return;
+                }//If user's DMs are blocked
+                if (logSettings != null) {
+                    if (guild.TryGetTextChannel(logSettings.backupChannel, out ITextChannel backupChannel))
+                        await backupChannel.SendMessageAsync($"{user.Mention} your username contains a bad word but your DMs are closed. Please clean up your username before rejoining");
+                    else if (guild.TryGetTextChannel(logSettings.pubLogChannel, out ITextChannel pubChannel))
+                        await pubChannel.SendMessageAsync($"{user.Mention} your username contains a bad word but your DMs are closed. Please clean up your username before rejoining");
+                    await Task.Delay(10000);
+                    SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
+                    await gUser.KickAsync($"Username '{user.Username}' triggered autofilter for '{detectedBadWord.word}'");
+                    user.Id.AddWarn(1, "Username with filtered word (Note: DMs closed)", guild, null);
+
+                }
+            } catch (Exception e) {
+                await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong checking usernames", e).Log();
+            }
+        }
 
         public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction) {
             try {
@@ -605,6 +652,16 @@ namespace BotCatMaxy {
             settings.anouncementChannels.Remove(Context.Channel.Id);
             settings.SaveToFile();
             await ReplyAsync("This channel is now not an 'anouncement' channel");
+        }
+
+        [Command("togglenamefilter")]
+        [HasAdmin]
+        public async Task ToggleNameFilter() {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            settings.moderateNames = !settings.moderateNames;
+            settings.SaveToFile();
+
+            await ReplyAsync("Set new user name filtering to " + settings.moderateNames.ToString().ToLowerInvariant());
         }
     }
 }

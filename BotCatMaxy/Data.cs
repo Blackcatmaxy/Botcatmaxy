@@ -297,6 +297,8 @@ namespace BotCatMaxy.Data {
         public bool moderateUsernames = false;
         public bool invitesAllowed = true;
         public uint? maxEmojis = null;
+        public bool moderateNames = false;
+
         public BsonDocument CatchAll { get; set; }
     }
 
@@ -304,9 +306,13 @@ namespace BotCatMaxy.Data {
         [BsonId]
         public BsonString Id = "LogSettings";
         public ulong? pubLogChannel = null;
-        public ulong logChannel;
+        public ulong? logChannel = null;
         public bool logDeletes = true;
         public bool logEdits = false;
+        public ulong? backupChannel = null;
+        public ulong? bestLog { get {
+                return pubLogChannel ?? logChannel;
+            } }
         public BsonDocument CatchAll { get; set; }
     }
 

@@ -48,7 +48,7 @@ namespace BotCatMaxy {
                 if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || !settings.logEdits) return;
-                SocketTextChannel logChannel = guild.GetChannel(settings.logChannel) as SocketTextChannel;
+                SocketTextChannel logChannel = guild.GetChannel(settings.logChannel ?? 0) as SocketTextChannel;
                 if (logChannel == null) return;
 
                 var embed = new EmbedBuilder();

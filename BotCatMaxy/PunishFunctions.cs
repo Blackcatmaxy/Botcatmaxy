@@ -58,15 +58,7 @@ namespace BotCatMaxy.Moderation {
                 return new WarnResult("Why would you need to warn someone with that size?");
             }
 
-            List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
-            Infraction newInfraction = new Infraction {
-                reason = reason,
-                time = DateTime.UtcNow,
-                size = size
-            };
-            if (!string.IsNullOrEmpty(logLink)) newInfraction.logLink = logLink;
-            infractions.Add(newInfraction);
-            userID.SaveInfractions(channel.Guild, infractions);
+            List<Infraction> infractions = userID.AddWarn(size, reason, channel.Guild, logLink);
 
             try {
                 if (warnee != null) {
@@ -82,6 +74,19 @@ namespace BotCatMaxy.Moderation {
                 }
             } catch { }
             return new WarnResult(infractions.Count);
+        }
+
+        public static List<Infraction> AddWarn(this ulong userID, float size, string reason, IGuild guild, string logLink) {
+            List<Infraction> infractions = userID.LoadInfractions(guild, true);
+            Infraction newInfraction = new Infraction {
+                reason = reason,
+                time = DateTime.UtcNow,
+                size = size
+            };
+            if (!string.IsNullOrEmpty(logLink)) newInfraction.logLink = logLink;
+            infractions.Add(newInfraction);
+            userID.SaveInfractions(guild, infractions);
+            return infractions;
         }
 
         public static async Task FilterPunish(this SocketCommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f) {
