@@ -70,21 +70,22 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
             }
 
             await ReplyAsync("Please reply with what you want to report");
-            string reportMsg = (await NextMessageAsync(timeout: TimeSpan.FromMinutes(1)))?.Content;
+            var reportMsg = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
             if (reportMsg == null) ReplyAsync("Report aborted");
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(Context.Message.Author);
             embed.WithTitle("Report");
-            embed.WithDescription(reportMsg);
+            embed.WithDescription(reportMsg.Content);
             embed.WithFooter("User ID: " + Context.Message.Author.Id);
             embed.WithCurrentTimestamp();
             string links = "";
-            if (Context.Message.Attachments.NotEmpty())
-                links = Context.Message.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
+            if (reportMsg.Attachments.NotEmpty())
+                links = reportMsg.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
             var channel = guild.GetTextChannel(settings.channelID.Value);
             await channel.SendMessageAsync(embed: embed.Build());
-            if (!string.IsNullOrEmpty(links)) await channel.SendMessageAsync("The message above had these attachments:" + links);
+            if (!string.IsNullOrEmpty(links))
+                await channel.SendMessageAsync("The message above had these attachments: " + links);
 
             await ReplyAsync("Report has been sent");
         } catch (Exception e) {
