@@ -37,7 +37,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
             }
 
             ReportSettings settings = guild.LoadFromFile<ReportSettings>(false);
-            if (settings?.channelID == null && guild.GetChannel(settings.channelID ?? 0) != null) {
+            if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null) {
                 await ReplyAsync("This guild does not currently have reporting set up, command canceled");
                 return;
             }
