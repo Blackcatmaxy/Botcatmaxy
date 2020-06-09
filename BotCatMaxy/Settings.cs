@@ -246,18 +246,18 @@ namespace BotCatMaxy {
             if (!setNull.IsNullOrEmpty() && (setNull.ToLower() == "none" || setNull.ToLower() == "null")) {
                 settings.backupChannel = null;
                 settings.SaveToFile();
-                await ReplyAsync("Set public log channel to null");
+                await ReplyAsync("Set backup channel to null");
                 return;
             }
             if (Context.Client.GetChannel(settings.backupChannel ?? 0) == Context.Channel) {
-                await ReplyAsync("This channel already is the logging channel");
+                await ReplyAsync("This channel already is the backup channel");
                 return;
             } else {
                 settings.backupChannel = Context.Channel.Id;
             }
 
             settings.SaveToFile();
-            await ReplyAsync("Set public log channel to this channel");
+            await ReplyAsync("Set backup channel to this channel");
         }
     }
 }
