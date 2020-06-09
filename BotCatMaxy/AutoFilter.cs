@@ -26,6 +26,7 @@ namespace BotCatMaxy {
             client.ReactionAdded += HandleReaction;
             client.UserJoined += HandleUserJoin;
             client.UserUpdated += HandleUserChange;
+            client.GuildMemberUpdated += HandleUserChange;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
@@ -37,6 +38,11 @@ namespace BotCatMaxy {
 
         public async Task HandleUserJoin(SocketGuildUser user)
             => await Task.Run(async () => CheckNameInGuild(user, user.Guild));
+
+        public async Task HandleGuildUserChange(SocketGuildUser old, SocketGuildUser updated) {
+            if (updated.Nickname != old.Nickname)
+                await Task.Run(async () => CheckNameInGuild(updated, updated.Guild));
+        }
 
         public async Task HandleUserChange(SocketUser old, SocketUser updated) {
             if (updated.Username != old.Username) {
