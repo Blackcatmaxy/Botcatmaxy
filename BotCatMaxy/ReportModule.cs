@@ -79,8 +79,13 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
             embed.WithDescription(reportMsg);
             embed.WithFooter("User ID: " + Context.Message.Author.Id);
             embed.WithCurrentTimestamp();
+            string links = "";
+            if (Context.Message.Attachments.NotEmpty())
+                links = Context.Message.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
+            var channel = guild.GetTextChannel(settings.channelID.Value);
+            await channel.SendMessageAsync(embed: embed.Build());
+            if (!string.IsNullOrEmpty(links)) await channel.SendMessageAsync("The message above had these attachments:" + links);
 
-            guild.GetTextChannel(settings.channelID.Value).SendMessageAsync(embed: embed.Build());
             await ReplyAsync("Report has been sent");
         } catch (Exception e) {
             ReplyAsync("Error: " + e);
