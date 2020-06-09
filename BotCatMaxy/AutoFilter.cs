@@ -175,7 +175,7 @@ namespace BotCatMaxy {
                     }
                 } //End of stuff from mod settings
 
-                BadWord detectedBadWord = message.Content.CheckForBadWords(badWords.ToArray());
+                BadWord detectedBadWord = message.Content.CheckForBadWords(badWords?.ToArray());
                 if (detectedBadWord != null) {
                     if (!string.IsNullOrEmpty(detectedBadWord.euphemism))
                         await context.FilterPunish("Bad word used (" + detectedBadWord.euphemism + ")", modSettings, detectedBadWord.size);
