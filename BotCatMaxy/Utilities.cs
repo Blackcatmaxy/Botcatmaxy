@@ -110,12 +110,12 @@ namespace BotCatMaxy {
                 var errorEmbed = new EmbedBuilder()
                     .WithAuthor(BotInfo.user)
                     .WithTitle(message.Source)
-                    .AddField(message.Severity.ToString(), message.Message.ToString())
+                    .AddField(message.Severity.ToString(), message.Message.ToString().Truncate(1020))
                     .WithCurrentTimestamp();
                 if (message.Exception != null)
-                    errorEmbed.AddField("Exception", message.Exception.ToString());
+                    errorEmbed.AddField("Exception", message.Exception.ToString().Truncate(1020));
                 else
-                    errorEmbed.AddField("Trace", trace);
+                    errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
                 Console.Beep();
             }

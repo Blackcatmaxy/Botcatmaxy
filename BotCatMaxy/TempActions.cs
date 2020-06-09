@@ -40,7 +40,13 @@ namespace BotCatMaxy {
             RequestOptions requestOptions = RequestOptions.Default;
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
             try {
+                currentInfo.checkedGuilds = 0;
+                currentInfo.checkedMutes = 0;
                 foreach (SocketGuild sockGuild in client.Guilds) {
+                    if (currentInfo.checkedGuilds > client.Guilds.Count) {
+                        await new LogMessage(LogSeverity.Error, "TempAct", "Check went past all guilds but has been stopped. This doesn't seem physically possible.").Log();
+                        return;
+                    }
                     RestGuild restGuild = await client.Rest.SuperGetRestGuild(sockGuild.Id);
                     if (debug) {
                         Console.ForegroundColor = ConsoleColor.Cyan;

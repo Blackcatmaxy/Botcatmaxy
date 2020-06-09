@@ -31,6 +31,8 @@ namespace BotCatMaxy.Cache {
         public LogSettings logSettings;
         public TempActionList tempActionList;
         public BadWordList badWordList;
+        public ReportSettings reportSettings;
+
         public GuildSettings(IGuild guild) {
             this.guild = guild;
         }
