@@ -37,17 +37,17 @@ namespace BotCatMaxy {
             => await Task.Run(() => CheckReaction(cachedMessage, channel, reaction)).ConfigureAwait(false);
 
         public async Task HandleUserJoin(SocketGuildUser user)
-            => await Task.Run(async () => CheckNameInGuild(user, user.Guild));
+            => await Task.Run(async () => CheckNameInGuild(user, user.Username, user.Guild));
 
         public async Task HandleGuildUserChange(SocketGuildUser old, SocketGuildUser updated) {
             if (updated.Nickname != old.Nickname)
-                await Task.Run(async () => CheckNameInGuild(updated, updated.Guild));
+                await Task.Run(async () => CheckNameInGuild(updated, updated.Nickname, updated.Guild));
         }
 
         public async Task HandleUserChange(SocketUser old, SocketUser updated) {
             if (updated.Username != old.Username) {
                 foreach (SocketGuild guild in updated.MutualGuilds) {
-                    await Task.Run(async () => CheckNameInGuild(updated, guild));
+                    await Task.Run(async () => CheckNameInGuild(updated, updated.Username, guild));
                 }
             }
         }
@@ -55,12 +55,12 @@ namespace BotCatMaxy {
         public async Task HandleMessage(SocketMessage message)
             => await Task.Run(() => CheckMessage(message)).ConfigureAwait(false);
 
-        public async Task CheckNameInGuild(IUser user, SocketGuild guild) {
+        public async Task CheckNameInGuild(IUser user, string name, SocketGuild guild) {
             try {
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
-                BadWord detectedBadWord = user.Username.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
+                BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
                 if (detectedBadWord == null) return;
 
                 LogSettings logSettings = guild.LoadFromFile<LogSettings>(false);
@@ -69,7 +69,7 @@ namespace BotCatMaxy {
                     embed.WithColor(Color.DarkMagenta);
                     embed.WithAuthor(user);
                     embed.WithTitle("User kicked for bad username");
-                    embed.WithDescription($"Name '{user.Username}' contained '{detectedBadWord.word}'");
+                    embed.WithDescription($"Name '{name}' contained '{detectedBadWord.word}'");
                     embed.WithCurrentTimestamp();
                     embed.WithFooter("User ID: " + user.Id);
                     await (channel as SocketTextChannel).SendMessageAsync(embed: embed.Build());
@@ -77,7 +77,7 @@ namespace BotCatMaxy {
                 //If user's DMs aren't blocked
                 if (user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord")) {
                     SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
-                    await gUser.KickAsync($"Username '{user.Username}' triggered autofilter for '{detectedBadWord.word}'");
+                    await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word", guild, null);
                     return;
                 }//If user's DMs are blocked
@@ -88,7 +88,7 @@ namespace BotCatMaxy {
                         await pubChannel.SendMessageAsync($"{user.Mention} your username contains a bad word but your DMs are closed. Please clean up your username before rejoining");
                     await Task.Delay(10000);
                     SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
-                    await gUser.KickAsync($"Username '{user.Username}' triggered autofilter for '{detectedBadWord.word}'");
+                    await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word (Note: DMs closed)", guild, null);
 
                 }
