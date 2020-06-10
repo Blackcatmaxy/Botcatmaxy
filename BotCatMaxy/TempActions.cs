@@ -83,7 +83,8 @@ namespace BotCatMaxy {
                                 }
                             }
 
-                            if (currentInfo.editedBans.All(actions.tempBans.Equals)) {
+                            //if all tempbans DON'T equal all edited tempbans (basically if there was a change
+                            if (!currentInfo.editedBans.All(actions.tempBans.Equals)) {
                                 if (debug) Console.Write($"{actions.tempBans.Count - currentInfo.editedBans.Count} tempbans are over, ");
                                 needSave = true;
                                 actions.tempBans = currentInfo.editedBans;
@@ -122,7 +123,7 @@ namespace BotCatMaxy {
 
                             _ = (currentInfo.checkedMutes == actions.tempMutes.Count || currentInfo.checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
 
-                            if (editedMutes.All(actions.tempMutes.Equals)) {
+                            if (!editedMutes.All(actions.tempMutes.Equals)) {
                                 if (debug) Console.Write($"{actions.tempMutes.Count - editedMutes.Count}/{actions.tempMutes.Count} tempmutes are over");
                                 actions.tempMutes = editedMutes;
                                 needSave = true;
