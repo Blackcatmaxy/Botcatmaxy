@@ -44,7 +44,6 @@ namespace BotCatMaxy {
                 if (!(channel is SocketGuildChannel)) return;
                 SocketGuild guild = (channel as SocketGuildChannel).Guild;
                 IMessage oldMessage = await cachedMessage.GetOrDownloadAsync();
-                if (oldMessage == null || newMessage == null) throw new NullReferenceException("Message is null");
                 if (oldMessage.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 if (settings == null || !settings.logEdits) return;
@@ -52,16 +51,16 @@ namespace BotCatMaxy {
                 if (logChannel == null) return;
 
                 var embed = new EmbedBuilder();
-                if (oldMessage.Content == null || oldMessage.Content == "") {
+                if (oldMessage?.Content == null || oldMessage.Content == "") {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
-                    "`This message had no text`");
+                    "`This message had no text or was null`");
                 } else {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
                     oldMessage.Content.Truncate(1020));
                 }
-                if (newMessage.Content == null || newMessage.Content == "") {
+                if (newMessage?.Content == null || newMessage.Content == "") {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
-                    "`This message had no text`");
+                    "`This message had no text or is null`");
                 } else {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
                     newMessage.Content.Truncate(1020));
