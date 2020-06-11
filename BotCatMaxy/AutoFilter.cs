@@ -267,6 +267,27 @@ namespace BotCatMaxy {
             return null;
         }
 
+        public static async Task FilterPunish(this SocketCommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f) {
+            string jumpLink = Logging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold);
+            await ((SocketGuildUser)context.User).Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
+            LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
+            Task<RestUserMessage> warnMessage = null;
+            if (context.Guild.GetTextChannel(logSettings?.pubLogChannel ?? 0) != null) {
+                warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+            } else {
+                if (settings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
+                    _ = context.Message.Author.Notify("warned", reason, context.Guild, article: "in");
+                else
+                    warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+            }
+            try {
+                Logging.deletedMessagesCache.Enqueue(context.Message.Id);
+                await context.Message.DeleteAsync();
+            } catch (Exception e) {
+                new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e);
+                await warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
+            }
+        }
     }
 
     [Group("automod")]

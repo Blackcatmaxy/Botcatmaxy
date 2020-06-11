@@ -79,7 +79,7 @@ namespace BotCatMaxy {
             }
         }
 
-        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false) {
+        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null) {
             try {
                 if (message == null) return null;
                 if (deletedMessagesCache.Any(delMsg => delMsg == message.Id)) return null;
@@ -121,7 +121,7 @@ namespace BotCatMaxy {
 
                 embed.WithFooter($"Message ID:{message.Id} • User ID:{message.Author.Id}")
                     .WithAuthor(message.Author)
-                    .WithColor(Color.Blue)
+                    .WithColor(color ?? Color.Blue)
                     .WithCurrentTimestamp();
                 string link = logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
                 if (!links.IsNullOrEmpty()) logChannel.SendMessageAsync("The message above had these attachments:" + links);
