@@ -106,19 +106,6 @@ namespace BotCatMaxy {
             }
             System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
             string finalMessage = message.Source.PadRight(8) + message.Message;
-            if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
-                var errorEmbed = new EmbedBuilder()
-                    .WithAuthor(BotInfo.user)
-                    .WithTitle(message.Source)
-                    .AddField(message.Severity.ToString(), message.Message.ToString().Truncate(1020))
-                    .WithCurrentTimestamp();
-                if (message.Exception != null)
-                    errorEmbed.AddField("Exception", message.Exception.ToString().Truncate(1020));
-                else
-                    errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
-                await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
-                Console.Beep();
-            }
             switch (message.Severity) {
                 case LogSeverity.Critical:
                     if (message.Exception != null) logger.Fatal(message.Exception, finalMessage);
@@ -141,6 +128,19 @@ namespace BotCatMaxy {
                 case LogSeverity.Debug:
                     logger.Debug(finalMessage);
                     break;
+            }
+            if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
+                var errorEmbed = new EmbedBuilder()
+                    .WithAuthor(BotInfo.user)
+                    .WithTitle(message.Source)
+                    .AddField(message.Severity.ToString(), message.Message.ToString().Truncate(1020))
+                    .WithCurrentTimestamp();
+                if (message.Exception != null)
+                    errorEmbed.AddField("Exception", message.Exception.ToString().Truncate(1020));
+                else
+                    errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
+                await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
+                Console.Beep();
             }
             if (message.Exception != null) Console.WriteLine($"Stacktrace:\n{trace}");
         }

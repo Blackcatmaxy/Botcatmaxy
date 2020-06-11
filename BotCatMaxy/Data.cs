@@ -298,6 +298,7 @@ namespace BotCatMaxy.Data {
         public bool invitesAllowed = true;
         public uint? maxEmojis = null;
         public bool moderateNames = false;
+        public ushort? maxNewLines = null;
 
         public BsonDocument CatchAll { get; set; }
     }

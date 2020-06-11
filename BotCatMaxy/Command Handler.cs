@@ -47,7 +47,7 @@ namespace BotCatMaxy {
                 _commands.Log += Utilities.Log;
                 _commands.CommandExecuted += CommandExecuted;
 
-                //Adds Emoji type reader
+                //Adds custom type readers
                 _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
                 _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
                 _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
@@ -254,6 +254,16 @@ namespace Discord.Commands {
             return PreconditionResult.FromSuccess();
         }
     }
+    /*Commented out because causes error on startup
+    public class NullableByteTypeReader : TypeReader {
+        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
+            if (input.Equals("null", StringComparison.InvariantCultureIgnoreCase) || input.Equals("none", StringComparison.InvariantCultureIgnoreCase))
+                return TypeReaderResult.FromSuccess(null);
+            if (byte.TryParse(input, out byte output))
+                return TypeReaderResult.FromSuccess(output);
+            return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Failed to parse UInt8");
+        }
+    }*/
 
     public class BetterUserTypeReader : UserTypeReader<IUser> {
         public override async Task<TypeReaderResult> ReadAsync(

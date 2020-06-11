@@ -142,6 +142,16 @@ namespace BotCatMaxy {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id))
                         return; //Returns if channel is set as not using automod
 
+                    //Checks if a message contains too many "newlines"
+                    if (modSettings.maxNewLines != null) {
+                        //Gets number of "newlines"
+                        int newLines = context.Message.Content.Count(c => c == '\n');
+                        if (newLines > modSettings.maxNewLines.Value) {
+                            await context.FilterPunish("too many newlines", modSettings, (newLines - modSettings.maxNewLines.Value) * 0.5f);
+                            return;
+                        }
+                    }
+
                     //Checks if a message contains an invite
                     if (!modSettings.invitesAllowed && message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
                         await context.FilterPunish("Posted Invite", modSettings);
@@ -681,6 +691,23 @@ namespace BotCatMaxy {
             string extra = "";
             if (settings.moderateNames) extra = " note: existing usernames and nicknames won't be filtered";
             await ReplyAsync("Set user name and nickname filtering to " + settings.moderateNames.ToString().ToLowerInvariant());
+        }
+
+        [Command("setmaxnewlines")]
+        [Alias("maxnewlinesset", "setmaximumnewlines")]
+        [HasAdmin]
+        public async Task SetMaximumNewLines(byte? amount) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            string reply;
+            if (amount == null || amount < 0) {
+                settings.maxNewLines = null;
+                reply = "Disabled newline filtering";
+            } else {
+                settings.maxNewLines = amount;
+                reply = "Set maximum amount of newlines to " + amount;
+            }
+            settings.SaveToFile();
+            await ReplyAsync(reply);
         }
     }
 }

@@ -41,11 +41,11 @@ namespace BotCatMaxy {
             await ReplyAsync(embed: embed.Build());
         }
 
-        [RequireOwner()]
+        /*[RequireOwner()]
         [Command("bottest")]
         public async Task TestCommand() {
-            ErrorTest();
-        }
+            await ReplyAsync($"Your message had {Context.Message.Content.Count(c => c == '\n')}");
+        }*/
 
         public void ErrorTest() {
             throw new InvalidOperationException();
