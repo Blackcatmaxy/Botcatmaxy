@@ -333,14 +333,16 @@ namespace BotCatMaxy {
                     }
                 }
                 if (settings.allowedCaps > 0) {
-                    embed.AddField("Allowed caps", $"{settings.allowedCaps}% in msgs more than 5 long");
+                    embed.AddField("Allowed caps", $"{settings.allowedCaps}% in msgs more than 5 long", true);
                 } else {
-                    embed.AddField("Allowed caps", "Capitalization is not filtered");
+                    embed.AddField("Allowed caps", "Capitalization is not filtered", true);
                 }
                 string badUniEmojis = settings.badUEmojis?.ListItems("");
                 if (!badUniEmojis.IsNullOrEmpty()) {
                     embed.AddField("Banned Emojis", badUniEmojis, true);
                 }
+                if (settings.moderateNames) embed.AddField("Name moderation", "True", true);
+                if (settings.maxNewLines != null) embed.AddField("Maximum new lines", $"{settings.maxNewLines.Value} new lines", true);
             }
             if (badWords != null && badWords.all != null && badWords.all.Count > 0) {
                 List<string> words = new List<string>();

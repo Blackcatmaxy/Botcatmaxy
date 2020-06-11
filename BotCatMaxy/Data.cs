@@ -279,6 +279,7 @@ namespace BotCatMaxy.Data {
         public List<BadWord> badWords = new List<BadWord>();
     }
 
+    [BsonIgnoreExtraElements]
     public class ModerationSettings : DataObject {
         [BsonId]
         public string Id = "ModerationSettings";
@@ -294,13 +295,10 @@ namespace BotCatMaxy.Data {
         public ulong mutedRole = 0;
         public ushort allowedCaps = 0;
         public bool useOwnerID = false;
-        public bool moderateUsernames = false;
         public bool invitesAllowed = true;
         public uint? maxEmojis = null;
         public bool moderateNames = false;
         public ushort? maxNewLines = null;
-
-        public BsonDocument CatchAll { get; set; }
     }
 
     public class LogSettings : DataObject {
