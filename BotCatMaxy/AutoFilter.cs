@@ -19,7 +19,7 @@ using Humanizer;
 
 namespace BotCatMaxy {
     public class Filter {
-        const string inviteRegex = @"(?:http|https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li|com)|discord(?:app)?\.com\/invite)\/(\D+)";
+        const string inviteRegex = @"(?:http|https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li|com)|discord(?:app)?\.com\/invite)\/(\S+)";
         RegexOptions regexOptions;
 
         readonly DiscordSocketClient client;
@@ -161,10 +161,9 @@ namespace BotCatMaxy {
                     if (!modSettings.invitesAllowed) {
                         MatchCollection matches = Regex.Matches(message.Content, inviteRegex, regexOptions);
                         var invites = matches.Select(async match => await client.GetInviteAsync(match.Value)).Select(match => match.Result);
-                        invites.Where(invite => invite?.GuildId != null);
                         if (invites.Any())
-                            foreach (RestInviteMetadata inviteData in invites)
-                                if (!modSettings.whitelistedForInvite.Contains(inviteData?.GuildId ?? 0)) {
+                            foreach (RestInviteMetadata invite in invites)
+                                if (invite?.GuildId != null && !modSettings.whitelistedForInvite.Contains(invite.GuildId.Value)) {
                                     await context.FilterPunish("Posted Invite", modSettings);
                                     return;
                                 }
