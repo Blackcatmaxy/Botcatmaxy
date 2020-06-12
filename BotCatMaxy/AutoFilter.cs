@@ -15,9 +15,13 @@ using System;
 using Discord.Addons.Interactive;
 using System.Dynamic;
 using System.Runtime.InteropServices.ComTypes;
+using Humanizer;
 
 namespace BotCatMaxy {
     public class Filter {
+        const string inviteRegex = @"(?:http|https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li|com)|discord(?:app)?\.com\/invite)\/(\D+)";
+        RegexOptions regexOptions;
+
         readonly DiscordSocketClient client;
         public Filter(DiscordSocketClient client) {
             this.client = client;
@@ -27,6 +31,7 @@ namespace BotCatMaxy {
             client.UserJoined += HandleUserJoin;
             client.UserUpdated += HandleUserChange;
             client.GuildMemberUpdated += HandleUserChange;
+            regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
@@ -153,15 +158,22 @@ namespace BotCatMaxy {
                     }
 
                     //Checks if a message contains an invite
-                    if (!modSettings.invitesAllowed && message.Content.ToLower().Contains("discord.gg/") || message.Content.ToLower().Contains("discordapp.com/invite/")) {
-                        await context.FilterPunish("Posted Invite", modSettings);
-                        return;
+                    if (!modSettings.invitesAllowed) {
+                        MatchCollection matches = Regex.Matches(message.Content, inviteRegex, regexOptions);
+                        var invites = matches.Select(async match => await client.GetInviteAsync(match.Value)).Select(match => match.Result);
+                        invites.Where(invite => invite?.GuildId != null);
+                        if (invites.Any())
+                            foreach (RestInviteMetadata inviteData in invites)
+                                if (!modSettings.whitelistedForInvite.Contains(inviteData?.GuildId ?? 0)) {
+                                    await context.FilterPunish("Posted Invite", modSettings);
+                                    return;
+                                }
                     }
 
                     //Checks for links
                     if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any())) {
                         const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
-                        MatchCollection matches = Regex.Matches(message.Content, linkRegex, RegexOptions.IgnoreCase);
+                        MatchCollection matches = Regex.Matches(message.Content, linkRegex, regexOptions);
                         //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                         foreach (Match match in matches) {
                             if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower()))) {
@@ -731,6 +743,36 @@ namespace BotCatMaxy {
             }
             settings.SaveToFile();
             await ReplyAsync(reply);
+        }
+
+        [Command("whitelistguild")]
+        [Alias("addwhitelistguild", "whitelistguildinvite")]
+        [HasAdmin]
+        public async Task AddInviteWhitelist(ulong guildID) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            if (settings?.whitelistedForInvite == null) settings.whitelistedForInvite = new List<ulong>();
+            else if (settings.whitelistedForInvite.Contains(guildID)) {
+                await ReplyAsync("Selected guild is already whitelisted");
+                return;
+            }
+            settings.whitelistedForInvite.Add(guildID);
+            settings.SaveToFile();
+            await ReplyAsync("Invites leading to this server won't result in warns");
+        }
+
+        [Command("unwhitelistguild")]
+        [Alias("removewhitelistguild", "unwhitelistguildinvite")]
+        [HasAdmin]
+        public async Task RemoveInviteWhitelist(ulong guildID) {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
+            if (settings?.whitelistedForInvite == null) settings.whitelistedForInvite = new List<ulong>();
+            else if (settings.whitelistedForInvite.Contains(guildID)) {
+                await ReplyAsync("Invites leading to selected server will already result in warns");
+            } else {
+                settings.whitelistedForInvite.Add(guildID);
+                settings.SaveToFile();
+                await ReplyAsync("Invites leading to selected server will now result in warns");
+            }
         }
     }
 }

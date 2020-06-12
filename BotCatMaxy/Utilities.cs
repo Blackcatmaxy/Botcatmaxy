@@ -368,10 +368,10 @@ namespace BotCatMaxy {
             return await func.SuperGet();
         }
 
-        public static T SuperGet<T>(this Func<T> action) {
+        public static async Task<T> SuperGet<T>(this Func<Task<T>> action) {
             for (int i = 0; i < 3; i++) {
                 try {
-                    return action();
+                    return await action();
                 } catch (HttpException e) { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
                     if (i == 2 || (e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable && e.HttpCode != System.Net.HttpStatusCode.InternalServerError && (int)e.HttpCode != 530)) throw;
                 }
@@ -407,6 +407,14 @@ namespace BotCatMaxy {
             var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
             Func<Task<RestGuild>> func = async () => {
                 return await client.GetGuildAsync(ID, requestOptions);
+            };
+            return await func.SuperGet();
+        }
+
+        public static async Task<RestInviteMetadata> SuperGetInviteDataAsync(this DiscordSocketClient client, string invite) {
+            var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
+            Func<Task<RestInviteMetadata>> func = async () => {
+                return await client.GetInviteAsync(invite, requestOptions);
             };
             return await func.SuperGet();
         }
