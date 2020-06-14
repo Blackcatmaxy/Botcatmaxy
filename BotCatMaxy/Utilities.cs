@@ -101,9 +101,6 @@ namespace BotCatMaxy {
         }
 
         public static async Task Log(this LogMessage message) {
-            if (string.IsNullOrEmpty(message.Message)) {
-                message = new LogMessage(LogSeverity.Critical, "NULL", "NULL logMessage from " + Environment.StackTrace);
-            }
             System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
             string finalMessage = message.Source.PadRight(8) + message.Message;
             switch (message.Severity) {
@@ -129,7 +126,7 @@ namespace BotCatMaxy {
                     logger.Debug(finalMessage);
                     break;
             }
-            if (message.Severity <= LogSeverity.Error) { //If severity is Critical or Error
+            if (message.Severity <= LogSeverity.Error || (string.IsNullOrEmpty(message.Source) && string.IsNullOrEmpty(message.Message))) { //If severity is Critical or Error
                 var errorEmbed = new EmbedBuilder()
                     .WithAuthor(BotInfo.user)
                     .WithTitle(message.Source)
@@ -140,7 +137,6 @@ namespace BotCatMaxy {
                 else
                     errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
                 await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
-                Console.Beep();
             }
             if (message.Exception != null) Console.WriteLine($"Stacktrace:\n{trace}");
         }
