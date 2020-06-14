@@ -27,10 +27,10 @@ namespace BotCatMaxy {
             var db = MainClass.dbClient.GetDatabase("Settings");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
-            if (guildCollection.CountDocuments(new BsonDocument()) > 0) {
-                return guildCollection;
-            } else if (ownerCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
+            if (ownerCollection.CountDocuments(new BsonDocument()) > 0) {
                 return ownerCollection;
+            } else if (guildCollection.CountDocuments(new BsonDocument()) > 0 || createDir) {
+                return guildCollection;
             }
 
             return null;
