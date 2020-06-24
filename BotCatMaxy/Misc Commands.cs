@@ -17,6 +17,7 @@ using MongoDB.Bson.Serialization;
 using System.Diagnostics;
 using Humanizer;
 using Discord.Rest;
+using Discord.Addons.Preconditions;
 
 namespace BotCatMaxy
 {
@@ -220,6 +221,12 @@ namespace BotCatMaxy
         {
             await TempActions.CheckTempActs(Context.Client, true);
             await ReplyAsync("Checked temp acts. Info is in console");
+        }
+
+        [Command("info")]
+        public async Task InfoCommandAsync()
+        {
+            await ReplyAsync($"Botcatmaxy is a public, open-source bot written and maintained by Blackcatmaxy with info at https://github.com/Blackcatmaxy/Botcatmaxy/ (use '{Context.Client.CurrentUser.Mention} help' for direct link to commands wiki)");
         }
     }
 }
