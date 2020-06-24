@@ -9,59 +9,75 @@ using System;
 using Humanizer;
 using BotCatMaxy;
 
-public class ReportModule : InteractiveBase<SocketCommandContext> {
+public class ReportModule : InteractiveBase<SocketCommandContext>
+{
     [Command("report", RunMode = RunMode.Async)]
     [RequireContext(ContextType.DM)]
-    public async Task Report() {
-        try {
+    public async Task Report()
+    {
+        try
+        {
             var guildsEmbed = new EmbedBuilder();
             guildsEmbed.WithTitle("Reply with the the number next to the guild you want to make the report in");
             var mutualGuilds = Context.User.MutualGuilds.ToArray();
-            for (int i = 0; i < Context.User.MutualGuilds.Count; i++) {
+            for (int i = 0; i < Context.User.MutualGuilds.Count; i++)
+            {
                 guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
-            while (true) {
+            while (true)
+            {
                 SocketMessage message = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
-                if (message == null || message.Content == "cancel") {
+                if (message == null || message.Content == "cancel")
+                {
                     await ReplyAsync("You have timed out or canceled");
                     return;
                 }
-                try {
+                try
+                {
                     guild = mutualGuilds[ushort.Parse(message.Content) - 1];
                     break;
-                } catch {
+                }
+                catch
+                {
                     await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
                 }
             }
 
             ReportSettings settings = guild.LoadFromFile<ReportSettings>(false);
-            if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null) {
+            if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null)
+            {
                 await ReplyAsync("This guild does not currently have reporting set up, command canceled");
                 return;
             }
             SocketGuildUser gUser = guild.GetUser(Context.Message.Author.Id);
-            if (settings.requiredRole != null && !(gUser.RoleIDs().Contains(settings.requiredRole.Value) || gUser.GuildPermissions.Administrator)) {
+            if (settings.requiredRole != null && !(gUser.RoleIDs().Contains(settings.requiredRole.Value) || gUser.GuildPermissions.Administrator))
+            {
                 await ReplyAsync("You are missing required role for reporting");
                 return;
             }
 
-            if (settings.cooldown != null) {
+            if (settings.cooldown != null)
+            {
                 int messageAmount = 100;
                 var messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToListAsync();
                 messages.OrderBy(msg => msg.CreatedAt);
-                while (messages.Last().CreatedAt.Offset > settings.cooldown.Value) {
+                while (messages.Last().CreatedAt.Offset > settings.cooldown.Value)
+                {
                     _ = ReplyAsync("Downloading more messages");
                     messageAmount += 100;
                     messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToListAsync();
                     messages.OrderBy(msg => msg.Timestamp.Offset);
                 }
-                foreach (IMessage message in messages) {
+                foreach (IMessage message in messages)
+                {
                     TimeSpan timeAgo = message.GetTimeAgo();
-                    if (message.Author.IsBot && message.Content == "Report has been sent") {
+                    if (message.Author.IsBot && message.Content == "Report has been sent")
+                    {
                         if (timeAgo > settings.cooldown.Value) break;
-                        else {
+                        else
+                        {
                             await ReplyAsync($"You need to wait the full {settings.cooldown.Value.Humanize()}, {timeAgo.Humanize()} have passed from {message.GetJumpUrl()}");
                             return;
                         }
@@ -88,35 +104,46 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
                 await channel.SendMessageAsync("The message above had these attachments: " + links);
 
             await ReplyAsync("Report has been sent");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             ReplyAsync("Error: " + e);
         }
     }
 
     [Command("setreportchannel")]
     [HasAdmin]
-    public async Task SetReportChannel() {
-        try {
+    public async Task SetReportChannel()
+    {
+        try
+        {
             ReportSettings settings = Context.Guild.LoadFromFile<ReportSettings>(true);
             if (settings.channelID == Context.Channel.Id) ReplyAsync("Reporting is already set to log here");
-            else {
+            else
+            {
                 settings.channelID = Context.Channel.Id;
                 settings.SaveToFile();
                 ReplyAsync("Reporting is now set to this channel");
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             ReplyAsync("Error: " + e);
         }
     }
 
     [Command("setreportcooldown")]
     [HasAdmin]
-    public async Task SetReportCooldown(string time) {
-        try {
+    public async Task SetReportCooldown(string time)
+    {
+        try
+        {
             ReportSettings settings;
-            if (time == "none") {
+            if (time == "none")
+            {
                 settings = Context.Guild.LoadFromFile<ReportSettings>(false);
-                if (settings?.cooldown == null) {
+                if (settings?.cooldown == null)
+                {
                     ReplyAsync("Either reports or cooldown are already turned off");
                     return;
                 }
@@ -124,26 +151,32 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
             }
             settings = Context.Guild.LoadFromFile<ReportSettings>(true);
             TimeSpan? cooldown = time.ToTime();
-            if (cooldown == null) {
+            if (cooldown == null)
+            {
                 ReplyAsync("Time is invalid, if you intend to remove cooldon instead use ``none``");
                 return;
             }
             if (settings.cooldown == cooldown) ReplyAsync("Cooldown is already set to value");
-            else {
+            else
+            {
                 settings.cooldown = cooldown;
                 settings.SaveToFile();
                 ReplyAsync($"Cooldown is now set to {cooldown.Value.Humanize()}");
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             ReplyAsync("Error: " + e);
         }
     }
 
     [Command("setreportrole"), HasAdmin]
-    public async Task SetReportRole(SocketRole role) {
+    public async Task SetReportRole(SocketRole role)
+    {
         ReportSettings settings = Context.Guild.LoadFromFile<ReportSettings>();
         if (settings.requiredRole == role.Id) ReplyAsync("Reporting is already set to that role");
-        else {
+        else
+        {
             settings.requiredRole = role.Id;
             settings.SaveToFile();
             ReplyAsync($"Reporting now requires {role.Name} role");
@@ -151,15 +184,18 @@ public class ReportModule : InteractiveBase<SocketCommandContext> {
     }
 
     [Command("setreportrole"), HasAdmin]
-    public async Task SetReportRole(string value) {
+    public async Task SetReportRole(string value)
+    {
         value.ToLower();
-        if (!(value == "null" || value == "none")) {
+        if (!(value == "null" || value == "none"))
+        {
             await ReplyAsync("Invalid role");
             return;
         }
         ReportSettings settings = Context.Guild.LoadFromFile<ReportSettings>();
         if (settings.requiredRole == null) ReplyAsync("Reporting is already set to not need a role");
-        else {
+        else
+        {
             settings.requiredRole = null;
             settings.SaveToFile();
             ReplyAsync($"Reporting now doesn't require a role");

@@ -14,11 +14,14 @@ using Discord;
 using MongoDB;
 using System;
 
-namespace BotCatMaxy {
-    public class MainClass {
+namespace BotCatMaxy
+{
+    public class MainClass
+    {
         private static DiscordSocketClient _client;
         public static MongoClient dbClient;
-        public static async Task Main(string[] args) {
+        public static async Task Main(string[] args)
+        {
             var logConfig = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
@@ -30,7 +33,8 @@ namespace BotCatMaxy {
 #endif
             Utilities.logger = logConfig.CreateLogger();
             await new LogMessage(LogSeverity.Info, "Log", $"Program log logging at {AppDomain.CurrentDomain.BaseDirectory}").Log();
-            var config = new DiscordSocketConfig {
+            var config = new DiscordSocketConfig
+            {
                 AlwaysDownloadUsers = true,
                 ConnectionTimeout = 6000,
                 MessageCacheSize = 120,
@@ -39,7 +43,8 @@ namespace BotCatMaxy {
             };
 
             //Maps all the classes
-            try {
+            try
+            {
                 BsonClassMap.RegisterClassMap<List<Infraction>>();
                 BsonClassMap.RegisterClassMap<ModerationSettings>();
                 BsonClassMap.RegisterClassMap<UserInfractions>();
@@ -47,7 +52,9 @@ namespace BotCatMaxy {
                 BsonClassMap.RegisterClassMap<Infraction>();
                 BsonClassMap.RegisterClassMap<TempAct>();
                 BsonClassMap.RegisterClassMap<BadWord>();
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 await new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e).Log();
             }
 
@@ -56,11 +63,14 @@ namespace BotCatMaxy {
             _client.Log += Utilities.Log;
             _client.Ready += Ready;
 
-            if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary") {
+            if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary")
+            {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
                 dbClient = new MongoClient(HiddenInfo.debugDB);
                 BotInfo.debug = true;
-            } else {
+            }
+            else
+            {
 #if DEBUG
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
 #else
@@ -76,26 +86,33 @@ namespace BotCatMaxy {
             const string BuildVersionMetadataPrefix = "+build";
             DateTime buildDate = new DateTime();
             var attribute = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-            if (attribute?.InformationalVersion != null) {
+            if (attribute?.InformationalVersion != null)
+            {
                 var value = attribute.InformationalVersion;
                 var index = value.IndexOf(BuildVersionMetadataPrefix);
-                if (index > 0) {
+                if (index > 0)
+                {
                     value = value.Substring(index + BuildVersionMetadataPrefix.Length);
-                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result)) {
+                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var result))
+                    {
                         buildDate = result.ToUniversalTime();
                     }
                 }
                 //}
                 StatusManager statusManager;
-                if (args.Length > 0 && args[0].NotEmpty()) {
+                if (args.Length > 0 && args[0].NotEmpty())
+                {
                     await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
                     statusManager = new StatusManager(_client, args[0]);
-                } else {
+                }
+                else
+                {
                     await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
                     statusManager = new StatusManager(_client, "unknown");
                 }
 
-                var serviceConfig = new CommandServiceConfig {
+                var serviceConfig = new CommandServiceConfig
+                {
                     DefaultRunMode = RunMode.Async,
                     IgnoreExtraArgs = true
                 };
@@ -115,7 +132,8 @@ namespace BotCatMaxy {
         }
 
 
-        private static async Task Ready() {
+        private static async Task Ready()
+        {
             _client.Ready -= Ready;
             BotInfo.user = _client.CurrentUser;
             SocketGuild guild = _client.GetGuild(285529027383525376);
@@ -125,7 +143,8 @@ namespace BotCatMaxy {
         }
     }
 
-    public static class BotInfo {
+    public static class BotInfo
+    {
         public static SocketTextChannel logChannel;
         public static bool debug = false;
         public static ISelfUser user;

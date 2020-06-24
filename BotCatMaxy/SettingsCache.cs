@@ -9,22 +9,27 @@ using System.Linq;
 using Discord.Rest;
 using System.Threading.Tasks;
 
-namespace BotCatMaxy.Cache {
-    public class SettingsCache {
+namespace BotCatMaxy.Cache
+{
+    public class SettingsCache
+    {
         public static HashSet<GuildSettings> guildSettings = new HashSet<GuildSettings>();
         private DiscordSocketClient client;
-        public SettingsCache(DiscordSocketClient client) {
+        public SettingsCache(DiscordSocketClient client)
+        {
             this.client = client;
             this.client.LeftGuild += RemoveGuild;
         }
 
 
-        public async Task RemoveGuild(SocketGuild guild) {
+        public async Task RemoveGuild(SocketGuild guild)
+        {
             guildSettings.RemoveWhere(g => g.ID == guild.Id);
         }
     }
 
-    public class GuildSettings {
+    public class GuildSettings
+    {
         private readonly IGuild guild;
         public ulong ID => guild.Id;
         public ModerationSettings moderationSettings;
@@ -33,7 +38,8 @@ namespace BotCatMaxy.Cache {
         public BadWordList badWordList;
         public ReportSettings reportSettings;
 
-        public GuildSettings(IGuild guild) {
+        public GuildSettings(IGuild guild)
+        {
             this.guild = guild;
         }
     }

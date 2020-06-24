@@ -15,8 +15,10 @@ using BotCatMaxy;
 using Discord;
 using System;
 
-namespace BotCatMaxy {
-    public class CommandHandler {
+namespace BotCatMaxy
+{
+    public class CommandHandler
+    {
         /*public readonly HashSet<string> ignoredCMDErrors = new HashSet<string>() { "User not found.",
                             "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.",
                             "User requires guild permission BanMembers.", "This command now only works in the bot's DMs", "Failed to parse Int32.",
@@ -28,7 +30,8 @@ namespace BotCatMaxy {
         public readonly IServiceProvider services;
         //private SwearFilter filter;
 
-        public CommandHandler(DiscordSocketClient client, CommandService commands) {
+        public CommandHandler(DiscordSocketClient client, CommandService commands)
+        {
             _commands = commands;
             _client = client;
             services = new ServiceCollection()
@@ -38,8 +41,10 @@ namespace BotCatMaxy {
             _ = InstallCommandsAsync();
         }
 
-        public async Task InstallCommandsAsync() {
-            try {
+        public async Task InstallCommandsAsync()
+        {
+            try
+            {
                 // Hook the MessageReceived event into our command handler
                 _client.MessageReceived += HandleCommandAsync;
 
@@ -56,12 +61,15 @@ namespace BotCatMaxy {
                 await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
                                                 services: services);
                 await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 await new LogMessage(LogSeverity.Critical, "CMDs", "Commands set up failed", e).Log();
             }
         }
 
-        private async Task HandleCommandAsync(SocketMessage messageParam) {
+        private async Task HandleCommandAsync(SocketMessage messageParam)
+        {
             // Don't process the command if it was a system message
             SocketUserMessage message = messageParam as SocketUserMessage;
             if (message == null)
@@ -92,14 +100,20 @@ namespace BotCatMaxy {
                 services: services);
         }
 
-        private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result) {
-            if (!result.IsSuccess && result.Error != CommandError.UnknownCommand) {
+        private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
+        {
+            if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
+            {
                 await context.Channel.SendMessageAsync(result.ErrorReason);
-                if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful)) {
+                if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful))
+                {
                     string message = $"Command !{command.Value?.Name} in";
-                    if (context.Guild != null) {
+                    if (context.Guild != null)
+                    {
                         message += $" {context.Guild?.Name} guild";
-                    } else {
+                    }
+                    else
+                    {
                         message += $" {context.User.Username}'s ({context.User.Id}) DMs";
                     }
                     message += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
@@ -110,20 +124,24 @@ namespace BotCatMaxy {
     }
 }
 
-namespace Discord.Commands {
-    public class UserRef {
+namespace Discord.Commands
+{
+    public class UserRef
+    {
         public readonly SocketGuildUser gUser;
         public readonly SocketUser user;
         public readonly ulong ID;
 
-        public UserRef(SocketGuildUser gUser) {
+        public UserRef(SocketGuildUser gUser)
+        {
             Contract.Requires(gUser != null);
             this.gUser = gUser;
             user = gUser;
             ID = gUser.Id;
         }
 
-        public UserRef(SocketUser user) {
+        public UserRef(SocketUser user)
+        {
             Contract.Requires(user != null);
             this.user = user;
             ID = user.Id;
@@ -131,15 +149,18 @@ namespace Discord.Commands {
 
         public UserRef(ulong ID) => this.ID = ID;
 
-        public UserRef(UserRef userRef, SocketGuild guild) {
+        public UserRef(UserRef userRef, SocketGuild guild)
+        {
             user = userRef.user;
             ID = userRef.ID;
             gUser = guild.GetUser(ID);
         }
     }
 
-    public class UserRefTypeReader : TypeReader {
-        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
+    public class UserRefTypeReader : TypeReader
+    {
+        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
+        {
             IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
             SocketGuildUser gUserResult = null;
             SocketUser userResult = null;
@@ -149,7 +170,8 @@ namespace Discord.Commands {
                 guildUsers = await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false);
 
             //By Mention (1.0)
-            if (MentionUtils.TryParseUser(input, out var id)) {
+            if (MentionUtils.TryParseUser(input, out var id))
+            {
                 if (context.Guild != null)
                     gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
                 if (gUserResult != null)
@@ -163,7 +185,8 @@ namespace Discord.Commands {
             }
 
             //By Id (0.9)
-            if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id)) {
+            if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
+            {
                 if (context.Guild != null)
                     gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
                 if (gUserResult != null)
@@ -180,54 +203,70 @@ namespace Discord.Commands {
         }
     }
 
-    public class CanWarnAttribute : PreconditionAttribute {
-        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services) {
+    public class CanWarnAttribute : PreconditionAttribute
+    {
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        {
             //Makes sure it's in a server
-            if (context.User is SocketGuildUser gUser) {
+            if (context.User is SocketGuildUser gUser)
+            {
                 // If this command was executed by a user with the appropriate role, return a success
                 if (gUser.CanWarn())
                     return Task.FromResult(PreconditionResult.FromSuccess());
                 else
                     return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
-            } else
+            }
+            else
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
         }
     }
-    public class HasAdminAttribute : PreconditionAttribute {
-        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services) {
+    public class HasAdminAttribute : PreconditionAttribute
+    {
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        {
             //Makes sure it's in a server
-            if (context.User is SocketGuildUser gUser) {
+            if (context.User is SocketGuildUser gUser)
+            {
                 // If this command was executed by a user with administrator permission, return a success
                 if (gUser.HasAdmin())
                     return Task.FromResult(PreconditionResult.FromSuccess());
                 else
                     return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
-            } else
+            }
+            else
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
         }
     }
 
-    public class EmojiTypeReader : TypeReader {
-        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
+    public class EmojiTypeReader : TypeReader
+    {
+        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
+        {
             string regex = @"<(a?):(\w+):(\d+)>";
             Match match = Regex.Match(input, regex); //Check if it's custom discord emoji
-            if (match.Success) {
+            if (match.Success)
+            {
                 return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "This is a custom emoji not a normal one, if you beleive they should work on this command make an issue on the GitHub over at !help"));
             }
             Emoji emoji = new Emoji(input);
-            try {
+            try
+            {
                 await context.Message.AddReactionAsync(emoji);
                 await context.Message.RemoveReactionAsync(emoji, context.Client.CurrentUser);
-            } catch {
+            }
+            catch
+            {
                 return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "That is not a valid emoji"));
             }
             return await Task.FromResult(TypeReaderResult.FromSuccess(emoji));
         }
     }
 
-    public class RequireHierarchyAttribute : ParameterPreconditionAttribute {
+    public class RequireHierarchyAttribute : ParameterPreconditionAttribute
+    {
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context,
-            ParameterInfo parameter, object value, IServiceProvider services) {
+            ParameterInfo parameter, object value, IServiceProvider services)
+        {
             // Hierarchy is only available under the socket variant of the user.
             if (!(context.User is SocketGuildUser guildUser))
                 return PreconditionResult.FromError("This command cannot be used outside of a guild");
@@ -265,21 +304,26 @@ namespace Discord.Commands {
         }
     }*/
 
-    public class BetterUserTypeReader : UserTypeReader<IUser> {
+    public class BetterUserTypeReader : UserTypeReader<IUser>
+    {
         public override async Task<TypeReaderResult> ReadAsync(
             ICommandContext context,
             string input,
-            IServiceProvider services) {
+            IServiceProvider services)
+        {
             var result = await base.ReadAsync(context, input, services);
             if (result.IsSuccess)
                 return result;
-            else {
+            else
+            {
                 DiscordRestClient restClient = (context.Client as DiscordSocketClient).Rest;
-                if (MentionUtils.TryParseUser(input, out var id)) {
+                if (MentionUtils.TryParseUser(input, out var id))
+                {
                     RestUser user = await restClient.GetUserAsync(id);
                     if (user != null) return TypeReaderResult.FromSuccess(user);
                 }
-                if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id)) {
+                if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
+                {
                     RestUser user = await restClient.GetUserAsync(id);
                     if (user != null) return TypeReaderResult.FromSuccess(user);
                 }

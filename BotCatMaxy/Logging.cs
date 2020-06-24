@@ -12,17 +12,21 @@ using Humanizer;
 using Discord;
 using System;
 
-namespace BotCatMaxy {
-    public class Logging {
+namespace BotCatMaxy
+{
+    public class Logging
+    {
         public static FixedSizedQueue<ulong> deletedMessagesCache = new FixedSizedQueue<ulong>(10);
         private readonly DiscordSocketClient _client;
-        public Logging(DiscordSocketClient client) {
+        public Logging(DiscordSocketClient client)
+        {
             _client = client;
 
             _ = SetUpAsync();
         }
 
-        public async Task SetUpAsync() {
+        public async Task SetUpAsync()
+        {
             _client.MessageDeleted += HandleDelete;
             _client.MessageUpdated += LogEdit;
             _client.MessageReceived += HandleNew;
@@ -31,15 +35,19 @@ namespace BotCatMaxy {
         }
 
         public async Task HandleNew(IMessage message) => await Task.Run(() => LogNew(message)).ConfigureAwait(false);
-        public async Task LogNew(IMessage message) {
-            if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0) {
+        public async Task LogNew(IMessage message)
+        {
+            if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
+            {
                 SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
                 LogMessage("Role ping", message, guild, true);
             }
         }
 
-        async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel) {
-            try {
+        async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        {
+            try
+            {
                 //Just makes sure that it's not logged when it shouldn't be
                 if (!(channel is SocketGuildChannel)) return;
                 SocketGuild guild = (channel as SocketGuildChannel).Guild;
@@ -52,17 +60,23 @@ namespace BotCatMaxy {
                 if (logChannel == null) return;
 
                 var embed = new EmbedBuilder();
-                if (string.IsNullOrEmpty(oldMessage?.Content)) {
+                if (string.IsNullOrEmpty(oldMessage?.Content))
+                {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
                     "`This message had no text or was null`");
-                } else {
+                }
+                else
+                {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
                     oldMessage.Content.Truncate(1020));
                 }
-                if (string.IsNullOrEmpty(newMessage.Content)) {
+                if (string.IsNullOrEmpty(newMessage.Content))
+                {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
                     "`This message had no text or is null`");
-                } else {
+                }
+                else
+                {
                     embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
                     newMessage.Content.Truncate(1020));
                 }
@@ -74,47 +88,60 @@ namespace BotCatMaxy {
                     .WithCurrentTimestamp();
 
                 await logChannel.SendMessageAsync(embed: embed.Build());
-            } catch (Exception exception) {
+            }
+            catch (Exception exception)
+            {
                 await new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
             }
         }
 
-        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null) {
-            try {
+        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null)
+        {
+            try
+            {
                 if (message == null) return null;
                 if (deletedMessagesCache.Any(delMsg => delMsg == message.Id)) return null;
 
-                if (guild == null) {
+                if (guild == null)
+                {
                     guild = Utilities.GetGuild(message.Channel as SocketGuildChannel);
-                    if (guild == null) {
+                    if (guild == null)
+                    {
                         return null;
                     }
                 }
 
                 LogSettings settings = guild?.LoadFromFile<LogSettings>();
                 SocketGuildChannel gChannel = guild?.GetChannel(settings?.logChannel ?? 0);
-                if (settings == null || gChannel == null || !settings.logDeletes) {
+                if (settings == null || gChannel == null || !settings.logDeletes)
+                {
                     return null;
                 }
                 SocketTextChannel logChannel = gChannel as SocketTextChannel;
 
                 var embed = new EmbedBuilder();
                 SocketTextChannel channel = message.Channel as SocketTextChannel;
-                if (message.Content == null || message.Content == "") {
+                if (message.Content == null || message.Content == "")
+                {
                     embed.AddField(reason + " in #" + message.Channel.Name,
                     "`This message had no text`", true);
-                } else {
+                }
+                else
+                {
                     embed.AddField(reason + " in #" + message.Channel.Name,
                     message.Content.Truncate(1020), true);
                 }
 
-                if (addJumpLink) {
+                if (addJumpLink)
+                {
                     embed.AddField("Message Link", "[Click Here](" + message.GetJumpUrl() + ")", true);
                 }
 
                 string links = "";
-                if (message.Attachments.NotEmpty()) {
-                    foreach (IAttachment attachment in message.Attachments) {
+                if (message.Attachments.NotEmpty())
+                {
+                    foreach (IAttachment attachment in message.Attachments)
+                    {
                         links += " " + attachment.ProxyUrl;
                     }
                 }
@@ -126,14 +153,18 @@ namespace BotCatMaxy {
                 string link = logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
                 if (!links.IsNullOrEmpty()) logChannel.SendMessageAsync("The message above had these attachments:" + links);
                 return link;
-            } catch (Exception exception) {
+            }
+            catch (Exception exception)
+            {
                 _ = new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
             }
             return null;
         }
 
-        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink) {
-            try {
+        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink)
+        {
+            try
+            {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
                 if (channel == null) return null;
@@ -141,12 +172,14 @@ namespace BotCatMaxy {
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warner);
                 IGuildUser gWarnee = guild.GetUserAsync(warneeID).Result;
-                if (gWarnee != null) {
+                if (gWarnee != null)
+                {
                     if (gWarnee.Nickname.IsNullOrEmpty())
                         embed.AddField($"{gWarnee.Username} ({gWarnee.Id}) has been warned", "For " + reason);
                     else
                         embed.AddField($"{gWarnee.Nickname} aka {gWarnee.Username} ({warneeID}) has been warned", "For " + reason);
-                } else
+                }
+                else
                     embed.AddField($"({warneeID}) has been warned", "For " + reason);
 
                 if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
@@ -154,14 +187,18 @@ namespace BotCatMaxy {
                 embed.WithCurrentTimestamp();
 
                 return await channel.SendMessageAsync(embed: embed.Build());
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 await new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return null;
         }
 
-        public static void LogTempAct(IGuild guild, IUser warner, UserRef subject, string actType, string reason, string warnLink, TimeSpan length) {
-            try {
+        public static void LogTempAct(IGuild guild, IUser warner, UserRef subject, string actType, string reason, string warnLink, TimeSpan length)
+        {
+            try
+            {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
                 if (channel == null) return;
@@ -178,14 +215,18 @@ namespace BotCatMaxy {
 
                 channel.SendMessageAsync(embed: embed.Build());
                 return;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return;
         }
 
-        public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason, TimeSpan length) {
-            try {
+        public static void LogEndTempAct(IGuild guild, IUser warnee, string actType, string reason, TimeSpan length)
+        {
+            try
+            {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
                 if (channel == null)
@@ -203,14 +244,18 @@ namespace BotCatMaxy {
 
                 channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
                 return;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return;
         }
 
-        public static void LogManualEndTempAct(IGuild guild, IUser warnee, string actType, DateTime dateHappened) {
-            try {
+        public static void LogManualEndTempAct(IGuild guild, IUser warnee, string actType, DateTime dateHappened)
+        {
+            try
+            {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
                 if (channel == null)
@@ -228,14 +273,18 @@ namespace BotCatMaxy {
 
                 channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
                 return;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return;
         }
 
-        public static void LogManualEndTempAct(IGuild guild, ulong userID, string actType, DateTime dateHappened) {
-            try {
+        public static void LogManualEndTempAct(IGuild guild, ulong userID, string actType, DateTime dateHappened)
+        {
+            try
+            {
                 LogSettings settings = guild.LoadFromFile<LogSettings>();
                 ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
                 if (channel == null)
@@ -249,21 +298,28 @@ namespace BotCatMaxy {
 
                 channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
                 return;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return;
         }
 
-        private async Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
+        private async Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        {
             _ = LogDelete(message, channel);
         }
 
-        private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) {
-            try {
+        private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        {
+            try
+            {
                 if (!(channel is SocketGuildChannel)) return;
                 LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
-            } catch (Exception exception) {
+            }
+            catch (Exception exception)
+            {
                 await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
             }
             //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));

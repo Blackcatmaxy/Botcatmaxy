@@ -18,10 +18,13 @@ using System.Diagnostics;
 using Humanizer;
 using Discord.Rest;
 
-namespace BotCatMaxy {
-    public class MiscCommands : ModuleBase<SocketCommandContext> {
+namespace BotCatMaxy
+{
+    public class MiscCommands : ModuleBase<SocketCommandContext>
+    {
         [Command("help"), Alias("botinfo", "commands")]
-        public async Task Help() {
+        public async Task Help()
+        {
             var embed = new EmbedBuilder();
             embed.AddField("To see commands", "[Click here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
@@ -31,7 +34,8 @@ namespace BotCatMaxy {
         [Command("checkperms")]
         [RequireUserPermission(GuildPermission.BanMembers, Group = "Permission")]
         [RequireOwner(Group = "Permission")]
-        public async Task CheckPerms() {
+        public async Task CheckPerms()
+        {
             GuildPermissions perms = Context.Guild.CurrentUser.GuildPermissions;
             var embed = new EmbedBuilder();
             embed.AddField("Manage roles", perms.ManageRoles, true);
@@ -47,14 +51,16 @@ namespace BotCatMaxy {
             await ReplyAsync($"Your message had {Context.Message.Content.Count(c => c == '\n')}");
         }*/
 
-        public void ErrorTest() {
+        public void ErrorTest()
+        {
             throw new InvalidOperationException();
         }
 
         [RequireOwner]
         [Command("stats")]
         [Alias("statistics")]
-        public async Task Statistics() {
+        public async Task Statistics()
+        {
             var embed = new EmbedBuilder();
             embed.WithTitle("Statistics");
             embed.AddField($"Part of", $"{Context.Client.Guilds.Count} discord guilds", true);
@@ -63,14 +69,18 @@ namespace BotCatMaxy {
             ulong members = 0;
             uint tempBannedPeople = 0;
             uint tempMutedPeople = 0;
-            foreach (SocketGuild guild in Context.Client.Guilds) {
+            foreach (SocketGuild guild in Context.Client.Guilds)
+            {
                 members += (ulong)guild.MemberCount;
                 var collection = guild.GetInfractionsCollection(false);
 
-                if (collection != null) {
+                if (collection != null)
+                {
                     using var cursor = collection.Find(new BsonDocument()).ToCursor();
-                    foreach (var doc in cursor.ToList()) {
-                        foreach (Infraction infraction in BsonSerializer.Deserialize<UserInfractions>(doc).infractions) {
+                    foreach (var doc in cursor.ToList())
+                    {
+                        foreach (Infraction infraction in BsonSerializer.Deserialize<UserInfractions>(doc).infractions)
+                        {
                             if (DateTime.UtcNow - infraction.time < TimeSpan.FromHours(24))
                                 infractions24Hours++;
                             totalInfractons++;
@@ -91,14 +101,16 @@ namespace BotCatMaxy {
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        public async Task SetSlowMode(int time) {
+        public async Task SetSlowMode(int time)
+        {
             (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
             await ReplyAsync($"Set channel slowmode to {time} seconds");
         }
 
         [Command("tempactexectime")]
         [RequireOwner]
-        public async Task DisplayTempActionTimes() {
+        public async Task DisplayTempActionTimes()
+        {
             var embed = new EmbedBuilder();
             embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(TempActions.cachedInfo.lastCheck).Humanize(2)} ago)");
             embed.AddField("Times", TempActions.cachedInfo.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
@@ -107,39 +119,50 @@ namespace BotCatMaxy {
 
         [Command("Checktempacts")]
         [RequireOwner]
-        public async Task ActSanityCheck() {
+        public async Task ActSanityCheck()
+        {
             List<TypedTempAct> tempActsToEnd = new List<TypedTempAct>();
             RequestOptions requestOptions = RequestOptions.Default;
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
-            foreach (SocketGuild sockGuild in Context.Client.Guilds) {
+            foreach (SocketGuild sockGuild in Context.Client.Guilds)
+            {
                 TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
-                if (actions != null) {
-                    if (!actions.tempBans.IsNullOrEmpty()) {
-                        foreach (TempAct tempBan in actions.tempBans) {
-                            if (DateTime.UtcNow >= tempBan.End) {
+                if (actions != null)
+                {
+                    if (!actions.tempBans.IsNullOrEmpty())
+                    {
+                        foreach (TempAct tempBan in actions.tempBans)
+                        {
+                            if (DateTime.UtcNow >= tempBan.End)
+                            {
                                 tempActsToEnd.Add(new TypedTempAct(tempBan, TempActs.TempBan));
                             }
                         }
                     }
 
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
-                    if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty()) {
-                        foreach (TempAct tempMute in actions.tempMutes) {
-                            if (DateTime.UtcNow >= tempMute.End) { //Normal mute end
+                    if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty())
+                    {
+                        foreach (TempAct tempMute in actions.tempMutes)
+                        {
+                            if (DateTime.UtcNow >= tempMute.End)
+                            { //Normal mute end
                                 tempActsToEnd.Add(new TypedTempAct(tempMute, TempActs.TempMute));
                             }
                         }
                     }
                 }
             }
-            if (tempActsToEnd.Count == 0) {
+            if (tempActsToEnd.Count == 0)
+            {
                 await ReplyAsync("No acts should've ended already");
                 return;
             }
 
             var embed = new EmbedBuilder();
             embed.Title = $"{tempActsToEnd.Count} tempacts should've ended (longest one ended ago is {TimeSpan.FromMilliseconds(tempActsToEnd.Select(tempAct => DateTime.UtcNow.Subtract(tempAct.End).TotalMilliseconds).Max()).Humanize(2)}";
-            foreach (TypedTempAct tempAct in tempActsToEnd) {
+            foreach (TypedTempAct tempAct in tempActsToEnd)
+            {
                 embed.AddField($"{tempAct.type} started on {tempAct.dateBanned.ToShortTimeString()} {tempAct.dateBanned.ToShortDateString()} for {tempAct.length.LimitedHumanize()}",
                     $"Should've ended {DateTime.UtcNow.Subtract(tempAct.End).LimitedHumanize()}");
             }
@@ -150,30 +173,37 @@ namespace BotCatMaxy {
 
         [Command("CheckCache")]
         [HasAdmin]
-        public async Task CheckCache() {
+        public async Task CheckCache()
+        {
             string modSettings;
             if (Context.Guild.GetFromCache<ModerationSettings>(out _, out _) != null)
                 modSettings = "In cache";
-            else {
-                if (Context.Guild.LoadFromFile<ModerationSettings>(false) != null) {
+            else
+            {
+                if (Context.Guild.LoadFromFile<ModerationSettings>(false) != null)
+                {
                     if (Context.Guild.GetFromCache<ModerationSettings>(out _, out _) != null)
                         modSettings = "Loaded into cache";
                     else
                         modSettings = "Cache failed";
-                } else
+                }
+                else
                     modSettings = "Not set";
             }
 
             string logSettings;
             if (Context.Guild.GetFromCache<LogSettings>(out _, out _) != null)
                 logSettings = "In cache";
-            else {
-                if (Context.Guild.LoadFromFile<LogSettings>(false) != null) {
+            else
+            {
+                if (Context.Guild.LoadFromFile<LogSettings>(false) != null)
+                {
                     if (Context.Guild.GetFromCache<LogSettings>(out _, out _) != null)
                         logSettings = "Loaded into cache";
                     else
                         logSettings = "Cache failed";
-                } else
+                }
+                else
                     logSettings = "Not set";
             }
 
@@ -186,7 +216,8 @@ namespace BotCatMaxy {
 
         [Command("verboseactcheck")]
         [RequireOwner]
-        public async Task VerboseActCheck() {
+        public async Task VerboseActCheck()
+        {
             await TempActions.CheckTempActs(Context.Client, true);
             await ReplyAsync("Checked temp acts. Info is in console");
         }
