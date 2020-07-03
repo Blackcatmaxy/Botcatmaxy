@@ -158,7 +158,8 @@ namespace BotCatMaxy
                                 }
                             }
 
-                            _ = (currentInfo.checkedMutes != actions.tempMutes.Count).AssertAsync($"Checked incorrect number tempmutes in guild {sockGuild} owned by {sockGuild.Owner}");
+                            //NOTE: Assertions fail if NOT true
+                            _ = (currentInfo.checkedMutes == actions.tempMutes.Count).AssertAsync($"Checked incorrect number tempmutes in guild {sockGuild} owned by {sockGuild.Owner}");
 
                             if (!editedMutes.All(actions.tempMutes.Equals))
                             {
