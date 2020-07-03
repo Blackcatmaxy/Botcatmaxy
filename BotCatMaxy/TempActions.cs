@@ -48,9 +48,9 @@ namespace BotCatMaxy
             try
             {
                 currentInfo.checkedGuilds = 0;
-                currentInfo.checkedMutes = 0;
                 foreach (SocketGuild sockGuild in client.Guilds)
                 {
+                    currentInfo.checkedMutes = 0;
                     if (currentInfo.checkedGuilds > client.Guilds.Count)
                     {
                         await new LogMessage(LogSeverity.Error, "TempAct", "Check went past all guilds but has been stopped. This doesn't seem physically possible.").Log();
@@ -158,7 +158,7 @@ namespace BotCatMaxy
                                 }
                             }
 
-                            _ = (currentInfo.checkedMutes == actions.tempMutes.Count || currentInfo.checkedMutes == uint.MaxValue).AssertAsync("Didn't check all tempmutes");
+                            _ = (currentInfo.checkedMutes != actions.tempMutes.Count).AssertAsync($"Checked incorrect number tempmutes in guild {sockGuild} owned by {sockGuild.Owner}");
 
                             if (!editedMutes.All(actions.tempMutes.Equals))
                             {
