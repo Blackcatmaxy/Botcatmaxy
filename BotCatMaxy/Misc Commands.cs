@@ -15,9 +15,11 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using System.Diagnostics;
+using Discord.Addons.Preconditions;
 using Humanizer;
 using Discord.Rest;
 using Discord.Addons.Preconditions;
+using BotCatMaxy.Cache;
 
 namespace BotCatMaxy
 {
@@ -227,6 +229,20 @@ namespace BotCatMaxy
         public async Task InfoCommandAsync()
         {
             await ReplyAsync($"Botcatmaxy is a public, open-source bot written and maintained by Blackcatmaxy with info at https://github.com/Blackcatmaxy/Botcatmaxy/ (use '{Context.Client.CurrentUser.Mention} help' for direct link to commands wiki)");
+        }
+
+        [Command("resetcache")]
+        [HasAdmin]
+        public async Task ResetCacheCommad()
+        {
+            GuildSettings guild = SettingsCache.guildSettings.FirstOrDefault(g => g.ID == Context.Guild.Id);
+            if (guild == null)
+            {
+                await ReplyAsync("No settings loaded to clear");
+                return;
+            }
+            SettingsCache.guildSettings.Remove(guild);
+            await ReplyAsync("Cache cleared for this server's data");
         }
     }
 }
