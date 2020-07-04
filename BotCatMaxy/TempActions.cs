@@ -53,7 +53,7 @@ namespace BotCatMaxy
                     currentInfo.checkedMutes = 0;
                     if (currentInfo.checkedGuilds > client.Guilds.Count)
                     {
-                        await new LogMessage(LogSeverity.Error, "TempAct", "Check went past all guilds but has been stopped. This doesn't seem physically possible.").Log();
+                        await new LogMessage(LogSeverity.Error, "TempAct", $"Check went past all guilds (at #{currentInfo.checkedGuilds}) but has been stopped. This doesn't seem physically possible.").Log();
                         return;
                     }
                     RestGuild restGuild = await client.Rest.SuperGetRestGuild(sockGuild.Id);
@@ -106,7 +106,7 @@ namespace BotCatMaxy
                             }
 
                             //if all tempbans DON'T equal all edited tempbans (basically if there was a change
-                            if (!currentInfo.editedBans.All(actions.tempBans.Equals))
+                            if (currentInfo.editedBans.Count != actions.tempBans.Count)
                             {
                                 if (debug) Console.Write($"{actions.tempBans.Count - currentInfo.editedBans.Count} tempbans are over, ");
                                 needSave = true;
@@ -131,6 +131,7 @@ namespace BotCatMaxy
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
                                         Logging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.dateBanned);
+                                        _ = (!editedMutes.Contains(tempMute)).AssertAsync("Tempmute not removed?!");
                                     }
                                     else if (DateTime.UtcNow >= tempMute.dateBanned.Add(tempMute.length))
                                     { //Normal mute end
@@ -159,22 +160,23 @@ namespace BotCatMaxy
                             }
 
                             //NOTE: Assertions fail if NOT true
-                            _ = (currentInfo.checkedMutes == actions.tempMutes.Count).AssertAsync($"Checked incorrect number tempmutes in guild {sockGuild} owned by {sockGuild.Owner}");
+                            _ = (currentInfo.checkedMutes == actions.tempMutes.Count).AssertAsync($"Checked incorrect number tempmutes ({currentInfo.checkedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
 
-                            if (!editedMutes.All(actions.tempMutes.Equals))
+                            if (editedMutes.Count != actions.tempMutes.Count)
                             {
                                 if (debug) Console.Write($"{actions.tempMutes.Count - editedMutes.Count}/{actions.tempMutes.Count} tempmutes are over");
                                 actions.tempMutes = editedMutes;
                                 needSave = true;
                             }
-                            else if (debug) Console.Write($"no tempmute changes");
+                            else if (debug) Console.Write($"none of {actions.tempMutes.Count} tempmutes over");
                         }
                         else if (debug) Console.Write("no tempmutes to check or no settings");
                         if (needSave) actions.SaveToFile();
                     }
+                    else if (debug) Console.Write("no actions to check");
                 }
                 if (debug) Console.Write("\n");
-                _ = (currentInfo.checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempbans?");
+                _ = (currentInfo.checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempacts?");
 
             }
             catch (Exception e)
