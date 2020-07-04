@@ -244,5 +244,13 @@ namespace BotCatMaxy
             SettingsCache.guildSettings.Remove(guild);
             await ReplyAsync("Cache cleared for this server's data");
         }
+
+        [Command("globalresetcache")]
+        [RequireOwner]
+        public async Task ResetGlobalCacheCommad()
+        {
+            SettingsCache.guildSettings = new HashSet<GuildSettings>();
+            await ReplyAsync("All data cleared from cache");
+        }
     }
 }
