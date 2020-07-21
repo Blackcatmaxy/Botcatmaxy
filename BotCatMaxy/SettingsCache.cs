@@ -8,6 +8,7 @@ using Discord;
 using System.Linq;
 using Discord.Rest;
 using System.Threading.Tasks;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy.Cache
 {

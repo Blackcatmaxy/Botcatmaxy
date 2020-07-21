@@ -14,8 +14,10 @@ using System.Linq;
 using BotCatMaxy;
 using Discord;
 using System;
+using BotCatMaxy.Models;
+using BotCatMaxy.TypeReaders;
 
-namespace BotCatMaxy
+namespace BotCatMaxy.Startup
 {
     public class CommandHandler
     {
@@ -28,7 +30,6 @@ namespace BotCatMaxy
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;
-        //private SwearFilter filter;
 
         public CommandHandler(DiscordSocketClient client, CommandService commands)
         {
@@ -126,83 +127,6 @@ namespace BotCatMaxy
 
 namespace Discord.Commands
 {
-    public class UserRef
-    {
-        public readonly SocketGuildUser gUser;
-        public readonly SocketUser user;
-        public readonly ulong ID;
-
-        public UserRef(SocketGuildUser gUser)
-        {
-            Contract.Requires(gUser != null);
-            this.gUser = gUser;
-            user = gUser;
-            ID = gUser.Id;
-        }
-
-        public UserRef(SocketUser user)
-        {
-            Contract.Requires(user != null);
-            this.user = user;
-            ID = user.Id;
-        }
-
-        public UserRef(ulong ID) => this.ID = ID;
-
-        public UserRef(UserRef userRef, SocketGuild guild)
-        {
-            user = userRef.user;
-            ID = userRef.ID;
-            gUser = guild.GetUser(ID);
-        }
-    }
-
-    public class UserRefTypeReader : TypeReader
-    {
-        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
-        {
-            IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
-            SocketGuildUser gUserResult = null;
-            SocketUser userResult = null;
-            ulong? IDResult = null;
-
-            if (context.Guild != null)
-                guildUsers = await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false);
-
-            //By Mention (1.0)
-            if (MentionUtils.TryParseUser(input, out var id))
-            {
-                if (context.Guild != null)
-                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
-                if (gUserResult != null)
-                    return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
-                else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser;
-                if (userResult != null)
-                    return TypeReaderResult.FromSuccess(new UserRef(userResult));
-                else
-                    return TypeReaderResult.FromSuccess(new UserRef(id));
-            }
-
-            //By Id (0.9)
-            if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
-            {
-                if (context.Guild != null)
-                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
-                if (gUserResult != null)
-                    return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
-                else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser;
-                if (userResult != null)
-                    return TypeReaderResult.FromSuccess(new UserRef(userResult));
-                else
-                    return TypeReaderResult.FromSuccess(new UserRef(id));
-            }
-
-            return TypeReaderResult.FromError(CommandError.ObjectNotFound, "User not found.");
-        }
-    }
-
     public class CanWarnAttribute : PreconditionAttribute
     {
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
@@ -238,29 +162,7 @@ namespace Discord.Commands
         }
     }
 
-    public class EmojiTypeReader : TypeReader
-    {
-        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
-        {
-            string regex = @"<(a?):(\w+):(\d+)>";
-            Match match = Regex.Match(input, regex); //Check if it's custom discord emoji
-            if (match.Success)
-            {
-                return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "This is a custom emoji not a normal one, if you beleive they should work on this command make an issue on the GitHub over at !help"));
-            }
-            Emoji emoji = new Emoji(input);
-            try
-            {
-                await context.Message.AddReactionAsync(emoji);
-                await context.Message.RemoveReactionAsync(emoji, context.Client.CurrentUser);
-            }
-            catch
-            {
-                return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "That is not a valid emoji"));
-            }
-            return await Task.FromResult(TypeReaderResult.FromSuccess(emoji));
-        }
-    }
+
 
     public class RequireHierarchyAttribute : ParameterPreconditionAttribute
     {

@@ -11,6 +11,7 @@ using Humanizer;
 using Discord;
 using System;
 using System.Security.Cryptography;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy.Moderation
 {

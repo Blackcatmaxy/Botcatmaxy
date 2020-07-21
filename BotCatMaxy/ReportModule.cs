@@ -8,6 +8,7 @@ using Discord;
 using System;
 using Humanizer;
 using BotCatMaxy;
+using BotCatMaxy.Models;
 
 public class ReportModule : InteractiveBase<SocketCommandContext>
 {

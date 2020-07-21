@@ -20,11 +20,14 @@ using Humanizer;
 using Discord.Rest;
 using Discord.Addons.Preconditions;
 using BotCatMaxy.Cache;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {
     public class MiscCommands : ModuleBase<SocketCommandContext>
     {
+        public object TempActs { get; private set; }
+
         [Command("help"), Alias("botinfo", "commands")]
         public async Task Help()
         {
@@ -138,7 +141,7 @@ namespace BotCatMaxy
                         {
                             if (DateTime.UtcNow >= tempBan.End)
                             {
-                                tempActsToEnd.Add(new TypedTempAct(tempBan, TempActs.TempBan));
+                                tempActsToEnd.Add(new TypedTempAct(tempBan, TempActType.TempBan));
                             }
                         }
                     }
@@ -150,7 +153,7 @@ namespace BotCatMaxy
                         {
                             if (DateTime.UtcNow >= tempMute.End)
                             { //Normal mute end
-                                tempActsToEnd.Add(new TypedTempAct(tempMute, TempActs.TempMute));
+                                tempActsToEnd.Add(new TypedTempAct(tempMute, TempActType.TempMute));
                             }
                         }
                     }

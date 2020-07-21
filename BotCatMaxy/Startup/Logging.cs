@@ -11,6 +11,7 @@ using BotCatMaxy;
 using Humanizer;
 using Discord;
 using System;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {

@@ -13,6 +13,8 @@ using Serilog;
 using Discord;
 using MongoDB;
 using System;
+using BotCatMaxy.Models;
+using BotCatMaxy.Startup;
 
 namespace BotCatMaxy
 {
@@ -43,20 +45,7 @@ namespace BotCatMaxy
             };
 
             //Maps all the classes
-            try
-            {
-                BsonClassMap.RegisterClassMap<List<Infraction>>();
-                BsonClassMap.RegisterClassMap<ModerationSettings>();
-                BsonClassMap.RegisterClassMap<UserInfractions>();
-                BsonClassMap.RegisterClassMap<LogSettings>();
-                BsonClassMap.RegisterClassMap<Infraction>();
-                BsonClassMap.RegisterClassMap<TempAct>();
-                BsonClassMap.RegisterClassMap<BadWord>();
-            }
-            catch (Exception e)
-            {
-                await new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e).Log();
-            }
+            _ = DataManipulator.MapTypes();
 
             //Sets up the events
             _client = new DiscordSocketClient(config);
@@ -98,38 +87,39 @@ namespace BotCatMaxy
                         buildDate = result.ToUniversalTime();
                     }
                 }
-                //}
-                StatusManager statusManager;
-                if (args.Length > 0 && args[0].NotEmpty())
-                {
-                    await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
-                    statusManager = new StatusManager(_client, args[0]);
-                }
-                else
-                {
-                    await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
-                    statusManager = new StatusManager(_client, "unknown");
-                }
-
-                var serviceConfig = new CommandServiceConfig
-                {
-                    DefaultRunMode = RunMode.Async,
-                    IgnoreExtraArgs = true
-                };
-
-                CommandService service = new CommandService(serviceConfig);
-                CommandHandler handler = new CommandHandler(_client, service);
-
-                Logging logger = new Logging(_client);
-                TempActions tempActions = new TempActions(_client);
-                Filter filter = new Filter(_client);
-
-                //Debug info
-                await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
-
-                await Task.Delay(-1);
             }
+
+            StatusManager statusManager;
+            if (args.Length > 0 && args[0].NotEmpty())
+            {
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
+                statusManager = new StatusManager(_client, args[0]);
+            }
+            else
+            {
+                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
+                statusManager = new StatusManager(_client, "unknown");
+            }
+
+            var serviceConfig = new CommandServiceConfig
+            {
+                DefaultRunMode = RunMode.Async,
+                IgnoreExtraArgs = true
+            };
+
+            CommandService service = new CommandService(serviceConfig);
+            CommandHandler handler = new CommandHandler(_client, service);
+
+            Logging logger = new Logging(_client);
+            TempActions tempActions = new TempActions(_client);
+            Filter filter = new Filter(_client);
+
+            //Debug info
+            await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();
+
+            await Task.Delay(-1);
         }
+
 
 
         private static async Task Ready()

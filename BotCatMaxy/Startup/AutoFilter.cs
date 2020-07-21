@@ -16,6 +16,7 @@ using Discord.Addons.Interactive;
 using System.Dynamic;
 using System.Runtime.InteropServices.ComTypes;
 using Humanizer;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {

@@ -9,6 +9,7 @@ using Humanizer;
 using Discord;
 using System;
 using System.Threading;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {

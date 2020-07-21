@@ -13,6 +13,7 @@ using Humanizer;
 using Discord;
 using System;
 using System.Diagnostics;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {

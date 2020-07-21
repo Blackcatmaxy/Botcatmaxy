@@ -10,6 +10,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Humanizer;
 using Discord.Addons.Interactive;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {

@@ -16,6 +16,7 @@ using Discord;
 using System;
 using Discord.Net;
 using System.Collections.Concurrent;
+using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {
