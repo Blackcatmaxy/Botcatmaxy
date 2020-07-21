@@ -17,6 +17,7 @@ using System.Dynamic;
 using System.Runtime.InteropServices.ComTypes;
 using Humanizer;
 using BotCatMaxy.Models;
+using System.Reflection.Metadata;
 
 namespace BotCatMaxy
 {
@@ -168,6 +169,7 @@ namespace BotCatMaxy
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
                 List<BadWord> badWords = Guild.LoadFromFile<BadWordList>()?.badWords;
 
+                string msgContent = message.Content;
                 if (modSettings != null)
                 {
                     if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id))
@@ -199,13 +201,14 @@ namespace BotCatMaxy
                                 }
                     }
 
-                    //Checks for links
-                    if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()))
+                    const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
+                    MatchCollection linkMatches = Regex.Matches(message.Content, linkRegex, regexOptions);
+                    //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
+                    foreach (Match match in linkMatches)
                     {
-                        const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
-                        MatchCollection matches = Regex.Matches(message.Content, linkRegex, regexOptions);
-                        //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
-                        foreach (Match match in matches)
+                        msgContent = msgContent.Replace(match.Value, "", StringComparison.InvariantCultureIgnoreCase);
+                        //Checks for links
+                        if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()))
                         {
                             if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower())))
                             {
@@ -240,7 +243,7 @@ namespace BotCatMaxy
                     }
                 } //End of stuff from mod settings
 
-                BadWord detectedBadWord = message.Content.CheckForBadWords(badWords?.ToArray());
+                BadWord detectedBadWord = msgContent.CheckForBadWords(badWords?.ToArray());
                 if (detectedBadWord != null)
                 {
                     if (!string.IsNullOrEmpty(detectedBadWord.euphemism))
