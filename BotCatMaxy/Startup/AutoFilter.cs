@@ -206,6 +206,7 @@ namespace BotCatMaxy
                     //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
                     foreach (Match match in linkMatches)
                     {
+                        if (msgContent.Equals(match.Value, StringComparison.InvariantCultureIgnoreCase)) return;
                         msgContent = msgContent.Replace(match.Value, "", StringComparison.InvariantCultureIgnoreCase);
                         //Checks for links
                         if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()))
