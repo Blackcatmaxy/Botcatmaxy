@@ -416,7 +416,7 @@ namespace BotCatMaxy
             bool useExplicit = false;
             if (extension != null && extension.ToLower() == "explicit" || extension.ToLower() == "e")
             {
-                if ((Context.Message.Author as SocketGuildUser).CanWarn())
+                if (guild.GetUser(Context.Message.Author.Id).CanWarn())
                 {
                     useExplicit = true;
                 }
