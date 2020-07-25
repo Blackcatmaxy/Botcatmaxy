@@ -17,6 +17,7 @@ namespace BotCatMaxy.Models
         public HashSet<string> allowedLinks = new HashSet<string>();
         public List<ulong> allowedToLink = new List<ulong>();
         public HashSet<string> badUEmojis = new HashSet<string>();
+        public HashSet<string> badLinks = new HashSet<string>();
         public List<ulong> ableToBan = new List<ulong>();
         public List<ulong> anouncementChannels = new List<ulong>();
         public List<ulong> whitelistedForInvite = new List<ulong>();

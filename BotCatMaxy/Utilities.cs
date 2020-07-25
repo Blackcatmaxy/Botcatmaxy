@@ -43,21 +43,20 @@ namespace BotCatMaxy
 
         public static bool HasAdmin(this SocketGuildUser user)
         {
-            if (user?.Guild?.Owner == user)
+            if (user == null) return false;
+            if (user.Guild.Owner.Id == user.Id)
             {
                 return true;
             }
 
-            bool hasAdmin = false;
             foreach (SocketRole role in (user).Roles)
             {
                 if (role.Permissions.Administrator)
                 {
-                    hasAdmin = true;
+                    return true;
                 }
             }
-
-            return hasAdmin;
+            return false;
         }
 
         public static bool CanWarn(this SocketGuildUser user)
