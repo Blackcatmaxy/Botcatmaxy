@@ -144,6 +144,7 @@ namespace Discord.Commands
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
         }
     }
+
     public class HasAdminAttribute : PreconditionAttribute
     {
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
@@ -161,8 +162,6 @@ namespace Discord.Commands
                 return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
         }
     }
-
-
 
     public class RequireHierarchyAttribute : ParameterPreconditionAttribute
     {
@@ -195,16 +194,6 @@ namespace Discord.Commands
             return PreconditionResult.FromSuccess();
         }
     }
-    /*Commented out because causes error on startup
-    public class NullableByteTypeReader : TypeReader {
-        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services) {
-            if (input.Equals("null", StringComparison.InvariantCultureIgnoreCase) || input.Equals("none", StringComparison.InvariantCultureIgnoreCase))
-                return TypeReaderResult.FromSuccess(null);
-            if (byte.TryParse(input, out byte output))
-                return TypeReaderResult.FromSuccess(output);
-            return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Failed to parse UInt8");
-        }
-    }*/
 
     public class BetterUserTypeReader : UserTypeReader<IUser>
     {
