@@ -109,8 +109,16 @@ namespace BotCatMaxy
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(int time)
         {
-            (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
+            await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
             await ReplyAsync($"Set channel slowmode to {time} seconds");
+        }
+
+        [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        public async Task SetSlowMode(TimeSpan time)
+        {
+            await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time.Seconds);
+            await ReplyAsync($"Set channel slowmode to {time.LimitedHumanize()}");
         }
 
         [Command("tempactexectime")]
