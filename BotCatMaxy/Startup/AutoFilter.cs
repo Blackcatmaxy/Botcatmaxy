@@ -73,6 +73,7 @@ namespace BotCatMaxy
         {
             try
             {
+                if (!guild.GetUser(BotInfo.user.Id).GuildPermissions.KickMembers) return;
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
