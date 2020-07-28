@@ -243,13 +243,13 @@ namespace BotCatMaxy
                 {
                     return TimeSpan.FromHours(amount);
                 }
-                else if (s.ToLower().EndsWith("mi"))
+                else if (s.ToLower().EndsWith("m"))
                 {
                     return TimeSpan.FromMinutes(amount);
                 }
-                else if (s.ToLower().EndsWith("mo"))
+                else if (s.ToLower().EndsWith("s"))
                 {
-                    return TimeSpan.FromDays(amount * 30.4368);
+                    return TimeSpan.FromSeconds(amount);
                 }
                 else if (s.ToLower().EndsWith("y"))
                 {
