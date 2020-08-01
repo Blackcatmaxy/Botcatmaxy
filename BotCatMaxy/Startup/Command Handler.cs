@@ -50,7 +50,7 @@ namespace BotCatMaxy.Startup
                 _client.MessageReceived += HandleCommandAsync;
 
                 //Post Execution handling
-                _commands.Log += Utilities.Log;
+                _commands.Log += ExceptionLogging.Log;
                 _commands.CommandExecuted += CommandExecuted;
 
                 //Adds custom type readers

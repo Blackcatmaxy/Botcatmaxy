@@ -23,8 +23,6 @@ namespace BotCatMaxy
 {
     public static class Utilities
     {
-        public static ILogger logger;
-
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true)
         {
             if (guild == null)
@@ -124,50 +122,6 @@ namespace BotCatMaxy
             }
         }
 
-        public static async Task Log(this LogMessage message)
-        {
-            System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
-            string finalMessage = message.Source.PadRight(8) + message.Message;
-            switch (message.Severity)
-            {
-                case LogSeverity.Critical:
-                    if (message.Exception != null) logger.Fatal(message.Exception, finalMessage);
-                    else logger.Fatal(finalMessage);
-                    break;
-                case LogSeverity.Error:
-                    if (message.Exception != null) logger.Error(message.Exception, finalMessage);
-                    else logger.Error(finalMessage);
-                    break;
-                case LogSeverity.Warning:
-                    if (message.Exception != null) logger.Warning(message.Exception, finalMessage);
-                    else logger.Warning(finalMessage);
-                    break;
-                case LogSeverity.Info:
-                    logger.Information(finalMessage);
-                    break;
-                case LogSeverity.Verbose:
-                    logger.Verbose(finalMessage);
-                    break;
-                case LogSeverity.Debug:
-                    logger.Debug(finalMessage);
-                    break;
-            }
-            if (message.Severity <= LogSeverity.Error || (string.IsNullOrEmpty(message.Source) && string.IsNullOrEmpty(message.Message)))
-            { //If severity is Critical or Error
-                var errorEmbed = new EmbedBuilder()
-                    .WithAuthor(BotInfo.user)
-                    .WithTitle(message.Source)
-                    .AddField(message.Severity.ToString(), message.Message.ToString().Truncate(1020))
-                    .WithCurrentTimestamp();
-                if (message.Exception != null)
-                    errorEmbed.AddField("Exception", message.Exception.ToString().Truncate(1020));
-                else
-                    errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
-                await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
-            }
-            if (message.Exception != null) Console.WriteLine($"Stacktrace:\n{trace}");
-        }
-
         public static string Suffix(this int num)
         {
             if (num.ToString().EndsWith("11")) return num.ToString() + "th";
@@ -177,22 +131,6 @@ namespace BotCatMaxy
             if (num.ToString().EndsWith("2")) return num.ToString() + "nd";
             if (num.ToString().EndsWith("3")) return num.ToString() + "rd";
             return num.ToString() + "th";
-        }
-
-        public static async Task AssertAsync(this bool assertion, string message = "Assertion failed")
-        {
-            if (assertion == false)
-            {
-                await Log(new LogMessage(LogSeverity.Error, "Assert", message));
-            }
-        }
-
-        public static async Task AssertWarnAsync(this bool assertion, string message = "Assertion failed")
-        {
-            if (assertion == false)
-            {
-                await Log(new LogMessage(LogSeverity.Warning, "Assert", message));
-            }
         }
 
         public static bool IsNullOrEmpty(this string s)

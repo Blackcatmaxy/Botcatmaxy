@@ -110,7 +110,7 @@ namespace BotCatMaxy.Startup
             }
             catch (Exception e)
             {
-                await e.LogException("username", guild);
+                await e.LogFilterError("username", guild);
             }
         }
 
@@ -143,7 +143,7 @@ namespace BotCatMaxy.Startup
             }
             catch (Exception e)
             {
-                await e.LogException("reaction", guild);
+                await e.LogFilterError("reaction", guild);
             }
         }
 
@@ -270,7 +270,7 @@ namespace BotCatMaxy.Startup
             }
             catch (Exception e)
             {
-                await e.LogException("message", guild);
+                await e.LogFilterError("message", guild);
             }
         }
     }

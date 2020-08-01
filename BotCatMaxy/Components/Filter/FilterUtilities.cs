@@ -111,9 +111,6 @@ namespace BotCatMaxy.Components.Filter
             }
         }
 
-        public static async Task LogException(this Exception exception, string type, IGuild guild)
-        {
-            await new LogMessage(LogSeverity.Error, "Filter", $"Something went wrong with the {type} filter in {guild.Name} guild ({guild.Id}) owned by {guild.OwnerId}", exception).Log();
-        }
+
     }
 }

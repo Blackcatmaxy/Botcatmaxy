@@ -15,6 +15,7 @@ using MongoDB;
 using System;
 using BotCatMaxy.Models;
 using BotCatMaxy.Startup;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy
 {
@@ -33,7 +34,7 @@ namespace BotCatMaxy
             BotInfo.debug = true;
             dbClient = new MongoClient(HiddenInfo.debugDB);
 #endif
-            Utilities.logger = logConfig.CreateLogger();
+            ExceptionLogging.logger = logConfig.CreateLogger();
             await new LogMessage(LogSeverity.Info, "Log", $"Program log logging at {AppDomain.CurrentDomain.BaseDirectory}").Log();
             var config = new DiscordSocketConfig
             {
@@ -49,7 +50,7 @@ namespace BotCatMaxy
 
             //Sets up the events
             _client = new DiscordSocketClient(config);
-            _client.Log += Utilities.Log;
+            _client.Log += ExceptionLogging.Log;
             _client.Ready += Ready;
 
             if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary")
