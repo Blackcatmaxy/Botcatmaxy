@@ -205,7 +205,7 @@ namespace BotCatMaxy
                     //Checks if a message contains ugly, unwanted text t̨̠̱̭͓̠ͪ̈́͌ͪͮ̐͒h̲̱̯̀͂̔̆̌͊ͅà̸̻͌̍̍ͅt͕̖̦͂̎͂̂ͮ͜ ̲͈̥͒ͣ͗̚l̬͚̺͚͎̆͜ͅo͔̯̖͙ͩõ̲̗̎͆͜k̦̭̮̺ͮ͆̀ ͙̍̂͘l̡̮̱̤͍̜̲͙̓̌̐͐͂̓i͙̬ͫ̀̒͑̔͐k̯͇̀ͭe̎͋̓́ ̥͖̼̬ͪ̆ṫ͏͕̳̞̯h̛̼͔ͩ̑̿͑i͍̲̽ͮͪsͦ͋ͦ̌͗ͭ̋
                     //Props to Mathias Bynens for the regex string
                     const string zalgoRegex = @"([\0-\u02FF\u0370-\u1AAF\u1B00-\u1DBF\u1E00-\u20CF\u2100-\uD7FF\uE000-\uFE1F\uFE30-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])([\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F]+)";
-                    if (modSettings.zalgoAllowed)
+                    if (modSettings.zalgoAllowed == false)
                     {
                         MatchCollection matches = Regex.Matches(message.Content, zalgoRegex, regexOptions);
                         if (matches.Any())
@@ -814,7 +814,7 @@ namespace BotCatMaxy
             settings.zalgoAllowed = !settings.zalgoAllowed;
             settings.SaveToFile();
 
-            await message.ModifyAsync(msg => msg.Content = "set zalgo allowed to " + settings.zalgoAllowed.ToString().ToLower());
+            await message.ModifyAsync(msg => msg.Content = "Set zalgo allowed to " + settings.zalgoAllowed.ToString().ToLower());
         }
 
         [Command("removeword")]
