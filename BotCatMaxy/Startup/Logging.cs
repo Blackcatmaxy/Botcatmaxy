@@ -162,7 +162,7 @@ namespace BotCatMaxy
             return null;
         }
 
-        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink)
+        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink, string additionalPunishment="")
         {
             try
             {
@@ -176,12 +176,12 @@ namespace BotCatMaxy
                 if (gWarnee != null)
                 {
                     if (gWarnee.Nickname.IsNullOrEmpty())
-                        embed.AddField($"{gWarnee.Username} ({gWarnee.Id}) has been warned", "For " + reason);
+                        embed.AddField($"{gWarnee.Username} ({gWarnee.Id}) has been {additionalPunishment}warned", "For " + reason);
                     else
-                        embed.AddField($"{gWarnee.Nickname} aka {gWarnee.Username} ({warneeID}) has been warned", "For " + reason);
+                        embed.AddField($"{gWarnee.Nickname} aka {gWarnee.Username} ({warneeID}) has been {additionalPunishment}warned", "For " + reason);
                 }
                 else
-                    embed.AddField($"({warneeID}) has been warned", "For " + reason);
+                    embed.AddField($"({warneeID}) has been {additionalPunishment}warned", "For " + reason);
 
                 if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
                 embed.WithColor(Color.Gold);
