@@ -36,15 +36,21 @@ namespace BotCatMaxy
         }
 
         [Command("help"), Alias("botinfo", "commands")]
+        [Summary("View Botcatmxy resources.")]
         public async Task Help()
         {
-            var embed = new EmbedBuilder();
+            var embed = new EmbedBuilder
+            {
+                Description = "Say !dmhelp in the bot's dms for a full list of commands you can use."
+            };
             embed.AddField("To see commands", "[Click here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
             await ReplyAsync(embed: embed.Build());
         }
 
         [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
+        [Summary("DM's a list of commands you can use.")]
+        [RequireContext(ContextType.DM)]
         public async Task DMHelp()
         {
             EmbedBuilder extraHelpEmbed = new EmbedBuilder();
@@ -107,6 +113,8 @@ namespace BotCatMaxy
         }
 
         [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
+        [Summary("DM's a list of commands you can use.")]
+        [RequireContext(ContextType.DM)]
         public async Task DMHelp(string commandName)
         {
             SearchResult res = _service.Search(Context, commandName);
@@ -171,6 +179,7 @@ namespace BotCatMaxy
         }
 
         [Command("checkperms")]
+        [Summary("Check if the required permissions are given.")]
         [RequireUserPermission(GuildPermission.BanMembers, Group = "Permission")]
         [RequireOwner(Group = "Permission")]
         public async Task CheckPerms()
@@ -197,6 +206,7 @@ namespace BotCatMaxy
 
         [RequireOwner]
         [Command("stats")]
+        [Summary("View bot statistics.")]
         [Alias("statistics")]
         public async Task Statistics()
         {
@@ -239,6 +249,7 @@ namespace BotCatMaxy
         }
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
+        [Summary("Sets this channel's slowmode.")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(int time)
         {
@@ -247,6 +258,7 @@ namespace BotCatMaxy
         }
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
+        [Summary("Sets this channel's slowmode.")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(string time)
         {
@@ -266,6 +278,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempactexectime")]
+        [Summary("View temp action check execution times.")]
         [RequireOwner]
         public async Task DisplayTempActionTimes()
         {
@@ -276,6 +289,7 @@ namespace BotCatMaxy
         }
 
         [Command("Checktempacts")]
+        [Summary("Checks to see if any tempacts should've ended but didn't.")]
         [RequireOwner]
         public async Task ActSanityCheck()
         {
@@ -330,6 +344,7 @@ namespace BotCatMaxy
         }
 
         [Command("CheckCache")]
+        [Summary("Check cache info.")]
         [HasAdmin]
         public async Task CheckCache()
         {
@@ -373,6 +388,7 @@ namespace BotCatMaxy
         }
 
         [Command("verboseactcheck")]
+        [Summary("Check temp acts.")]
         [RequireOwner]
         public async Task VerboseActCheck()
         {
@@ -381,12 +397,14 @@ namespace BotCatMaxy
         }
 
         [Command("info")]
+        [Summary("Information about the bot.")]
         public async Task InfoCommandAsync()
         {
             await ReplyAsync($"Botcatmaxy is a public, open-source bot written and maintained by Blackcatmaxy with info at https://github.com/Blackcatmaxy/Botcatmaxy/ (use '{Context.Client.CurrentUser.Mention} help' for direct link to commands wiki)");
         }
 
         [Command("resetcache")]
+        [Summary("Resets the cache.")]
         [HasAdmin]
         public async Task ResetCacheCommad()
         {
@@ -401,6 +419,7 @@ namespace BotCatMaxy
         }
 
         [Command("globalresetcache")]
+        [Summary("Resets the cache from all guilds.")]
         [RequireOwner]
         public async Task ResetGlobalCacheCommad()
         {
