@@ -18,7 +18,7 @@ using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy
 {
-    public class DiscordModModule : InteractiveBase<SocketCommandContext>
+    public class ModerationCommands : InteractiveBase<SocketCommandContext>
     {
         [RequireContext(ContextType.Guild)]
         [Command("warn")]

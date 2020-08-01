@@ -59,7 +59,8 @@ namespace BotCatMaxy
             }
             else
             {
-                _ = ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
+                await ReplyAsync("People with the role \"" + role.Name + "\" can already warn people");
+                return;
             }
 
             settings.SaveToFile();
@@ -75,7 +76,10 @@ namespace BotCatMaxy
             if (length == "none")
             { //Maybe add more options that mean none
                 if (settings.maxTempAction == null)
+                {
                     await ReplyAsync("The maximum temp punishment is already none");
+                    return;
+                }
                 else
                 {
                     settings.maxTempAction = null;
@@ -153,11 +157,12 @@ namespace BotCatMaxy
             }
             else
             {
-                _ = ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
+                await ReplyAsync("People with the role \"" + role.Name + "\" can't already warn people");
+                return;
             }
             settings.SaveToFile();
 
-            _ = ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
+            await ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
     }
 
