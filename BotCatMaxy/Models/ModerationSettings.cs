@@ -26,6 +26,7 @@ namespace BotCatMaxy.Models
         public ushort allowedCaps = 0;
         public bool useOwnerID = false;
         public bool invitesAllowed = true;
+        public bool zalgoAllowed = true;
         public uint? maxEmojis = null;
         public bool moderateNames = false;
         public ushort? maxNewLines = null;
