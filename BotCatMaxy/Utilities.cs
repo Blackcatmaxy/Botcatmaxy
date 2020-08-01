@@ -91,7 +91,8 @@ namespace BotCatMaxy
 
         public static bool CantBeWarned(this SocketGuildUser user)
         {
-            if (HasAdmin(user)) return true;
+            if (user == null) return false;
+            if (user.HasAdmin()) return true;
 
             ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
             if (settings != null)

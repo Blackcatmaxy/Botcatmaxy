@@ -73,7 +73,7 @@ namespace BotCatMaxy
         {
             try
             {
-                if (!guild.GetUser(BotInfo.user.Id).GuildPermissions.KickMembers) return;
+                if (!(guild.GetUser(BotInfo.user.Id).GuildPermissions.KickMembers)) return;
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
@@ -115,23 +115,22 @@ namespace BotCatMaxy
             }
             catch (Exception e)
             {
-                await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong checking usernames", e).Log();
+                await e.LogException("username", guild);
             }
         }
 
         public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
         {
+            if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is SocketGuildChannel))
+            {
+                return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+            }
+            IUserMessage message = await cachedMessage.GetOrDownloadAsync();
+            SocketGuildChannel chnl = channel as SocketGuildChannel;
+            SocketGuild guild = chnl?.Guild;
+            if (guild == null) return;
             try
             {
-                if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is SocketGuildChannel))
-                {
-                    return; //Makes sure it's not logging a message from a bot and that it's in a discord server
-                }
-                IUserMessage message = await cachedMessage.GetOrDownloadAsync();
-                SocketGuildChannel chnl = channel as SocketGuildChannel;
-                SocketGuild guild = chnl?.Guild;
-                if (guild == null) return;
-
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;
@@ -149,26 +148,26 @@ namespace BotCatMaxy
             }
             catch (Exception e)
             {
-                await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the reaction filter", e).Log();
+                await e.LogException("reaction", guild);
             }
         }
 
         public async Task CheckMessage(SocketMessage message)
         {
+            if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage))
+            {
+                return; //Makes sure it's not logging a message from a bot and that it's in a discord server
+            }
+            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
+            SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
+            if (chnl?.Guild == null || (message.Author as SocketGuildUser).CantBeWarned()) return;
+            var guild = chnl.Guild;
+
             try
             {
-                if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage))
-                {
-                    return; //Makes sure it's not logging a message from a bot and that it's in a discord server
-                }
-                SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
-                SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
-
-                if (chnl?.Guild == null || (message.Author as SocketGuildUser).CantBeWarned()) return;
-                var Guild = chnl.Guild;
-                ModerationSettings modSettings = Guild.LoadFromFile<ModerationSettings>();
+                ModerationSettings modSettings = guild.LoadFromFile<ModerationSettings>();
                 SocketGuildUser gUser = message.Author as SocketGuildUser;
-                List<BadWord> badWords = Guild.LoadFromFile<BadWordList>()?.badWords;
+                List<BadWord> badWords = guild.LoadFromFile<BadWordList>()?.badWords;
 
                 string msgContent = message.Content;
                 if (modSettings != null)
@@ -209,7 +208,10 @@ namespace BotCatMaxy
                     {
                         MatchCollection matches = Regex.Matches(message.Content, zalgoRegex, regexOptions);
                         if (matches.Any())
+                        {
                             await context.FilterPunish("zalgo usage", modSettings);
+                            return;
+                        }
                     }
 
                     const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
@@ -273,10 +275,9 @@ namespace BotCatMaxy
             }
             catch (Exception e)
             {
-                await new LogMessage(LogSeverity.Error, "Filter", "Something went wrong with the message filter", e).Log();
+                await e.LogException("message", guild);
             }
         }
-
     }
 
     public static class FilterFunctions
@@ -375,6 +376,11 @@ namespace BotCatMaxy
                 new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e);
                 await warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
             }
+        }
+
+        public static async Task LogException(this Exception exception, string type, IGuild guild)
+        {
+            await new LogMessage(LogSeverity.Error, "Filter", $"Something went wrong with the {type} filter in {guild.Name} guild ({guild.Id}) owned by {guild.OwnerId}", exception).Log();
         }
     }
 
