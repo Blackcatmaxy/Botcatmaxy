@@ -167,6 +167,7 @@ namespace BotCatMaxy
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
         {
             await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
+            await Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
@@ -180,6 +181,7 @@ namespace BotCatMaxy
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified")
         {
             await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
+            await Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
