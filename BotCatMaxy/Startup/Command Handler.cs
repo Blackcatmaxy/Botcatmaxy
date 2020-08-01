@@ -234,4 +234,15 @@ namespace Discord.Commands
             return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Game service not found.");*/
         }
     }
+
+    public class WriteableCommandContext : ICommandContext
+    {
+        public IDiscordClient Client { get; set; }
+        public IGuild Guild { get; set; }
+        public IMessageChannel Channel { get; set; }
+        public IUser User { get; set; }
+        public IUserMessage Message { get; set; }
+
+        public bool IsPrivate => Channel is IPrivateChannel;
+    }
 }

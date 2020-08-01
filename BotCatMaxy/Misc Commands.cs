@@ -21,12 +21,19 @@ using Discord.Rest;
 using Discord.Addons.Preconditions;
 using BotCatMaxy.Cache;
 using BotCatMaxy.Models;
+using System.Net.Sockets;
 
 namespace BotCatMaxy
 {
     public class MiscCommands : ModuleBase<SocketCommandContext>
     {
         public object TempActs { get; private set; }
+        private readonly CommandService _service;
+
+        public MiscCommands(CommandService service)
+        {
+            _service = service;
+        }
 
         [Command("help"), Alias("botinfo", "commands")]
         public async Task Help()
@@ -35,6 +42,132 @@ namespace BotCatMaxy
             embed.AddField("To see commands", "[Click here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
             await ReplyAsync(embed: embed.Build());
+        }
+
+        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
+        public async Task DMHelp()
+        {
+            EmbedBuilder extraHelpEmbed = new EmbedBuilder();
+            extraHelpEmbed.AddField("Wiki", "[Click Here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
+            extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
+
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Title = "Commands",
+                Description = "You are viewing all commands you have permission to use."
+            };
+
+            IReadOnlyCollection<SocketGuild> guilds = Context.User.MutualGuilds;
+
+            foreach (ModuleInfo module in _service.Modules)
+            {
+                string description = "";
+                foreach (CommandInfo command in module.Commands)
+                {
+                    bool isAllowed = false;
+
+                    foreach (SocketGuild guild in guilds)
+                    {
+                        WriteableCommandContext tmpCtx = new WriteableCommandContext
+                        {
+                            Client = Context.Client,
+                            Message = Context.Message,
+                            Guild = guild,
+                            Channel = (IMessageChannel)guild.Channels.First(),
+                            User = guild.GetUser(Context.User.Id)
+                        };
+
+                        PreconditionResult check = await command.CheckPreconditionsAsync(tmpCtx);
+
+                        if (check.IsSuccess)
+                        {
+                            isAllowed = true;
+                            break;
+                        }
+                    }
+
+                    if (isAllowed)
+                    {
+                        description += $"!{command.Aliases[0]}\n";
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    embed.AddField(new EmbedFieldBuilder
+                    {
+                        Name = module.Name,
+                        Value = description
+                    }); ;
+                }
+            }
+
+            await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
+            await Context.User.SendMessageAsync(embed: embed.Build());
+        }
+
+        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
+        public async Task DMHelp(string commandName)
+        {
+            SearchResult res = _service.Search(Context, commandName);
+
+            if (!res.IsSuccess)
+            {
+                await ReplyAsync($"`!{commandName}` isn't a command.");
+                return;
+            }
+
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Title = "Commands",
+                Description = $"Viewing search results you can use for `!{commandName}`."
+            };
+
+            IReadOnlyCollection<SocketGuild> guilds = Context.User.MutualGuilds;
+
+            foreach (CommandMatch match in res.Commands)
+            {
+                CommandInfo command = match.Command;
+                bool isAllowed = false;
+
+                foreach (SocketGuild guild in guilds)
+                {
+                    WriteableCommandContext tmpCtx = new WriteableCommandContext
+                    {
+                        Client = Context.Client,
+                        Message = Context.Message,
+                        Guild = guild,
+                        Channel = (IMessageChannel)guild.Channels.First(),
+                        User = guild.GetUser(Context.User.Id)
+                    };
+
+                    PreconditionResult check = await command.CheckPreconditionsAsync(tmpCtx);
+
+                    if (check.IsSuccess)
+                    {
+                        isAllowed = true;
+                        break;
+                    }
+                }
+
+                if (isAllowed)
+                {
+                    string args = "";
+
+                    foreach (ParameterInfo param in command.Parameters)
+                    {
+                        args += $"[{param.Name}] ";
+                    }
+
+                    embed.AddField(new EmbedFieldBuilder
+                    {
+                        Name = $"!{command.Aliases[0]} {args}",
+                        Value = command.Summary ?? "*No description.*"
+                    });
+                }
+            }
+
+            await Context.User.SendMessageAsync(embed: embed.Build());
         }
 
         [Command("checkperms")]
