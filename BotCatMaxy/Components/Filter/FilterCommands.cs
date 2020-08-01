@@ -14,10 +14,12 @@ using System.Threading.Tasks;
 namespace BotCatMaxy.Components.Filter
 {
     [Group("automod")]
+    [Summary("Manages the automoderator.")]
     [Alias("auto-mod", "filter")]
     public class FilterCommands : InteractiveBase<SocketCommandContext>
     {
         [Command("list")]
+        [Summary("View filter information.")]
         [Alias("info")]
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         public async Task ListAutoMod(string extension = "")
@@ -156,6 +158,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin]
         [Command("maxemoji"), Alias("setmaxemoji")]
+        [Summary("Set a number of max emojis a user may send in a single message.")]
         public async Task AllowEmojis(uint amount)
         {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
@@ -174,6 +177,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin]
         [Command("allowemoji"), Alias("setmaxemojis")]
+        [Summary("Set a number of max emojis a user may send in a single message.")]
         public async Task SetMaxEmojis(string amount)
         {
             ModerationSettings settings;
@@ -208,6 +212,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin]
         [Command("banemoji"), Alias("disallowemoji")]
+        [Summary("Disallow users from sending a specific emoji.")]
         [RequireBotPermission(ChannelPermission.AddReactions)]
         public async Task BanEmoji(Emoji emoji)
         {
@@ -224,6 +229,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin]
         [Command("allowemoji"), Alias("unbanemoji")]
+        [Summary("Allow users from sending a specific emoji.")]
         [RequireBotPermission(ChannelPermission.AddReactions)]
         public async Task RemoveBannedEmoji(Emoji emoji)
         {
@@ -240,6 +246,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin]
         [Command("SetAllowedCaps")]
+        [Summary("Sets the maximum percentage of capital letters a user may send.")]
         public async Task SetCapFilter(ushort percent)
         {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
@@ -267,6 +274,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin()]
         [Command("AddAllowedLinkRole")]
+        [Summary("Allows users in a role to send links.")]
         [Alias("addroleallowedtolink")]
         public async Task AddAllowedLinkRole(SocketRole role)
         {
@@ -286,6 +294,7 @@ namespace BotCatMaxy.Components.Filter
 
         [HasAdmin()]
         [Command("RemoveAllowedLinkRole")]
+        [Summary("Disallows users in a role to send links.")]
         [Alias("removeroleallowedtolink")]
         public async Task RemoveAllowedLinkRole(SocketRole role)
         {
@@ -308,6 +317,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("ToggleContainBadWord")]
+        [Summary("Toggle strict filtering and checks if a bad word is sent even if inside another word.")]
         [Alias("togglecontainword", "togglecontainword")]
         [HasAdmin()]
         public async Task ToggleContainBadWord(string word)
@@ -336,6 +346,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("channeltoggle")]
+        [Summary("Toggles if this channel is exempt from automoderation.")]
         [HasAdmin]
         public async Task ToggleAutoMod()
         {
@@ -356,6 +367,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("addignoredrole")]
+        [Summary("Disallows a user from being warned by the automoderator.")]
         [HasAdmin]
         public async Task AddWarnIgnoredRole(SocketRole role)
         {
@@ -372,6 +384,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("removeignoredrole")]
+        [Summary("Allows a user from being warned by the automoderator.")]
         [HasAdmin]
         public async Task RemovedWarnIgnoredRole(SocketRole role)
         {
@@ -392,6 +405,7 @@ namespace BotCatMaxy.Components.Filter
         public const string validLinkRegex = @"^[\w\d]+\.[\w\d]+$";
 
         [Command("addallowedlink")]
+        [Summary("Allow a link to bypass the automoderator.")]
         [HasAdmin]
         public async Task AddAllowedLink(string link)
         {
@@ -413,6 +427,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("removeallowedlink")]
+        [Summary("Disallow a link to bypass the automoderator.")]
         [HasAdmin]
         public async Task RemoveAllowedLink(string link)
         {
@@ -429,6 +444,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("toggleinvitewarn")]
+        [Summary("Toggles if a user is warned from sending an invite.")]
         [HasAdmin]
         public async Task ToggleInviteWarn()
         {
@@ -441,6 +457,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("togglezalgowarn"), Alias("togglezalgoallowed")]
+        [Summary("Toggles if a user is warned from sending zalgo.")]
         [HasAdmin]
         public async Task ToggleZalgoWarn()
         {
@@ -453,6 +470,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("removeword")]
+        [Summary("Removes a badword.")]
         [Alias("removebadword", "badremove", "removebadword")]
         [HasAdmin]
         public async Task RemoveBadWord(string word)
@@ -479,6 +497,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("addword")]
+        [Summary("Adds a badword.")]
         [Alias("addbadword", "wordadd", "badwordadd")]
         [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f)
@@ -497,6 +516,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("addanouncementchannel"), HasAdmin]
+        [Summary("Sets this channel as an announcement channel.")]
         public async Task AddAnouncementChannel()
         {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
@@ -511,6 +531,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("removeanouncementchannel"), HasAdmin]
+        [Summary("Sets this channel as a regular channel.")]
         public async Task RemoveAnouncementChannel()
         {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
@@ -526,6 +547,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("togglenamefilter")]
+        [Summary("Toggles if usernames and nicknames are filtered by the automod.")]
         [HasAdmin]
         public async Task ToggleNameFilter()
         {
@@ -538,6 +560,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("setmaxnewlines")]
+        [Summary("Sets the amount of lines a single message may contain.")]
         [Alias("maxnewlinesset", "setmaximumnewlines")]
         [HasAdmin]
         public async Task SetMaximumNewLines(byte? amount)
@@ -559,6 +582,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("whitelistguild")]
+        [Summary("Removes a specific guild from being filtered by the automoderator.")]
         [Alias("addwhitelistguild", "whitelistguildinvite")]
         [HasAdmin]
         public async Task AddInviteWhitelist(ulong guildID)
@@ -576,6 +600,7 @@ namespace BotCatMaxy.Components.Filter
         }
 
         [Command("unwhitelistguild")]
+        [Summary("Adds a specific guild to the filter.")]
         [Alias("removewhitelistguild", "unwhitelistguildinvite")]
         [HasAdmin]
         public async Task RemoveInviteWhitelist(ulong guildID)
