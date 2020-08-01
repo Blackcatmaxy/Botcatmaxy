@@ -14,6 +14,7 @@ using Discord;
 using System;
 using System.Diagnostics;
 using BotCatMaxy.Models;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy
 {
@@ -24,7 +25,7 @@ namespace BotCatMaxy
         [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified")
         {
-            IUserMessage logMessage = await Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
+            IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
             WarnResult result = await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
 
             if (result.success)
@@ -33,7 +34,7 @@ namespace BotCatMaxy
             {
                 if (logMessage != null)
                 {
-                    Logging.deletedMessagesCache.Enqueue(logMessage.Id);
+                    DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
                     await logMessage.DeleteAsync();
                 }
                 await ReplyAsync(result.description);
@@ -45,7 +46,7 @@ namespace BotCatMaxy
         [CanWarn()]
         public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason = "Unspecified")
         {
-            IUserMessage logMessage = await Logging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
+            IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
             WarnResult result = await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
             if (result.success)
                 Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
@@ -53,7 +54,7 @@ namespace BotCatMaxy
             {
                 if (logMessage != null)
                 {
-                    Logging.deletedMessagesCache.Enqueue(logMessage.Id);
+                    DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
                     await logMessage.DeleteAsync();
                 }
                 await ReplyAsync(result.description);
@@ -167,7 +168,7 @@ namespace BotCatMaxy
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
         {
             await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
-            await Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
+            await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
@@ -181,7 +182,7 @@ namespace BotCatMaxy
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified")
         {
             await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
-            await Logging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
+            await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
@@ -500,7 +501,7 @@ namespace BotCatMaxy
             userRef.user?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID);
             Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
-            Logging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
+            DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
         }
 
         [Command("delete")]

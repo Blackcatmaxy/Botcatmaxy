@@ -17,6 +17,7 @@ using System;
 using Discord.Net;
 using System.Collections.Concurrent;
 using BotCatMaxy.Models;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy
 {
@@ -327,7 +328,7 @@ namespace BotCatMaxy
             if (guild.GetChannelAsync(settings?.pubLogChannel ?? 0).Result == null) message.Channel.SendMessageAsync(toSay);
             else
             {
-                Logging.deletedMessagesCache.Enqueue(message.Id);
+                DiscordLogging.deletedMessagesCache.Enqueue(message.Id);
                 _ = message.DeleteAsync();
                 guild.GetTextChannelAsync(settings.pubLogChannel ?? 0).Result.SendMessageAsync($"{message.Author.Mention}, {toSay}");
             }

@@ -10,6 +10,7 @@ using Discord;
 using System;
 using System.Threading;
 using BotCatMaxy.Models;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy
 {
@@ -85,11 +86,11 @@ namespace BotCatMaxy
                                         //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         if (user == null)
                                         {
-                                            Logging.LogManualEndTempAct(sockGuild, tempBan.user, "bann", tempBan.dateBanned);
+                                            DiscordLogging.LogManualEndTempAct(sockGuild, tempBan.user, "bann", tempBan.dateBanned);
                                         }
                                         else
                                         {
-                                            Logging.LogManualEndTempAct(sockGuild, user, "bann", tempBan.dateBanned);
+                                            DiscordLogging.LogManualEndTempAct(sockGuild, user, "bann", tempBan.dateBanned);
                                         }
                                     }
                                     else if (DateTime.UtcNow >= tempBan.dateBanned.Add(tempBan.length))
@@ -97,7 +98,7 @@ namespace BotCatMaxy
                                         RestUser rUser = ban.User;
                                         await restGuild.RemoveBanAsync(tempBan.user, requestOptions);
                                         currentInfo.editedBans.Remove(tempBan);
-                                        Logging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.reason, tempBan.length);
+                                        DiscordLogging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.reason, tempBan.length);
                                     }
                                 }
                                 catch (Exception e)
@@ -131,7 +132,7 @@ namespace BotCatMaxy
                                     { //User missing muted role, must have been manually unmuted
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
-                                        Logging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.dateBanned);
+                                        DiscordLogging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.dateBanned);
                                         _ = (!editedMutes.Contains(tempMute)).AssertAsync("Tempmute not removed?!");
                                     }
                                     else if (DateTime.UtcNow >= tempMute.dateBanned.Add(tempMute.length))
@@ -146,7 +147,7 @@ namespace BotCatMaxy
                                             user ??= await client.SuperGetUser(tempMute.user);
                                             if (user != null)
                                             { // if possible to message, message and log
-                                                Logging.LogEndTempAct(sockGuild, user, "mut", tempMute.reason, tempMute.length);
+                                                DiscordLogging.LogEndTempAct(sockGuild, user, "mut", tempMute.reason, tempMute.length);
                                                 _ = user.Notify($"untemp-muted", tempMute.reason, sockGuild);
                                             }
                                             editedMutes.Remove(tempMute);

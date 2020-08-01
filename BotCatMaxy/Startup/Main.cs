@@ -110,9 +110,9 @@ namespace BotCatMaxy
             CommandService service = new CommandService(serviceConfig);
             CommandHandler handler = new CommandHandler(_client, service);
 
-            Logging logger = new Logging(_client);
+            LoggingHandler logger = new LoggingHandler(_client);
             TempActions tempActions = new TempActions(_client);
-            Filter filter = new Filter(_client);
+            FilterHandler filter = new FilterHandler(_client);
 
             //Debug info
             await new LogMessage(LogSeverity.Info, "Main", "Setup complete").Log();

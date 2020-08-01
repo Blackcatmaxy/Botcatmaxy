@@ -12,6 +12,7 @@ using Discord;
 using System;
 using System.Security.Cryptography;
 using BotCatMaxy.Models;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy.Moderation
 {
@@ -222,7 +223,7 @@ namespace BotCatMaxy.Moderation
             actions.tempBans.Add(tempBan);
             actions.SaveToFile();
             await context.Guild.AddBanAsync(userRef.ID, reason: reason);
-            Logging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
+            DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
             if (userRef.user != null)
             {
                 try
@@ -244,7 +245,7 @@ namespace BotCatMaxy.Moderation
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile();
             await userRef.gUser?.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
-            Logging.LogTempAct(context.Guild, context.User, userRef, "mut", reason, context.Message.GetJumpUrl(), time);
+            DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "mut", reason, context.Message.GetJumpUrl(), time);
             if (userRef.user != null)
             {
                 try

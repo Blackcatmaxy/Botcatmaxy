@@ -1,100 +1,19 @@
-﻿using System.Text.RegularExpressions;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using Discord;
 using Discord.WebSocket;
-using BotCatMaxy.Data;
-using Discord.Commands;
-using Discord.Rest;
+using Humanizer;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using BotCatMaxy;
-using Humanizer;
-using Discord;
-using System;
-using BotCatMaxy.Models;
+using System.Threading.Tasks;
 
-namespace BotCatMaxy
+namespace BotCatMaxy.Components.Logging
 {
-    public class Logging
+    public static class DiscordLogging
     {
         public static FixedSizedQueue<ulong> deletedMessagesCache = new FixedSizedQueue<ulong>(10);
-        private readonly DiscordSocketClient _client;
-        public Logging(DiscordSocketClient client)
-        {
-            _client = client;
-
-            _ = SetUpAsync();
-        }
-
-        public async Task SetUpAsync()
-        {
-            _client.MessageDeleted += HandleDelete;
-            _client.MessageUpdated += LogEdit;
-            _client.MessageReceived += HandleNew;
-
-            await new LogMessage(LogSeverity.Info, "Logs", "Logging set up").Log();
-        }
-
-        public async Task HandleNew(IMessage message) => await Task.Run(() => LogNew(message)).ConfigureAwait(false);
-        public async Task LogNew(IMessage message)
-        {
-            if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
-            {
-                SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
-                LogMessage("Role ping", message, guild, true);
-            }
-        }
-
-        async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
-        {
-            try
-            {
-                //Just makes sure that it's not logged when it shouldn't be
-                if (!(channel is SocketGuildChannel)) return;
-                SocketGuild guild = (channel as SocketGuildChannel).Guild;
-                IMessage oldMessage = await cachedMessage.GetOrDownloadAsync();
-                if (oldMessage?.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
-                LogSettings settings = guild.LoadFromFile<LogSettings>();
-                //if settings or the log channel are null, or edit logging is disabled, just stop
-                if (settings?.logChannel == null || !settings.logEdits) return;
-                SocketTextChannel logChannel = guild.GetChannel(settings.logChannel.Value) as SocketTextChannel;
-                if (logChannel == null) return;
-
-                var embed = new EmbedBuilder();
-                if (string.IsNullOrEmpty(oldMessage?.Content))
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
-                    "`This message had no text or was null`");
-                }
-                else
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
-                    oldMessage.Content.Truncate(1020));
-                }
-                if (string.IsNullOrEmpty(newMessage.Content))
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
-                    "`This message had no text or is null`");
-                }
-                else
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
-                    newMessage.Content.Truncate(1020));
-                }
-
-                embed.AddField("Message Link", "[Click Here](" + newMessage.GetJumpUrl() + ")", false);
-                embed.WithFooter("ID: " + newMessage.Id)
-                    .WithAuthor(newMessage.Author)
-                    .WithColor(Color.Teal)
-                    .WithCurrentTimestamp();
-
-                await logChannel.SendMessageAsync(embed: embed.Build());
-            }
-            catch (Exception exception)
-            {
-                await new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
-            }
-        }
 
         public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null)
         {
@@ -162,7 +81,7 @@ namespace BotCatMaxy
             return null;
         }
 
-        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink, string additionalPunishment="")
+        public static async Task<IUserMessage> LogWarn(IGuild guild, IUser warner, ulong warneeID, string reason, string warnLink, string additionalPunishment = "")
         {
             try
             {
@@ -253,6 +172,31 @@ namespace BotCatMaxy
             return;
         }
 
+        public static void LogManualEndTempAct(IGuild guild, ulong userID, string actType, DateTime dateHappened)
+        {
+            try
+            {
+                LogSettings settings = guild.LoadFromFile<LogSettings>();
+                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
+                if (channel == null)
+                    return;
+
+                var embed = new EmbedBuilder();
+                embed.AddField($"{userID} has manually been un{actType}ed", $"After {DateTime.UtcNow.Subtract(dateHappened).LimitedHumanize(2)}");
+                //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
+                embed.WithColor(Color.Green);
+                embed.WithCurrentTimestamp();
+
+                channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
+                return;
+            }
+            catch (Exception e)
+            {
+                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
+            }
+            return;
+        }
+
         public static void LogManualEndTempAct(IGuild guild, IUser warnee, string actType, DateTime dateHappened)
         {
             try
@@ -280,50 +224,6 @@ namespace BotCatMaxy
                 _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
             }
             return;
-        }
-
-        public static void LogManualEndTempAct(IGuild guild, ulong userID, string actType, DateTime dateHappened)
-        {
-            try
-            {
-                LogSettings settings = guild.LoadFromFile<LogSettings>();
-                ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
-                if (channel == null)
-                    return;
-
-                var embed = new EmbedBuilder();
-                embed.AddField($"{userID} has manually been un{actType}ed", $"After {DateTime.UtcNow.Subtract(dateHappened).LimitedHumanize(2)}");
-                //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);
-                embed.WithColor(Color.Green);
-                embed.WithCurrentTimestamp();
-
-                channel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();
-                return;
-            }
-            catch (Exception e)
-            {
-                _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
-            }
-            return;
-        }
-
-        private async Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
-        {
-            _ = LogDelete(message, channel);
-        }
-
-        private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
-        {
-            try
-            {
-                if (!(channel is SocketGuildChannel)) return;
-                LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
-            }
-            catch (Exception exception)
-            {
-                await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
-            }
-            //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
         }
     }
 }
