@@ -123,6 +123,7 @@ namespace BotCatMaxy
                 await Context.User.SendMessageAsync(embed: embed);
             }
             msg.DeleteAsync();
+            await ReplyAsync("These are all the commands you have permissions to use");
         }
 
         [Command("describecommand"), Alias("describecmd", "dc", "dmhelp")]
