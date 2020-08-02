@@ -10,6 +10,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -49,7 +50,7 @@ namespace BotCatMaxy
             extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
             await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
 
-            ICollection<WriteableCommandContext> ctxs = null;
+            Collection<WriteableCommandContext> ctxs = new Collection<WriteableCommandContext> { };
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
@@ -62,7 +63,7 @@ namespace BotCatMaxy
                     Client = Context.Client,
                     Message = Context.Message,
                     Guild = guild,
-                    Channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel,
+                    Channel = channel,
                     User = guild.GetUser(Context.User.Id)
                 };
 
@@ -133,7 +134,7 @@ namespace BotCatMaxy
                 Description = $"Viewing search results you can use for `!{commandName}`."
             };
 
-            ICollection<WriteableCommandContext> ctxs = null;
+            Collection<WriteableCommandContext> ctxs = new Collection<WriteableCommandContext> { };
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
@@ -146,7 +147,7 @@ namespace BotCatMaxy
                     Client = Context.Client,
                     Message = Context.Message,
                     Guild = guild,
-                    Channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel,
+                    Channel = channel,
                     User = guild.GetUser(Context.User.Id)
                 };
 
