@@ -47,9 +47,10 @@ namespace BotCatMaxy
             EmbedBuilder extraHelpEmbed = new EmbedBuilder();
             extraHelpEmbed.AddField("Wiki", "[Click Here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
-            IUserMessage msg = await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
+            await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
+            IUserMessage msg = await Context.User.SendMessageAsync("Fetching commands...");
 
-            ICollection<WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
+            ICollection <WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
@@ -120,6 +121,7 @@ namespace BotCatMaxy
             {
                 await Context.User.SendMessageAsync(embed: embed);
             }
+            msg.DeleteAsync();
         }
 
         [Command("describecommand"), Alias("describecmd", "dc", "dmhelp")]
@@ -141,57 +143,22 @@ namespace BotCatMaxy
                 Description = $"Viewing search results you can use for `!{commandName}`."
             };
 
-            ICollection<WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
-
-            foreach (SocketGuild guild in Context.User.MutualGuilds)
-            {
-                IMessageChannel channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
-                if (channel == null)
-                    continue;
-
-                WriteableCommandContext tmpCtx = new WriteableCommandContext
-                {
-                    Client = Context.Client,
-                    Message = Context.Message,
-                    Guild = guild,
-                    Channel = channel,
-                    User = guild.GetUser(Context.User.Id)
-                };
-
-                ctxs.Add(tmpCtx);
-            }
-
             foreach (CommandMatch match in res.Commands.Take(25))
             {
                 CommandInfo command = match.Command;
-                bool isAllowed = false;
 
-                foreach (WriteableCommandContext ctx in ctxs)
+                string args = "";
+
+                foreach (ParameterInfo param in command.Parameters)
                 {
-                    PreconditionResult check = await command.CheckPreconditionsAsync(ctx);
-
-                    if (check.IsSuccess)
-                    {
-                        isAllowed = true;
-                        break;
-                    }
+                    args += $"[{param.Name}] ";
                 }
 
-                if (isAllowed)
+                embed.AddField(new EmbedFieldBuilder
                 {
-                    string args = "";
-
-                    foreach (ParameterInfo param in command.Parameters)
-                    {
-                        args += $"[{param.Name}] ";
-                    }
-
-                    embed.AddField(new EmbedFieldBuilder
-                    {
-                        Name = $"!{command.Aliases[0]} {args}",
-                        Value = command.Summary ?? "*No description.*"
-                    });
-                }
+                    Name = $"!{command.Aliases[0]} {args}",
+                    Value = command.Summary ?? "*No description.*"
+                });
             }
 
             await ReplyAsync(embed: embed.Build());
