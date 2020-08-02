@@ -10,7 +10,6 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,7 +49,7 @@ namespace BotCatMaxy
             extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
             await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
 
-            Collection<WriteableCommandContext> ctxs = new Collection<WriteableCommandContext> { };
+            ICollection<WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
@@ -134,7 +133,7 @@ namespace BotCatMaxy
                 Description = $"Viewing search results you can use for `!{commandName}`."
             };
 
-            Collection<WriteableCommandContext> ctxs = new Collection<WriteableCommandContext> { };
+            ICollection<WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
