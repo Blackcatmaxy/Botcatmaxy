@@ -1,23 +1,20 @@
-﻿using Discord;
+﻿using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using BotCatMaxy;
-using BotCatMaxy.Data;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using Humanizer;
-using Discord.Addons.Interactive;
-using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {
     //I want to move away from vague files like settings since conflicts are annoying
+    [Name("Settings")]
     public class SettingsModule : InteractiveBase<SocketCommandContext>
     {
         [Command("Settings Info")]
+        [Summary("View settings.")]
         [RequireContext(ContextType.Guild)]
         public async Task SettingsInfo()
         {
@@ -40,6 +37,7 @@ namespace BotCatMaxy
         }
 
         [Command("toggleserverstorage", RunMode = RunMode.Async)]
+        [Summary("Legacy feature. Run for instruction on how to enable.")]
         [HasAdmin]
         public async Task ToggleServerIDUse()
         {
@@ -47,6 +45,7 @@ namespace BotCatMaxy
         }
 
         [Command("allowwarn"), Alias("allowtowarn")]
+        [Summary("Sets which role is allowed to warn other users.")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task AddWarnRole(SocketRole role)
@@ -69,6 +68,7 @@ namespace BotCatMaxy
         }
 
         [Command("setmaxpunishment"), Alias("setmaxpunish", "maxpunishmentset")]
+        [Summary("Sets the max length a temporary punishment can last.")]
         [RequireContext(ContextType.Guild), HasAdmin()]
         public async Task SetMaxPunishment(string length)
         {
@@ -109,6 +109,7 @@ namespace BotCatMaxy
         }
 
         [Command("setmutedrole"), Alias("mutedroleset")]
+        [Summary("Sets the muted role of the server.")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task SetMutedRole(SocketRole role)
@@ -135,6 +136,7 @@ namespace BotCatMaxy
         }
 
         [Command("removewarnability")]
+        [Summary("Disables a role's ability to warn.")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
         public async Task RemoveWarnRole(SocketRole role)

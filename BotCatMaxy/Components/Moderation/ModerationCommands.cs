@@ -1,27 +1,26 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using System.Text.RegularExpressions;
-using Discord.Addons.Interactive;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using BotCatMaxy.Moderation;
-using Discord.WebSocket;
-using Discord.Commands;
-using BotCatMaxy.Data;
-using System.Linq;
-using BotCatMaxy;
-using Humanizer;
-using Discord;
-using System;
-using System.Diagnostics;
-using BotCatMaxy.Models;
+﻿using BotCatMaxy;
 using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using BotCatMaxy.Moderation;
+using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
+using Discord.WebSocket;
+using Humanizer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {
+    [Name("Moderation")]
     public class ModerationCommands : InteractiveBase<SocketCommandContext>
     {
         [RequireContext(ContextType.Guild)]
         [Command("warn")]
+        [Summary("Warn a user with an option reason.")]
         [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified")
         {
@@ -43,6 +42,7 @@ namespace BotCatMaxy
 
         [RequireContext(ContextType.Guild)]
         [Command("warn")]
+        [Summary("Warn a user with a specific size, along with an option reason.")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason = "Unspecified")
         {
@@ -62,6 +62,7 @@ namespace BotCatMaxy
         }
 
         [Command("dmwarns", RunMode = RunMode.Async)]
+        [Summary("Views a user's infractions.")]
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         [Alias("dminfractions", "dmwarnings", "warns", "infractions", "warnings")]
         public async Task DMUserWarnsAsync(UserRef userRef = null, int amount = 50)
@@ -118,6 +119,7 @@ namespace BotCatMaxy
 
 
         [Command("warns")]
+        [Summary("Views a user's infractions.")]
         [RequireContext(ContextType.Guild)]
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(UserRef userRef = null, int amount = 5)
@@ -138,6 +140,7 @@ namespace BotCatMaxy
         }
 
         [Command("removewarn")]
+        [Summary("Removes a warn from a user.")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
         public async Task RemoveWarnAsync([RequireHierarchy] UserRef userRef, int index)
@@ -162,6 +165,7 @@ namespace BotCatMaxy
         }
 
         [Command("kickwarn")]
+        [Summary("Kicks a user, and warns them with an option reason.")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -176,6 +180,7 @@ namespace BotCatMaxy
         }
 
         [Command("kickwarn")]
+        [Summary("Kicks a user, and warns them with a specific size along with an option reason.")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -190,6 +195,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempban")]
+        [Summary("Temporarily bans a user.")]
         [Alias("tban", "temp-ban")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
@@ -248,6 +254,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempbanwarn")]
+        [Summary("Temporarily bans a user, and warns them with an option reason.")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn", "tbw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
@@ -287,6 +294,7 @@ namespace BotCatMaxy
 
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban", "tbw")]
+        [Summary("Temporarily bans a user, and warns them with a specific size along with an option reason.")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -324,6 +332,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempmute", RunMode = RunMode.Async)]
+        [Summary("Temporarily mutes a user in text channels.")]
         [Alias("tmute", "temp-mute")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -388,6 +397,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempmutewarn")]
+        [Summary("Temporarily mutes a user in text channels, and warns them with an option reason.")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -432,6 +442,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempmutewarn")]
+        [Summary("Temporarily mutes a user in text channels, and warns them with a specific size along with an option reason.")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -476,6 +487,7 @@ namespace BotCatMaxy
         }
 
         [Command("ban", RunMode = RunMode.Async)]
+        [Summary("Bans a user with an option reason.")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
@@ -505,6 +517,7 @@ namespace BotCatMaxy
         }
 
         [Command("delete")]
+        [Summary("Clear a specific number of messages between 0-300.")]
         [Alias("clean", "clear", "deletemany", "purge")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         public async Task DeleteMany(uint number, UserRef user = null)

@@ -1,43 +1,171 @@
-﻿using System.Text.RegularExpressions;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord.Commands;
+﻿using BotCatMaxy.Cache;
 using BotCatMaxy.Data;
-using Newtonsoft.Json;
-using System.Text;
-using System.Linq;
-using BotCatMaxy;
-using System.IO;
+using BotCatMaxy.Models;
 using Discord;
-using System;
-using MongoDB.Driver;
+using Discord.Commands;
+using Discord.WebSocket;
+using Humanizer;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using Discord.Addons.Preconditions;
-using Humanizer;
-using Discord.Rest;
-using Discord.Addons.Preconditions;
-using BotCatMaxy.Cache;
-using BotCatMaxy.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {
     public class MiscCommands : ModuleBase<SocketCommandContext>
     {
         public object TempActs { get; private set; }
+        private readonly CommandService _service;
+
+        public MiscCommands(CommandService service)
+        {
+            _service = service;
+        }
 
         [Command("help"), Alias("botinfo", "commands")]
+        [Summary("View Botcatmaxy resources.")]
         public async Task Help()
         {
-            var embed = new EmbedBuilder();
+            var embed = new EmbedBuilder
+            {
+                Description = "Say !dmhelp in the bot's dms for a full list of commands you can use."
+            };
             embed.AddField("To see commands", "[Click here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
             await ReplyAsync(embed: embed.Build());
         }
 
+        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
+        [Summary("DM's a list of commands you can use.")]
+        [RequireContext(ContextType.DM)]
+        public async Task DMHelp()
+        {
+            EmbedBuilder extraHelpEmbed = new EmbedBuilder();
+            extraHelpEmbed.AddField("Wiki", "[Click Here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
+            extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
+            await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
+            IUserMessage msg = await Context.User.SendMessageAsync("Fetching commands...");
+
+            ICollection <WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
+
+            foreach (SocketGuild guild in Context.User.MutualGuilds)
+            {
+                IMessageChannel channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
+                if (channel == null)
+                    continue;
+
+                WriteableCommandContext tmpCtx = new WriteableCommandContext
+                {
+                    Client = Context.Client,
+                    Message = Context.Message,
+                    Guild = guild,
+                    Channel = channel,
+                    User = guild.GetUser(Context.User.Id)
+                };
+
+                ctxs.Add(tmpCtx);
+            }
+
+            List<Embed> embeds = new List<Embed> { };
+
+            foreach (ModuleInfo module in _service.Modules)
+            {
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Title = module.Name
+                };
+
+                foreach (CommandInfo command in module.Commands)
+                {
+                    bool isAllowed = false;
+
+                    foreach (WriteableCommandContext ctx in ctxs)
+                    {
+                        PreconditionResult check = await command.CheckPreconditionsAsync(ctx);
+
+                        if (check.IsSuccess)
+                        {
+                            isAllowed = true;
+                            break;
+                        }
+                    }
+
+                    if (isAllowed)
+                    {
+                        string args = "";
+
+                        foreach (ParameterInfo param in command.Parameters)
+                        {
+                            args += $"[{param.Name}] ";
+                        }
+
+                        embed.AddField(new EmbedFieldBuilder
+                        {
+                            Name = $"!{command.Aliases[0]} {args}",
+                            Value = command.Summary ?? "*No description.*"
+                        });
+                    }
+                }
+
+                if (embed.Fields.Count != 0)
+                {
+                    embeds.Add(embed.Build());
+                }
+            }
+
+            foreach (Embed embed in embeds)
+            {
+                await Context.User.SendMessageAsync(embed: embed);
+            }
+            msg.DeleteAsync();
+        }
+
+        [Command("describecommand"), Alias("describecmd", "dc", "dmhelp")]
+        [Summary("Find info on a command.")]
+        [Priority(10)]
+        public async Task DMHelp(string commandName)
+        {
+            SearchResult res = _service.Search(Context, commandName);
+
+            if (!res.IsSuccess)
+            {
+                await ReplyAsync($"`!{commandName}` isn't a command.");
+                return;
+            }
+
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Title = "Commands",
+                Description = $"Viewing search results you can use for `!{commandName}`."
+            };
+
+            foreach (CommandMatch match in res.Commands.Take(25))
+            {
+                CommandInfo command = match.Command;
+
+                string args = "";
+
+                foreach (ParameterInfo param in command.Parameters)
+                {
+                    args += $"[{param.Name}] ";
+                }
+
+                embed.AddField(new EmbedFieldBuilder
+                {
+                    Name = $"!{command.Aliases[0]} {args}",
+                    Value = command.Summary ?? "*No description.*"
+                });
+            }
+
+            await ReplyAsync(embed: embed.Build());
+        }
+
         [Command("checkperms")]
+        [Summary("Check if the required permissions are given.")]
         [RequireUserPermission(GuildPermission.BanMembers, Group = "Permission")]
         [RequireOwner(Group = "Permission")]
         public async Task CheckPerms()
@@ -64,6 +192,7 @@ namespace BotCatMaxy
 
         [RequireOwner]
         [Command("stats")]
+        [Summary("View bot statistics.")]
         [Alias("statistics")]
         public async Task Statistics()
         {
@@ -106,6 +235,7 @@ namespace BotCatMaxy
         }
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
+        [Summary("Sets this channel's slowmode.")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(int time)
         {
@@ -114,6 +244,7 @@ namespace BotCatMaxy
         }
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
+        [Summary("Sets this channel's slowmode.")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(string time)
         {
@@ -133,6 +264,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempactexectime")]
+        [Summary("View temp action check execution times.")]
         [RequireOwner]
         public async Task DisplayTempActionTimes()
         {
@@ -143,6 +275,7 @@ namespace BotCatMaxy
         }
 
         [Command("Checktempacts")]
+        [Summary("Checks to see if any tempacts should've ended but didn't.")]
         [RequireOwner]
         public async Task ActSanityCheck()
         {
@@ -197,6 +330,7 @@ namespace BotCatMaxy
         }
 
         [Command("CheckCache")]
+        [Summary("Check cache info.")]
         [HasAdmin]
         public async Task CheckCache()
         {
@@ -240,6 +374,7 @@ namespace BotCatMaxy
         }
 
         [Command("verboseactcheck")]
+        [Summary("Check temp acts.")]
         [RequireOwner]
         public async Task VerboseActCheck()
         {
@@ -248,12 +383,14 @@ namespace BotCatMaxy
         }
 
         [Command("info")]
+        [Summary("Information about the bot.")]
         public async Task InfoCommandAsync()
         {
             await ReplyAsync($"Botcatmaxy is a public, open-source bot written and maintained by Blackcatmaxy with info at https://github.com/Blackcatmaxy/Botcatmaxy/ (use '{Context.Client.CurrentUser.Mention} help' for direct link to commands wiki)");
         }
 
         [Command("resetcache")]
+        [Summary("Resets the cache.")]
         [HasAdmin]
         public async Task ResetCacheCommad()
         {
@@ -268,6 +405,7 @@ namespace BotCatMaxy
         }
 
         [Command("globalresetcache")]
+        [Summary("Resets the cache from all guilds.")]
         [RequireOwner]
         public async Task ResetGlobalCacheCommad()
         {

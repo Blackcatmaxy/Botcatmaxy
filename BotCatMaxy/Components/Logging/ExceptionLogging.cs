@@ -1,10 +1,7 @@
 ﻿using Discord;
 using Humanizer;
 using Serilog;
-using Serilog.Core;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy

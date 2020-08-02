@@ -1,18 +1,15 @@
-﻿using System.Diagnostics.Contracts;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord.Commands;
-using BotCatMaxy.Data;
-using Discord.Rest;
-using System.Linq;
-using BotCatMaxy;
-using Humanizer;
-using Discord;
-using System;
-using System.Security.Cryptography;
-using BotCatMaxy.Models;
+﻿using BotCatMaxy;
 using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy.Moderation
 {

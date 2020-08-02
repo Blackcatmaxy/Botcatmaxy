@@ -1,18 +1,20 @@
-﻿using Discord.Addons.Interactive;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord.Commands;
+﻿using BotCatMaxy;
 using BotCatMaxy.Data;
-using System.Linq;
-using Discord;
-using System;
-using Humanizer;
-using BotCatMaxy;
 using BotCatMaxy.Models;
+using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
+using Discord.WebSocket;
+using Humanizer;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
+[Name("Report")]
 public class ReportModule : InteractiveBase<SocketCommandContext>
 {
     [Command("report", RunMode = RunMode.Async)]
+    [Summary("Create a new report.")]
     [RequireContext(ContextType.DM)]
     public async Task Report()
     {
@@ -113,6 +115,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
     }
 
     [Command("setreportchannel")]
+    [Summary("Sets the channel user reports will be sent in.")]
     [HasAdmin]
     public async Task SetReportChannel()
     {
@@ -134,6 +137,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
     }
 
     [Command("setreportcooldown")]
+    [Summary("Sets the cooldown in between reports.")]
     [HasAdmin]
     public async Task SetReportCooldown(string time)
     {
@@ -172,6 +176,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
     }
 
     [Command("setreportrole"), HasAdmin]
+    [Summary("Sets a role that is required to create reports.")]
     public async Task SetReportRole(SocketRole role)
     {
         ReportSettings settings = Context.Guild.LoadFromFile<ReportSettings>();
@@ -185,6 +190,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
     }
 
     [Command("setreportrole"), HasAdmin]
+    [Summary("Sets a role that is required to create reports. Supply `none` to remove.")]
     public async Task SetReportRole(string value)
     {
         value.ToLower();

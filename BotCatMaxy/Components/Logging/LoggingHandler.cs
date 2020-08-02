@@ -1,18 +1,12 @@
-﻿using System.Text.RegularExpressions;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using BotCatMaxy.Data;
-using Discord.Commands;
-using Discord.Rest;
-using System.Linq;
-using System.Text;
-using BotCatMaxy;
-using Humanizer;
-using Discord;
-using System;
-using BotCatMaxy.Models;
+﻿using BotCatMaxy;
 using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using Discord;
+using Discord.WebSocket;
+using Humanizer;
+using System;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy.Startup
 {
