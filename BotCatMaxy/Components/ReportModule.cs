@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
+[Name("Report")]
 public class ReportModule : InteractiveBase<SocketCommandContext>
 {
     [Command("report", RunMode = RunMode.Async)]
@@ -189,7 +190,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
     }
 
     [Command("setreportrole"), HasAdmin]
-    [Summary("Sets a role that is required to create reports.")]
+    [Summary("Sets a role that is required to create reports. Supply `none` to remove.")]
     public async Task SetReportRole(string value)
     {
         value.ToLower();

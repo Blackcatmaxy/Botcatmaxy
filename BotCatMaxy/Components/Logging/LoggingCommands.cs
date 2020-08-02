@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Logging
 {
+    [Name("Logging")]
     [Group("logs")]
     [Summary("Manages logging.")]
     [RequireContext(ContextType.Guild)]

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Filter
 {
+    [Name("Automoderation")]
     [Group("automod")]
     [Summary("Manages the automoderator.")]
     [Alias("auto-mod", "filter")]

@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {
+    [Name("Moderation")]
     public class ModerationCommands : InteractiveBase<SocketCommandContext>
     {
         [RequireContext(ContextType.Guild)]
