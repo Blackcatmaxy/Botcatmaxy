@@ -47,7 +47,7 @@ namespace BotCatMaxy
             EmbedBuilder extraHelpEmbed = new EmbedBuilder();
             extraHelpEmbed.AddField("Wiki", "[Click Here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
-            await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
+            IUserMessage msg = await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
 
             ICollection<WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
 
@@ -68,6 +68,8 @@ namespace BotCatMaxy
 
                 ctxs.Add(tmpCtx);
             }
+
+            List<Embed> embeds = new List<Embed> { };
 
             foreach (ModuleInfo module in _service.Modules)
             {
@@ -110,13 +112,19 @@ namespace BotCatMaxy
 
                 if (embed.Fields.Count != 0)
                 {
-                    await Context.User.SendMessageAsync(embed: embed.Build());
+                    embeds.Add(embed.Build());
                 }
+            }
+
+            foreach (Embed embed in embeds)
+            {
+                await Context.User.SendMessageAsync(embed: embed);
             }
         }
 
-        [Command("describecommand"), Alias("describecmd", "dc")]
+        [Command("describecommand"), Alias("describecmd", "dc", "dmhelp")]
         [Summary("Find info on a command.")]
+        [Priority(10)]
         public async Task DMHelp(string commandName)
         {
             SearchResult res = _service.Search(Context, commandName);
