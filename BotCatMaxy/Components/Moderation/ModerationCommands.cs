@@ -1,20 +1,17 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using System.Text.RegularExpressions;
-using Discord.Addons.Interactive;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using BotCatMaxy.Moderation;
-using Discord.WebSocket;
-using Discord.Commands;
-using BotCatMaxy.Data;
-using System.Linq;
-using BotCatMaxy;
-using Humanizer;
-using Discord;
-using System;
-using System.Diagnostics;
-using BotCatMaxy.Models;
+﻿using BotCatMaxy;
 using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using BotCatMaxy.Moderation;
+using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
+using Discord.WebSocket;
+using Humanizer;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {

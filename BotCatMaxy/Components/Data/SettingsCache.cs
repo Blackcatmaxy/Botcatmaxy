@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using BotCatMaxy.Data;
-using BotCatMaxy;
-using Discord.WebSocket;
+﻿using BotCatMaxy.Models;
 using Discord;
-using System.Linq;
-using Discord.Rest;
+using Discord.WebSocket;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using BotCatMaxy.Models;
 
 namespace BotCatMaxy.Cache
 {

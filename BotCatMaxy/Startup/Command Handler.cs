@@ -1,21 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Text.RegularExpressions;
-using System.Diagnostics.Contracts;
-using System.Collections.Immutable;
-using Discord.Addons.Interactive;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Globalization;
-using System.Reflection;
-using Discord.WebSocket;
-using Discord.Commands;
-using Discord.Rest;
-using System.Linq;
-using BotCatMaxy;
-using Discord;
-using System;
+﻿using BotCatMaxy;
 using BotCatMaxy.Models;
 using BotCatMaxy.TypeReaders;
+using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
+using Discord.Rest;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Globalization;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy.Startup
 {

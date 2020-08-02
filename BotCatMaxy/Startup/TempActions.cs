@@ -1,16 +1,15 @@
-﻿using System.Collections.Generic;
-using BotCatMaxy.Moderation;
-using System.Threading.Tasks;
-using Discord.WebSocket;
+﻿using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
-using Discord.Rest;
-using System.Linq;
-using Humanizer;
-using Discord;
-using System;
-using System.Threading;
 using BotCatMaxy.Models;
-using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Moderation;
+using Discord;
+using Discord.Rest;
+using Discord.WebSocket;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {

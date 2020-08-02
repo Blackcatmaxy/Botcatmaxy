@@ -1,14 +1,14 @@
-﻿using Discord.Addons.Interactive;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord.Commands;
+﻿using BotCatMaxy;
 using BotCatMaxy.Data;
-using System.Linq;
-using Discord;
-using System;
-using Humanizer;
-using BotCatMaxy;
 using BotCatMaxy.Models;
+using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
+using Discord.WebSocket;
+using Humanizer;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 public class ReportModule : InteractiveBase<SocketCommandContext>
 {

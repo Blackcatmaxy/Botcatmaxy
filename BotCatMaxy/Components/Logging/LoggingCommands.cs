@@ -1,12 +1,8 @@
 ﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Logging

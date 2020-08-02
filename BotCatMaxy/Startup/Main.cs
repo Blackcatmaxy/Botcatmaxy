@@ -1,21 +1,16 @@
-﻿using Serilog.Sinks.SystemConsole.Themes;
-using System.Collections.Generic;
-using MongoDB.Bson.Serialization;
-using System.Threading.Tasks;
-using System.Globalization;
-using System.Reflection;
-using Discord.WebSocket;
-using Discord.Commands;
-using BotCatMaxy.Cache;
+﻿using BotCatMaxy.Cache;
 using BotCatMaxy.Data;
+using BotCatMaxy.Startup;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using MongoDB.Driver;
 using Serilog;
-using Discord;
-using MongoDB;
+using Serilog.Sinks.SystemConsole.Themes;
 using System;
-using BotCatMaxy.Models;
-using BotCatMaxy.Startup;
-using BotCatMaxy.Components.Logging;
+using System.Globalization;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {

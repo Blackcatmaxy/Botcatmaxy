@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Discord;
 using Discord.WebSocket;
 using System.Threading;
-using Discord;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {

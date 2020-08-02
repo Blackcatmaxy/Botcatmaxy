@@ -1,16 +1,11 @@
-﻿using Discord;
+﻿using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using BotCatMaxy;
-using BotCatMaxy.Data;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using Humanizer;
-using Discord.Addons.Interactive;
-using BotCatMaxy.Models;
 
 namespace BotCatMaxy
 {

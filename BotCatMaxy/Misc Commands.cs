@@ -1,27 +1,18 @@
-﻿using System.Text.RegularExpressions;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord.Commands;
+﻿using BotCatMaxy.Cache;
 using BotCatMaxy.Data;
-using Newtonsoft.Json;
-using System.Text;
-using System.Linq;
-using BotCatMaxy;
-using System.IO;
+using BotCatMaxy.Models;
 using Discord;
-using System;
-using MongoDB.Driver;
+using Discord.Commands;
+using Discord.WebSocket;
+using Humanizer;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using Discord.Addons.Preconditions;
-using Humanizer;
-using Discord.Rest;
-using Discord.Addons.Preconditions;
-using BotCatMaxy.Cache;
-using BotCatMaxy.Models;
-using System.Net.Sockets;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {
@@ -36,7 +27,7 @@ namespace BotCatMaxy
         }
 
         [Command("help"), Alias("botinfo", "commands")]
-        [Summary("View Botcatmxy resources.")]
+        [Summary("View Botcatmaxy resources.")]
         public async Task Help()
         {
             var embed = new EmbedBuilder
@@ -56,34 +47,42 @@ namespace BotCatMaxy
             EmbedBuilder extraHelpEmbed = new EmbedBuilder();
             extraHelpEmbed.AddField("Wiki", "[Click Here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
             extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
+            await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
 
-            EmbedBuilder embed = new EmbedBuilder
+            ICollection<WriteableCommandContext> ctxs = null;
+
+            foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
-                Title = "Commands",
-                Description = "You are viewing all commands you have permission to use."
-            };
+                IMessageChannel channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
+                if (channel == null)
+                    continue;
 
-            IReadOnlyCollection<SocketGuild> guilds = Context.User.MutualGuilds;
+                WriteableCommandContext tmpCtx = new WriteableCommandContext
+                {
+                    Client = Context.Client,
+                    Message = Context.Message,
+                    Guild = guild,
+                    Channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel,
+                    User = guild.GetUser(Context.User.Id)
+                };
+
+                ctxs.Add(tmpCtx);
+            }
 
             foreach (ModuleInfo module in _service.Modules)
             {
-                string description = "";
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Title = module.Name
+                };
+
                 foreach (CommandInfo command in module.Commands)
                 {
                     bool isAllowed = false;
 
-                    foreach (SocketGuild guild in guilds)
+                    foreach (WriteableCommandContext ctx in ctxs)
                     {
-                        WriteableCommandContext tmpCtx = new WriteableCommandContext
-                        {
-                            Client = Context.Client,
-                            Message = Context.Message,
-                            Guild = guild,
-                            Channel = (IMessageChannel)guild.Channels.First(),
-                            User = guild.GetUser(Context.User.Id)
-                        };
-
-                        PreconditionResult check = await command.CheckPreconditionsAsync(tmpCtx);
+                        PreconditionResult check = await command.CheckPreconditionsAsync(ctx);
 
                         if (check.IsSuccess)
                         {
@@ -94,27 +93,30 @@ namespace BotCatMaxy
 
                     if (isAllowed)
                     {
-                        description += $"!{command.Aliases[0]}\n";
+                        string args = "";
+
+                        foreach (ParameterInfo param in command.Parameters)
+                        {
+                            args += $"[{param.Name}] ";
+                        }
+
+                        embed.AddField(new EmbedFieldBuilder
+                        {
+                            Name = $"!{command.Aliases[0]} {args}",
+                            Value = command.Summary ?? "*No description.*"
+                        });
                     }
                 }
 
-                if (!string.IsNullOrWhiteSpace(description))
+                if (embed.Fields.Count != 0)
                 {
-                    embed.AddField(new EmbedFieldBuilder
-                    {
-                        Name = module.Name,
-                        Value = description
-                    }); ;
+                    await Context.User.SendMessageAsync(embed: embed.Build());
                 }
             }
-
-            await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
-            await Context.User.SendMessageAsync(embed: embed.Build());
         }
 
-        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
-        [Summary("DM's a list of commands you can use.")]
-        [RequireContext(ContextType.DM)]
+        [Command("describecommand"), Alias("describecmd", "dc")]
+        [Summary("Find info on a command.")]
         public async Task DMHelp(string commandName)
         {
             SearchResult res = _service.Search(Context, commandName);
@@ -131,25 +133,34 @@ namespace BotCatMaxy
                 Description = $"Viewing search results you can use for `!{commandName}`."
             };
 
-            IReadOnlyCollection<SocketGuild> guilds = Context.User.MutualGuilds;
+            ICollection<WriteableCommandContext> ctxs = null;
 
-            foreach (CommandMatch match in res.Commands)
+            foreach (SocketGuild guild in Context.User.MutualGuilds)
+            {
+                IMessageChannel channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
+                if (channel == null)
+                    continue;
+
+                WriteableCommandContext tmpCtx = new WriteableCommandContext
+                {
+                    Client = Context.Client,
+                    Message = Context.Message,
+                    Guild = guild,
+                    Channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel,
+                    User = guild.GetUser(Context.User.Id)
+                };
+
+                ctxs.Add(tmpCtx);
+            }
+
+            foreach (CommandMatch match in res.Commands.Take(25))
             {
                 CommandInfo command = match.Command;
                 bool isAllowed = false;
 
-                foreach (SocketGuild guild in guilds)
+                foreach (WriteableCommandContext ctx in ctxs)
                 {
-                    WriteableCommandContext tmpCtx = new WriteableCommandContext
-                    {
-                        Client = Context.Client,
-                        Message = Context.Message,
-                        Guild = guild,
-                        Channel = (IMessageChannel)guild.Channels.First(),
-                        User = guild.GetUser(Context.User.Id)
-                    };
-
-                    PreconditionResult check = await command.CheckPreconditionsAsync(tmpCtx);
+                    PreconditionResult check = await command.CheckPreconditionsAsync(ctx);
 
                     if (check.IsSuccess)
                     {
