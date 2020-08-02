@@ -186,7 +186,7 @@ namespace BotCatMaxy
                 }
             }
 
-            await Context.User.SendMessageAsync(embed: embed.Build());
+            await ReplyAsync(embed: embed.Build());
         }
 
         [Command("checkperms")]
