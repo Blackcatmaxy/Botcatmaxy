@@ -39,7 +39,7 @@ namespace BotCatMaxy
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands")]
+        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands", "commandlist")]
         [Summary("DM's a list of commands you can use.")]
         [RequireContext(ContextType.DM)]
         public async Task DMHelp()
@@ -50,7 +50,8 @@ namespace BotCatMaxy
             await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
             IUserMessage msg = await Context.User.SendMessageAsync("Fetching commands...");
 
-            ICollection <WriteableCommandContext> ctxs = new List<WriteableCommandContext> { };
+            ICollection <ICommandContext> contexts = new List<ICommandContext>();
+            contexts.Add(Context);
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
@@ -67,10 +68,10 @@ namespace BotCatMaxy
                     User = guild.GetUser(Context.User.Id)
                 };
 
-                ctxs.Add(tmpCtx);
+                contexts.Add(tmpCtx);
             }
 
-            List<Embed> embeds = new List<Embed> { };
+            List<Embed> embeds = new List<Embed>();
 
             foreach (ModuleInfo module in _service.Modules)
             {
@@ -83,7 +84,7 @@ namespace BotCatMaxy
                 {
                     bool isAllowed = false;
 
-                    foreach (WriteableCommandContext ctx in ctxs)
+                    foreach (ICommandContext ctx in contexts)
                     {
                         PreconditionResult check = await command.CheckPreconditionsAsync(ctx);
 
