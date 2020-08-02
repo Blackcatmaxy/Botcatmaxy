@@ -15,7 +15,7 @@ namespace BotCatMaxy.Components.Filter
     [Name("Automoderation")]
     [Group("automod")]
     [Summary("Manages the automoderator.")]
-    [Alias("auto-mod", "filter")]
+    [Alias("automod", "auto -mod", "filter")]
     public class FilterCommands : InteractiveBase<SocketCommandContext>
     {
         [Command("list")]
