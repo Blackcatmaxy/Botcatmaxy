@@ -39,6 +39,44 @@ namespace BotCatMaxy
             await ReplyAsync(embed: embed.Build());
         }
 
+        private EmbedFieldBuilder MakeCommandField(CommandInfo command)
+        {
+            string args = "";
+            foreach (ParameterInfo param in command.Parameters)
+            {
+                args += $"[{param.Name}] ";
+            }
+
+            const string guildMessage = "in guilds only";
+            RequireContextAttribute contextAttribute = command.Preconditions.FirstOrDefault(attribute => attribute is RequireContextAttribute) as RequireContextAttribute;
+            string context = contextAttribute?.Contexts switch
+            {
+                ContextType.Guild => guildMessage,
+                ContextType.DM    => "in DMs only",
+                _                 => "anywhere",
+            };
+
+            if (command.Preconditions.Any(attribute => attribute is HasAdminAttribute))
+                context = $"{guildMessage} \n**Requires administrator permission**";
+            else if (command.Preconditions.Any(attribute => attribute is CanWarnAttribute))
+                context = $"{guildMessage} \n**Requires ability to warn**";
+            else
+            {
+                RequireUserPermissionAttribute permissionAttribute = command.Preconditions.FirstOrDefault(attribute => attribute is RequireUserPermissionAttribute) as RequireUserPermissionAttribute;
+                if (permissionAttribute?.GuildPermission != null)
+                    context = $"{guildMessage} \n**Requires {permissionAttribute.GuildPermission.Value.Humanize(LetterCasing.LowerCase)} permission**";
+            }
+
+            string description = command.Summary ?? "*No description.*";
+            description += $"\nUseable {context}";
+
+            return new EmbedFieldBuilder
+            {
+                Name = $"!{command.Aliases[0]} {args}",
+                Value = description
+            };
+        }
+
         [Command("dmhelp"), Alias("dmbotinfo", "dmcommands", "commandlist")]
         [Summary("DM's a list of commands you can use.")]
         [RequireContext(ContextType.DM)]
@@ -50,7 +88,7 @@ namespace BotCatMaxy
             await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
             IUserMessage msg = await Context.User.SendMessageAsync("Fetching commands...");
 
-            ICollection <ICommandContext> contexts = new List<ICommandContext>();
+            ICollection<ICommandContext> contexts = new List<ICommandContext>();
             contexts.Add(Context);
 
             foreach (SocketGuild guild in Context.User.MutualGuilds)
@@ -97,18 +135,7 @@ namespace BotCatMaxy
 
                     if (isAllowed)
                     {
-                        string args = "";
-
-                        foreach (ParameterInfo param in command.Parameters)
-                        {
-                            args += $"[{param.Name}] ";
-                        }
-
-                        embed.AddField(new EmbedFieldBuilder
-                        {
-                            Name = $"!{command.Aliases[0]} {args}",
-                            Value = command.Summary ?? "*No description.*"
-                        });
+                        embed.AddField(MakeCommandField(command));
                     }
                 }
 
@@ -149,18 +176,7 @@ namespace BotCatMaxy
             {
                 CommandInfo command = match.Command;
 
-                string args = "";
-
-                foreach (ParameterInfo param in command.Parameters)
-                {
-                    args += $"[{param.Name}] ";
-                }
-
-                embed.AddField(new EmbedFieldBuilder
-                {
-                    Name = $"!{command.Aliases[0]} {args}",
-                    Value = command.Summary ?? "*No description.*"
-                });
+                embed.AddField(MakeCommandField(command));
             }
 
             await ReplyAsync(embed: embed.Build());

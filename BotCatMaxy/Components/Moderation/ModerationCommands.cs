@@ -120,15 +120,10 @@ namespace BotCatMaxy
 
         [Command("warns")]
         [Summary("Views a user's infractions.")]
-        [RequireContext(ContextType.Guild)]
+        [CanWarn]
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(UserRef userRef = null, int amount = 5)
         {
-            if (!(Context.Message.Author as SocketGuildUser).CanWarn())
-            {
-                await ReplyAsync("To avoid flood only people who can warn can use this command. Please use !dmwarns instead (use in bot's DMs)");
-                return;
-            }
             userRef ??= new UserRef(Context.User as SocketGuildUser);
             List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
             if (infractions.IsNullOrEmpty())

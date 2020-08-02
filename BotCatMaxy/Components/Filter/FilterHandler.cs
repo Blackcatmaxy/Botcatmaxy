@@ -104,7 +104,6 @@ namespace BotCatMaxy.Startup
                     else if (guild.TryGetTextChannel(logSettings.pubLogChannel, out ITextChannel pubChannel))
                         await pubChannel.SendMessageAsync($"{user.Mention} your username contains a bad word but your DMs are closed. Please clean up your username before rejoining");
                     await Task.Delay(10000);
-                    SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
                     await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word (Note: DMs closed)", guild, null);
 
