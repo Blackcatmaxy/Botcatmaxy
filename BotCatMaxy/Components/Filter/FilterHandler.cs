@@ -66,10 +66,15 @@ namespace BotCatMaxy.Startup
         {
             try
             {
-                if (!(guild.GetUser(BotInfo.user.Id).GuildPermissions.KickMembers)) return;
+                if (!guild.CurrentUser.GuildPermissions.KickMembers) return;
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
+
+                SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
+                if (gUser.CantBeWarned() || !gUser.CanActOn(guild.CurrentUser))
+                    return;
+
                 BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
                 if (detectedBadWord == null) return;
 
@@ -88,7 +93,6 @@ namespace BotCatMaxy.Startup
                 //If user's DMs aren't blocked
                 if (user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord"))
                 {
-                    SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
                     await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word", guild, null);
                     return;
