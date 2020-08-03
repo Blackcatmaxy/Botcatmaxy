@@ -19,6 +19,7 @@ namespace BotCatMaxy.Models
         public HashSet<string> badLinks = new HashSet<string>();
         public List<ulong> ableToBan = new List<ulong>();
         public List<ulong> anouncementChannels = new List<ulong>();
+        public Dictionary<string, double> dynamicSlowmode = new Dictionary<string, double>();
         public List<ulong> whitelistedForInvite = new List<ulong>();
         public TimeSpan? maxTempAction = null;
         public ulong mutedRole = 0;
