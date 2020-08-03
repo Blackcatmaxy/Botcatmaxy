@@ -25,27 +25,35 @@ namespace BotCatMaxy.Startup
         {
             _client.Ready -= OnReady;
             timer = new Timer((_) => _ = Check());
-            timer.Change(0, 30 * 1000);
+            timer.Change(1000, 15 * 1000);
         }
 
         public async Task Check()
         {
-            foreach (SocketGuild guild in _client.Guilds)
+            try
             {
-                ModerationSettings settings = guild.LoadFromFile<ModerationSettings>();
-                foreach (KeyValuePair<string, double> channelSetting in settings.dynamicSlowmode)
+                foreach (SocketGuild guild in _client.Guilds)
                 {
-                    // Key: channel id
-                    // Value: factor
-                    SocketTextChannel channel = guild.GetTextChannel(Convert.ToUInt64(channelSetting.Key));
+                    ModerationSettings settings = guild.LoadFromFile<ModerationSettings>();
+                    if (settings?.dynamicSlowmode == null) continue;
+                    foreach (KeyValuePair<string, double> channelSetting in settings.dynamicSlowmode)
+                    {
+                        // Key: channel id
+                        // Value: factor
+                        SocketTextChannel channel = guild.GetTextChannel(Convert.ToUInt64(channelSetting.Key));
 
-                    var messages = await channel.GetMessagesAsync(150).FlattenAsync();
-                    messages = messages.Where(msg => msg.Timestamp > DateTime.Now.AddMinutes(-1));
+                        var messages = await channel.GetMessagesAsync(200).FlattenAsync();
+                        messages = messages.Where(msg => msg.GetTimeAgo() < TimeSpan.FromMinutes(1));
 
-                    var count = messages.Count() * channelSetting.Value;
-                    if (count < 2) count = 1;
-                    await channel.ModifyAsync(c => c.SlowModeInterval = Convert.ToInt32(count));
+                        var count = messages.Count() * channelSetting.Value;
+                        if (count < 2) count = 1;
+                        await channel.ModifyAsync(c => c.SlowModeInterval = Convert.ToInt32(count));
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                await new LogMessage(LogSeverity.Error, "Slow", "Something went wrong in slowmode", e).Log();
             }
         }
     }
