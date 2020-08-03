@@ -67,6 +67,58 @@ namespace BotCatMaxy
             await ReplyAsync("People with the role \"" + role.Name + "\" can now warn people");
         }
 
+        [Command("dynamicslowmode"), Alias("ds"), Priority(5)]
+        [Summary("Set the factor of dynamic slowmode.")]
+        [HasAdmin]
+        public async Task DynamicSlowmode(double factor)
+        {
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+
+            if (settings.dynamicSlowmode[channel.Id] == factor)
+            {
+                await ReplyAsync(channel.Mention + " already has a dynamic slowmode with a factor of " + factor + ".");
+                return;
+            }
+            else
+            {
+                if (factor == 0)
+                {
+                    settings.dynamicSlowmode.Remove(channel.Id);
+                    await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
+                }
+                else
+                {
+                    settings.dynamicSlowmode[channel.Id] = factor;
+                    await ReplyAsync(channel.Mention + " now has a dynamic slowmode with a factor of " + factor + ".");
+                }
+
+                settings.SaveToFile();
+            }
+        }
+
+        [Command("dynamicslowmode"), Alias("ds")]
+        [Summary("Set the factor of dynamic slowmode.")]
+        [HasAdmin]
+        public async Task DynamicSlowmode(string disable)
+        {
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+
+            if (settings.dynamicSlowmode[channel.Id] == null)
+            {
+                await ReplyAsync(channel.Mention + " doesn't have dynamic slowmode.");
+                return;
+            }
+            else if (disable == "null" || disable == "off")
+            {
+                settings.dynamicSlowmode.Remove(channel.Id);
+                await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
+
+                settings.SaveToFile();
+            }
+        }
+
         [Command("setmaxpunishment"), Alias("setmaxpunish", "maxpunishmentset")]
         [Summary("Sets the max length a temporary punishment can last.")]
         [RequireContext(ContextType.Guild), HasAdmin()]
