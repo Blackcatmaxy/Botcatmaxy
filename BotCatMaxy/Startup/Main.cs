@@ -111,6 +111,7 @@ namespace BotCatMaxy
             CommandService service = new CommandService(serviceConfig);
             CommandHandler handler = new CommandHandler(_client, service);
 
+            DynamicSlowmode dynamicSlowmode = new DynamicSlowmode(_client);
             LoggingHandler logger = new LoggingHandler(_client);
             TempActions tempActions = new TempActions(_client);
             FilterHandler filter = new FilterHandler(_client);

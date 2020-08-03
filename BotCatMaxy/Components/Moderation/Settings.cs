@@ -11,6 +11,8 @@ using MongoDB.Bson.Serialization.Attributes;
 using Humanizer;
 using Discord.Addons.Interactive;
 using BotCatMaxy.Models;
+using System.ComponentModel;
+using System.Linq;
 
 namespace BotCatMaxy
 {
@@ -44,6 +46,58 @@ namespace BotCatMaxy
         public async Task ToggleServerIDUse()
         {
             await ReplyAsync("This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
+        }
+
+        [Command("dynamicslowmode"), Alias("ds"), Priority(5)]
+        [Description("Set the factor of dynamic slowmode.")]
+        [HasAdmin]
+        public async Task DynamicSlowmode(double factor)
+        {
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+
+            if (settings.dynamicSlowmode[channel.Id] == factor)
+            {
+                await ReplyAsync(channel.Mention + " already has a dynamic slowmode with a factor of " + factor + ".");
+                return;
+            }
+            else
+            {
+                if (factor == 0)
+                {
+                    settings.dynamicSlowmode.Remove(channel.Id);
+                    await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
+                }
+                else
+                {
+                    settings.dynamicSlowmode[channel.Id] = factor;
+                    await ReplyAsync(channel.Mention + " now has a dynamic slowmode with a factor of " + factor + ".");
+                }
+
+                settings.SaveToFile();
+            }
+        }
+
+        [Command("dynamicslowmode"), Alias("ds")]
+        [Description("Set the factor of dynamic slowmode.")]
+        [HasAdmin]
+        public async Task DynamicSlowmode(string disable)
+        {
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+
+            if (settings.dynamicSlowmode[channel.Id] == null)
+            {
+                await ReplyAsync(channel.Mention + " doesn't have dynamic slowmode.");
+                return;
+            }
+            else if (disable == "null" || disable == "off")
+            {
+                settings.dynamicSlowmode.Remove(channel.Id);
+                await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
+
+                settings.SaveToFile();
+            }
         }
 
         [Command("allowwarn"), Alias("allowtowarn")]
