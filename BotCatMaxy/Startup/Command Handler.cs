@@ -1,21 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Text.RegularExpressions;
-using System.Diagnostics.Contracts;
-using System.Collections.Immutable;
-using Discord.Addons.Interactive;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Globalization;
-using System.Reflection;
-using Discord.WebSocket;
-using Discord.Commands;
-using Discord.Rest;
-using System.Linq;
-using BotCatMaxy;
-using Discord;
-using System;
+﻿using BotCatMaxy;
 using BotCatMaxy.Models;
 using BotCatMaxy.TypeReaders;
+using Discord;
+using Discord.Addons.Interactive;
+using Discord.Commands;
+using Discord.Rest;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Globalization;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy.Startup
 {
@@ -233,5 +228,16 @@ namespace Discord.Commands
             }
             return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Game service not found.");*/
         }
+    }
+
+    public class WriteableCommandContext : ICommandContext
+    {
+        public IDiscordClient Client { get; set; }
+        public IGuild Guild { get; set; }
+        public IMessageChannel Channel { get; set; }
+        public IUser User { get; set; }
+        public IUserMessage Message { get; set; }
+
+        public bool IsPrivate => Channel is IPrivateChannel;
     }
 }

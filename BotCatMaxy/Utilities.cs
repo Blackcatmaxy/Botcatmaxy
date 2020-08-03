@@ -1,23 +1,21 @@
-﻿using System.Diagnostics.Contracts;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Collections;
-using Discord.WebSocket;
-using Discord.Commands;
+﻿using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
-using MongoDB.Driver;
+using BotCatMaxy.Models;
+using Discord;
+using Discord.Net;
 using Discord.Rest;
+using Discord.WebSocket;
+using Humanizer;
 using MongoDB.Bson;
+using MongoDB.Driver;
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
-using Humanizer;
-using Serilog;
-using Discord;
-using System;
-using Discord.Net;
-using System.Collections.Concurrent;
-using BotCatMaxy.Models;
-using BotCatMaxy.Components.Logging;
+using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {

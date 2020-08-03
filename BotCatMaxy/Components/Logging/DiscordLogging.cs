@@ -4,9 +4,7 @@ using Discord;
 using Discord.WebSocket;
 using Humanizer;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Logging

@@ -1,21 +1,20 @@
 ﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Logging
 {
-    [Group("logs")]
+    [Name("Logging")]
+    [Group("logs"), Alias("logs")]
+    [Summary("Manages logging.")]
     [RequireContext(ContextType.Guild)]
     public class LoggingCommands : ModuleBase<SocketCommandContext>
     {
         [Command("setchannel"), Alias("sethere")]
+        [Summary("Sets the logging channel to the current channel.")]
         [HasAdmin]
         public async Task SetLogChannel()
         {
@@ -43,6 +42,7 @@ namespace BotCatMaxy.Components.Logging
         }
 
         [Command("setpubchannel"), Alias("setpublog", "publogset", "setpublogchannel")]
+        [Summary("Sets this channel as the public logging channel.")]
         [HasAdmin]
         public async Task SetPubLogChannel(string setNull = null)
         {
@@ -71,6 +71,7 @@ namespace BotCatMaxy.Components.Logging
         }
 
         [Command("info"), Alias("settings")]
+        [Summary("Views logging settings.")]
         public async Task DebugLogSettings()
         {
             LogSettings settings = Context.Guild.LoadFromFile<LogSettings>();
@@ -102,6 +103,7 @@ namespace BotCatMaxy.Components.Logging
         }
 
         [Command("toggleLogDeleted")]
+        [Summary("Toggles if deleted messages should be logged.")]
         [HasAdmin]
         public async Task ToggleLoggingDeleted()
         {
@@ -124,6 +126,7 @@ namespace BotCatMaxy.Components.Logging
         }
 
         [Command("toggleLogEdited")]
+        [Summary("Toggles if edited messages should be logged.")]
         [HasAdmin]
         public async Task ToggleLoggingEdited()
         {
@@ -146,6 +149,7 @@ namespace BotCatMaxy.Components.Logging
         }
 
         [Command("setemergencychannel"), Alias("setbackupchannel", "backupset", "setbackup")]
+        [Summary("Sets this channel as the emergency channel.")]
         [HasAdmin]
         public async Task SetBackupLogChannel(string setNull = null)
         {

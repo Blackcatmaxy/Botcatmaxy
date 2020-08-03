@@ -9,8 +9,6 @@ using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -68,10 +66,15 @@ namespace BotCatMaxy.Startup
         {
             try
             {
-                if (!(guild.GetUser(BotInfo.user.Id).GuildPermissions.KickMembers)) return;
+                if (!guild.CurrentUser.GuildPermissions.KickMembers) return;
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
+
+                SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
+                if (gUser.CantBeWarned() || !gUser.CanActOn(guild.CurrentUser))
+                    return;
+
                 BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
                 if (detectedBadWord == null) return;
 
@@ -90,7 +93,6 @@ namespace BotCatMaxy.Startup
                 //If user's DMs aren't blocked
                 if (user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord"))
                 {
-                    SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
                     await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word", guild, null);
                     return;
@@ -102,7 +104,6 @@ namespace BotCatMaxy.Startup
                     else if (guild.TryGetTextChannel(logSettings.pubLogChannel, out ITextChannel pubChannel))
                         await pubChannel.SendMessageAsync($"{user.Mention} your username contains a bad word but your DMs are closed. Please clean up your username before rejoining");
                     await Task.Delay(10000);
-                    SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
                     await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word (Note: DMs closed)", guild, null);
 
@@ -149,7 +150,7 @@ namespace BotCatMaxy.Startup
 
         public async Task CheckMessage(SocketMessage message)
         {
-            if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage))
+            if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage) || string.IsNullOrWhiteSpace(message.Content))
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
