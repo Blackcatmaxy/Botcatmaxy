@@ -150,7 +150,7 @@ namespace BotCatMaxy.Startup
 
         public async Task CheckMessage(SocketMessage message)
         {
-            if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage))
+            if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage) || string.IsNullOrWhiteSpace(message.Content))
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
