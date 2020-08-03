@@ -47,43 +47,41 @@ namespace BotCatMaxy.Components.Settings
         [HasAdmin]
         public async Task DynamicSlowmode(double factor)
         {
-            SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
-
-            if (factor <= 0)
+            if (factor < 0)
             {
                 await ReplyAsync("Why would you need a factor that low?");
                 return;
             }
 
-            if (settings.dynamicSlowmode[channel.Id] == factor)
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+
+            if (factor == 0)
             {
-                await ReplyAsync(channel.Mention + " already has a dynamic slowmode with a factor of " + factor + ".");
-                return;
+                settings.dynamicSlowmode.Remove(channel.Id);
+                await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
             }
             else
             {
-                if (factor == 0)
+                if (!settings.dynamicSlowmode.ContainsKey(channel.Id))
                 {
-                    settings.dynamicSlowmode.Remove(channel.Id);
-                    await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
+                    settings.dynamicSlowmode.Add(channel.Id, factor);
                 }
                 else
                 {
-                    if (!settings.dynamicSlowmode.ContainsKey(channel.Id))
+                    if (settings.dynamicSlowmode[channel.Id] == factor)
                     {
-                        settings.dynamicSlowmode.Add(channel.Id, factor);
-                    }
-                    else
-                    {
-                        settings.dynamicSlowmode[channel.Id] = factor;
+                        await ReplyAsync(channel.Mention + " already has a dynamic slowmode with a factor of " + factor + ".");
+                        return;
                     }
 
-                    await ReplyAsync(channel.Mention + " now has a dynamic slowmode with a factor of " + factor + ".");
+                    settings.dynamicSlowmode[channel.Id] = factor;
                 }
 
-                settings.SaveToFile();
+                await ReplyAsync(channel.Mention + " now has a dynamic slowmode with a factor of " + factor + ".");
             }
+
+            settings.SaveToFile();
         }
 
         [Command("dynamicslowmode"), Alias("ds")]
