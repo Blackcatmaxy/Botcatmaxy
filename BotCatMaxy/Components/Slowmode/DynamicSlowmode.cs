@@ -33,11 +33,11 @@ namespace BotCatMaxy.Startup
             foreach (SocketGuild guild in _client.Guilds)
             {
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>();
-                foreach (KeyValuePair<ulong, double> channelSetting in settings.dynamicSlowmode)
+                foreach (KeyValuePair<string, double> channelSetting in settings.dynamicSlowmode)
                 {
                     // Key: channel id
                     // Value: factor
-                    SocketTextChannel channel = guild.GetTextChannel(channelSetting.Key);
+                    SocketTextChannel channel = guild.GetTextChannel(Convert.ToUInt64(channelSetting.Key));
 
                     var messages = await channel.GetMessagesAsync(150).FlattenAsync();
                     messages = messages.Where(msg => msg.Timestamp > DateTime.Now.AddMinutes(-1));

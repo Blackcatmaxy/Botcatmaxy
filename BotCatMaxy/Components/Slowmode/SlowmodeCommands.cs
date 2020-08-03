@@ -55,27 +55,28 @@ namespace BotCatMaxy.Components.Settings
 
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            string channelId = Convert.ToString(channel.Id);
 
             if (factor == 0)
             {
-                settings.dynamicSlowmode.Remove(channel.Id);
+                settings.dynamicSlowmode.Remove(channelId);
                 await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
             }
             else
             {
-                if (!settings.dynamicSlowmode.ContainsKey(channel.Id))
+                if (!settings.dynamicSlowmode.ContainsKey(channelId))
                 {
-                    settings.dynamicSlowmode.Add(channel.Id, factor);
+                    settings.dynamicSlowmode.Add(channelId, factor);
                 }
                 else
                 {
-                    if (settings.dynamicSlowmode[channel.Id] == factor)
+                    if (settings.dynamicSlowmode[channelId] == factor)
                     {
                         await ReplyAsync(channel.Mention + " already has a dynamic slowmode with a factor of " + factor + ".");
                         return;
                     }
 
-                    settings.dynamicSlowmode[channel.Id] = factor;
+                    settings.dynamicSlowmode[channelId] = factor;
                 }
 
                 await ReplyAsync(channel.Mention + " now has a dynamic slowmode with a factor of " + factor + ".");
@@ -91,15 +92,16 @@ namespace BotCatMaxy.Components.Settings
         {
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            string channelId = Convert.ToString(channel.Id);
 
-            if (settings.dynamicSlowmode[channel.Id] == null)
+            if (settings.dynamicSlowmode.ContainsKey(channelId))
             {
                 await ReplyAsync(channel.Mention + " doesn't have dynamic slowmode.");
                 return;
             }
             else if (disable == "null" || disable == "off")
             {
-                settings.dynamicSlowmode.Remove(channel.Id);
+                settings.dynamicSlowmode.Remove(channelId);
                 await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
 
                 settings.SaveToFile();
