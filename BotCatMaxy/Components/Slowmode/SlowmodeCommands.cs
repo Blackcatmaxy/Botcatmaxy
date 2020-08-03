@@ -70,7 +70,15 @@ namespace BotCatMaxy.Components.Settings
                 }
                 else
                 {
-                    settings.dynamicSlowmode[channel.Id] = factor;
+                    if (!settings.dynamicSlowmode.ContainsKey(channel.Id))
+                    {
+                        settings.dynamicSlowmode.Add(channel.Id, factor);
+                    }
+                    else
+                    {
+                        settings.dynamicSlowmode[channel.Id] = factor;
+                    }
+
                     await ReplyAsync(channel.Mention + " now has a dynamic slowmode with a factor of " + factor + ".");
                 }
 
@@ -79,7 +87,7 @@ namespace BotCatMaxy.Components.Settings
         }
 
         [Command("dynamicslowmode"), Alias("ds")]
-        [Summary("Set the factor of dynamic slowmode.")]
+        [Summary("Set the factor of dynamic slowmode. Pass `null` or `off` to disable.")]
         [HasAdmin]
         public async Task DynamicSlowmode(string disable)
         {
