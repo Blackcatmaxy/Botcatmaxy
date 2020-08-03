@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace BotCatMaxy.Components.Settings
 {
     [Name("Slowmode")]
-    class SlowmodeCommands : ModuleBase
+    public class SlowmodeCommands : ModuleBase
     {
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [Summary("Sets this channel's slowmode.")]
