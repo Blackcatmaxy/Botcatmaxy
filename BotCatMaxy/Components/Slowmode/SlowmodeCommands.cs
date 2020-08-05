@@ -30,7 +30,7 @@ namespace BotCatMaxy.Components.Settings
             var amount = time.ToTime();
             if (amount == null)
             {
-                await ReplyAsync($"Unable to parse '{time}', be careful with decimals");
+                await ReplyAsync($"Unable to parse '{time.StrippedOfPing()}', be careful with decimals");
                 return;
             }
             if (amount.Value.TotalSeconds % 1 != 0)
@@ -90,22 +90,25 @@ namespace BotCatMaxy.Components.Settings
         [HasAdmin]
         public async Task DynamicSlowmode(string disable)
         {
+            if (disable != "null" && disable != "off")
+            {
+                await ReplyAsync("Input not understood");
+                return;
+            }
+
             SocketTextChannel channel = Context.Channel as SocketTextChannel;
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
             string channelId = Convert.ToString(channel.Id);
 
-            if (settings.dynamicSlowmode.ContainsKey(channelId))
+            if (settings?.dynamicSlowmode == null || !settings.dynamicSlowmode.ContainsKey(channelId))
             {
                 await ReplyAsync(channel.Mention + " doesn't have dynamic slowmode.");
                 return;
             }
-            else if (disable == "null" || disable == "off")
-            {
-                settings.dynamicSlowmode.Remove(channelId);
-                await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
 
-                settings.SaveToFile();
-            }
+            settings.dynamicSlowmode.Remove(channelId);
+            await ReplyAsync(channel.Mention + " no longer has dynamic slowmode.");
+            settings.SaveToFile();
         }
     }
 }

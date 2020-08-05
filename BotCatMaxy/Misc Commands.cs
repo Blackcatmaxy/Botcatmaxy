@@ -109,8 +109,6 @@ namespace BotCatMaxy
                 contexts.Add(tmpCtx);
             }
 
-            List<Embed> embeds = new List<Embed>();
-
             foreach (ModuleInfo module in _service.Modules)
             {
                 EmbedBuilder embed = new EmbedBuilder
@@ -139,16 +137,12 @@ namespace BotCatMaxy
                     }
                 }
 
-                if (embed.Fields.Count != 0)
+                if (embed.Fields.Count > 0)
                 {
-                    embeds.Add(embed.Build());
+                    await ReplyAsync(embed: embed.Build());
                 }
             }
 
-            foreach (Embed embed in embeds)
-            {
-                await Context.User.SendMessageAsync(embed: embed);
-            }
             msg.DeleteAsync();
             await ReplyAsync("These are all the commands you have permissions to use");
         }

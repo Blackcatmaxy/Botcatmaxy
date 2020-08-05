@@ -46,6 +46,8 @@ namespace BotCatMaxy.Startup
                         messages = messages.Where(msg => msg.GetTimeAgo() < TimeSpan.FromMinutes(1));
 
                         var count = messages.Count() * channelSetting.Value;
+                        //API limit
+                        if (count >= 21599) count = 21599;
                         if (count < 2) count = 1;
                         await channel.ModifyAsync(c => c.SlowModeInterval = Convert.ToInt32(count));
                     }
