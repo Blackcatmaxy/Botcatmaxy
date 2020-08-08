@@ -113,7 +113,7 @@ namespace BotCatMaxy.Components.Filter
                 if (settings.moderateNames) embed.AddField("Name moderation", "True", true);
                 if (settings.maxNewLines != null) embed.AddField("Maximum new lines", $"{settings.maxNewLines.Value} new lines", true);
             }
-            if (badWords != null && badWords.all != null && badWords.all.Count > 0)
+            if (badWords?.all != null && badWords.all.Count > 0 && (useExplicit || badWords.all.Any(word => !string.IsNullOrWhiteSpace(word.euphemism))))
             {
                 List<string> words = new List<string>();
                 foreach (List<BadWord> group in badWords.grouped)
