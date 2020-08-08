@@ -172,6 +172,10 @@ namespace BotCatMaxy.Moderation
                         string infracInfo = $"[{MathF.Abs(i - infractions.Count)}] {size}{infraction.reason}{jumpLink} - {timeAgo}";
                         n++;
 
+                        //So we don't go over embed character limit of 9000
+                        if (infractionStrings.Select(str => str.Length).Sum() + infracInfo.Length >= 5800)
+                            return;
+
                         if ((infractionStrings.LastOrDefault() + infracInfo).Length < 1024)
                         {
                             if (infractionStrings.LastOrDefault().NotEmpty()) infractionStrings[infractionStrings.Count - 1] += "\n";
