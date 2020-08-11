@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Humanizer;
+using MongoDB.Driver;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -75,5 +76,9 @@ namespace BotCatMaxy
         {
             await new LogMessage(LogSeverity.Error, "Filter", $"Something went wrong with the {type} filter in {guild.Name} guild ({guild.Id}) owned by {guild.OwnerId}", exception).Log();
         }
+
+        //just to save code
+        public static async Task<string> Describe(this IGuild guild) => $"{guild.Name} ({guild.Id}) owned by {(await guild.GetOwnerAsync()).Describe()}";
+        public static string Describe(this IUser user) => $"{user.Username}#{user.Discriminator} ({user.Id})";
     }
 }

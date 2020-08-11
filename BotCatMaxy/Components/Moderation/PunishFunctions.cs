@@ -5,6 +5,7 @@ using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -47,20 +48,14 @@ namespace BotCatMaxy.Moderation
 
         public static async Task<WarnResult> Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null)
         {
-            try
-            {
-                if (user.CantBeWarned())
-                {
-                    return new WarnResult("This person can't be warned");
-                }
 
-                return await user.Id.Warn(size, reason, channel, user, logLink);
-            }
-            catch (Exception e)
+            if (user.CantBeWarned())
             {
-                await new LogMessage(LogSeverity.Error, "Warn", "An exception has happened while warning", e).Log();
-                return new WarnResult(e.ToString());
+                return new WarnResult("This person can't be warned");
             }
+
+            return await user.Id.Warn(size, reason, channel, user, logLink);
+
         }
 
         public static async Task<WarnResult> Warn(this ulong userID, float size, string reason, SocketTextChannel channel, IUser warnee = null, string logLink = null)
@@ -70,26 +65,36 @@ namespace BotCatMaxy.Moderation
                 return new WarnResult("Why would you need to warn someone with that size?");
             }
 
-            List<Infraction> infractions = userID.AddWarn(size, reason, channel.Guild, logLink);
-
             try
             {
-                if (warnee != null)
+                List<Infraction> infractions = userID.AddWarn(size, reason, channel.Guild, logLink);
+
+                //Try to message but will fail if user has DMs blocked
+                try
                 {
-                    LogSettings logSettings = channel.Guild.LoadFromFile<LogSettings>(false);
-                    IUser[] users = null;
-                    if (logSettings?.pubLogChannel != null && channel.Guild.TryGetChannel(logSettings.pubLogChannel.Value, out IGuildChannel logChannel))
-                        users = await (logChannel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
-                    else
-                        users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
-                    if (!users.Any(xUser => xUser.Id == userID))
+                    if (warnee != null)
                     {
-                        warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");
+                        LogSettings logSettings = channel.Guild.LoadFromFile<LogSettings>(false);
+                        IUser[] users = null;
+                        if (logSettings?.pubLogChannel != null && channel.Guild.TryGetChannel(logSettings.pubLogChannel.Value, out IGuildChannel logChannel))
+                            users = await (logChannel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
+                        else
+                            users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
+                        if (!users.Any(xUser => xUser.Id == userID))
+                        {
+                            warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");
+                        }
                     }
                 }
+                catch { }
+                return new WarnResult(infractions.Count);
             }
-            catch { }
-            return new WarnResult(infractions.Count);
+            catch (Exception e)
+            {
+                List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
+                await new LogMessage(LogSeverity.Error, "Warn", $"An exception has happened while warning a user ({userID}) with {infractions.Count} warns in {channel.Guild.Describe()}", e).Log();
+                return new WarnResult(("Something has gone wrong with trying to warn. Try again in a while, if it's still not working email blackcatmaxy@gmail.com or leave an issue on the GitHub" + e.ToString()).Truncate(1500));
+            }
         }
 
         public static List<Infraction> AddWarn(this ulong userID, float size, string reason, IGuild guild, string logLink)

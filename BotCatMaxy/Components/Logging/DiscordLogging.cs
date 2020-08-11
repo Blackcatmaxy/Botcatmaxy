@@ -153,7 +153,7 @@ namespace BotCatMaxy.Components.Logging
                 var embed = new EmbedBuilder();
                 embed.WithAuthor(warnee);
                 if (!(warnee is SocketGuildUser) || (warnee as SocketGuildUser).Nickname.IsNullOrEmpty())
-                    embed.AddField($"{warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.LimitedHumanize(2)}, because of {reason}");
+                    embed.AddField($"{warnee.Describe()} has been un{actType}ed", $"After {length.LimitedHumanize(2)}, because of {reason}");
                 else
                     embed.AddField($"{(warnee as SocketGuildUser).Nickname} aka {warnee.Username} ({warnee.Id}) has been un{actType}ed", $"After {length.LimitedHumanize(2)}, because of {reason}");
                 //if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", warnLink);

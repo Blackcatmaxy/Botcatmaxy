@@ -6,6 +6,7 @@ using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
+using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Globalization;
@@ -100,13 +101,13 @@ namespace BotCatMaxy.Startup
         {
             if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
             {
-                await context.Channel.SendMessageAsync(result.ErrorReason);
+                await context.Channel.SendMessageAsync(result.ErrorReason.Truncate(1500));
                 if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful))
                 {
                     string message = $"Command !{command.Value?.Name} in";
                     if (context.Guild != null)
                     {
-                        message += $" {context.Guild?.Name} guild";
+                        message += $" {context.Guild.Describe()}";
                     }
                     else
                     {

@@ -36,7 +36,7 @@ namespace BotCatMaxy
                     DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
                     await logMessage.DeleteAsync();
                 }
-                await ReplyAsync(result.description);
+                await ReplyAsync(result.description.Truncate(1500));
             }
         }
 
@@ -57,7 +57,7 @@ namespace BotCatMaxy
                     DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
                     await logMessage.DeleteAsync();
                 }
-                await ReplyAsync(result.description);
+                await ReplyAsync(result.description.Truncate(1500));
             }
         }
 
