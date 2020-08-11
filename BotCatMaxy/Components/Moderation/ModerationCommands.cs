@@ -534,17 +534,18 @@ namespace BotCatMaxy
             else
             {
                 searchedMessages = 100;
-                messages = (await Context.Channel.GetMessagesAsync(100).Flatten().ToListAsync());
+                messages = await Context.Channel.GetMessagesAsync(100).Flatten().ToListAsync();
                 for (int i = 0; i < 3; i++)
                 {
-                    if (messages.Last().GetTimeAgo() > TimeSpan.FromDays(14)) break;
+                    var lastMessage = messages.Last();
+                    if (lastMessage.GetTimeAgo() > TimeSpan.FromDays(14)) break;
                     messages.RemoveAll(message => message.Author.Id != user.ID);
                     if (messages.Count >= number)
                     {
                         break;
                     }
                     searchedMessages += 100;
-                    messages.Concat(await Context.Channel.GetMessagesAsync(messages.Last(), Direction.After, 100).Flatten().ToListAsync());
+                    messages.Concat(await Context.Channel.GetMessagesAsync(lastMessage, Direction.After, 100).Flatten().ToListAsync());
                 }
                 if (messages.Count > 0)
                 {
