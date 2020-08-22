@@ -13,7 +13,7 @@ namespace BotCatMaxy.Components.Logging
     {
         public static FixedSizedQueue<ulong> deletedMessagesCache = new FixedSizedQueue<ulong>(10);
 
-        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null)
+        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null, IUser authorOveride = null)
         {
             try
             {
@@ -64,8 +64,8 @@ namespace BotCatMaxy.Components.Logging
                     }
                 }
 
-                embed.WithFooter($"Message ID:{message.Id} • User ID:{message.Author.Id}")
-                    .WithAuthor(message.Author)
+                embed.WithFooter($"Message ID:{message.Id} • User ID:{(authorOveride ?? message.Author).Id}")
+                    .WithAuthor(authorOveride ?? message.Author)
                     .WithColor(color ?? Color.Blue)
                     .WithCurrentTimestamp();
                 string link = logChannel.SendMessageAsync(embed: embed.Build()).Result.GetJumpUrl();

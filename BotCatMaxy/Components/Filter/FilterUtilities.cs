@@ -83,33 +83,38 @@ namespace BotCatMaxy.Components.Filter
 
         public static async Task FilterPunish(this SocketCommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f)
         {
-            string jumpLink = DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold);
-            await ((SocketGuildUser)context.User).Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
+            await context.FilterPunish(context.User as SocketGuildUser, reason, settings, delete: true, warnSize: warnSize);
+        }
+
+        public static async Task FilterPunish(this SocketCommandContext context, SocketGuildUser user, string reason, ModerationSettings settings, bool delete = true, float warnSize = 0.5f, string explicitInfo = "")
+        {
+            string jumpLink = DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user);
+            await user.Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
             Task<RestUserMessage> warnMessage = null;
             if (context.Guild.GetTextChannel(logSettings?.pubLogChannel ?? 0) != null)
             {
-                warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+                warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{user.Mention} has been given their {user.LoadInfractions().Count.Suffix()} infraction because of {reason}");
             }
             else
             {
                 if (settings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
-                    _ = context.Message.Author.Notify("warned", reason, context.Guild, article: "in");
-                else
-                    warnMessage = context.Channel.SendMessageAsync($"{context.User.Mention} has been given their {(context.User as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of {reason}");
+                    return;
+                warnMessage = context.Channel.SendMessageAsync($"{user.Mention} has been given their {user.LoadInfractions().Count.Suffix()} infraction because of {reason}");
             }
-            try
+            if (delete)
             {
-                DiscordLogging.deletedMessagesCache.Enqueue(context.Message.Id);
-                await context.Message.DeleteAsync();
-            }
-            catch (Exception e)
-            {
-                new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e);
-                await warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
+                try
+                {
+                    DiscordLogging.deletedMessagesCache.Enqueue(context.Message.Id);
+                    await context.Message.DeleteAsync();
+                }
+                catch (Exception e)
+                {
+                    await new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e).Log();
+                    await warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
+                }
             }
         }
-
-
     }
 }

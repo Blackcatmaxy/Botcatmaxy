@@ -125,6 +125,7 @@ namespace BotCatMaxy.Startup
             SocketGuildChannel chnl = channel as SocketGuildChannel;
             SocketGuild guild = chnl?.Guild;
             if (guild == null) return;
+            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
             try
             {
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
@@ -137,9 +138,7 @@ namespace BotCatMaxy.Startup
                 if (settings.badUEmojis.Select(emoji => new Emoji(emoji)).Contains(reaction.Emote))
                 {
                     await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
-                    await ((SocketGuildUser)reaction.User.Value).Warn(1, "Bad reaction used", channel as SocketTextChannel);
-                    IUserMessage warnMessage = await channel.SendMessageAsync(
-                        $"{reaction.User.Value.Mention} has been given their {(reaction.User.Value as SocketGuildUser).LoadInfractions().Count.Suffix()} infraction because of bad reaction used");
+                    await context.FilterPunish(gUser, "bad reaction used", settings, delete: false, warnSize: 1);
                 }
             }
             catch (Exception e)

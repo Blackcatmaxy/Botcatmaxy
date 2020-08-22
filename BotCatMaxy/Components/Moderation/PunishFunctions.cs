@@ -266,13 +266,15 @@ namespace BotCatMaxy.Moderation
             userRef.ID.RecordAct(context.Guild, tempMute, "tempmute", context.Message.GetJumpUrl());
         }
 
-        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null, string article = "from")
+        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null, string article = "from", Color color = default)
         {
+            if (color == default) color = Color.LightGrey;
             var embed = new EmbedBuilder();
             embed.WithTitle($"You have been {action} {article} a discord guild");
             embed.AddField("Reason", reason, true);
             embed.AddField("Guild name", guild.Name, true);
             embed.WithCurrentTimestamp();
+            embed.WithColor(color);
             if (author != null) embed.WithAuthor(author);
             user.TryNotify(embed.Build());
         }
