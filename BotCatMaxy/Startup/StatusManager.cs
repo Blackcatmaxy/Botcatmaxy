@@ -38,6 +38,10 @@ namespace BotCatMaxy
                     break;
                 case 1:
                     status = "with info at https://bot.blackcatmaxy.com";
+                    statusPos++;
+                    break;
+                case 2:
+                    status = "Donate at https://donate.blackcatmaxy.com to help keep the bot running";
                     statusPos = 0;
                     break;
                 default:
