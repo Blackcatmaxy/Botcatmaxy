@@ -22,7 +22,7 @@ namespace BotCatMaxy
         [Command("warn")]
         [Summary("Warn a user with an option reason.")]
         [CanWarn()]
-        public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified")
+        public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
             WarnResult result = await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
@@ -44,7 +44,7 @@ namespace BotCatMaxy
         [Command("warn")]
         [Summary("Warn a user with a specific size, along with an option reason.")]
         [CanWarn()]
-        public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason = "Unspecified")
+        public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
             WarnResult result = await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
