@@ -486,7 +486,7 @@ namespace BotCatMaxy
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason = "Unspecified")
+        public async Task Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.user == userRef.ID) ?? false)
@@ -497,18 +497,19 @@ namespace BotCatMaxy
                 {
                     Context.Channel.DeleteMessageAsync(query);
                     ReplyAsync("Command Canceled");
+                    return;
                 }
                 actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.user == userRef.ID));
             }
-            else if (Context.Guild.GetBansAsync().Result.Any(ban => ban.User.Id == userRef.ID))
+            else if ((await Context.Guild.GetBansAsync()).Any(ban => ban.User.Id == userRef.ID))
             {
                 await ReplyAsync("User has already been banned permanently");
                 return;
             }
             userRef.user?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
-            await Context.Guild.AddBanAsync(userRef.ID);
-            Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
+            await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
+            Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
         }
 
         [Command("delete")]
