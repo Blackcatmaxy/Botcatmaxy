@@ -107,11 +107,11 @@ namespace BotCatMaxy.Startup
                     string message = $"Command !{command.Value?.Name} in";
                     if (context.Guild != null)
                     {
-                        message += $" {context.Guild.Describe()}";
+                        message += $" {await context.Guild.Describe()} owned by {(await context.Guild.GetOwnerAsync()).Describe()}";
                     }
                     else
                     {
-                        message += $" {context.User.Username}'s ({context.User.Id}) DMs";
+                        message += $" {context.User.Describe()} DMs";
                     }
                     message += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
                     await new LogMessage(LogSeverity.Error, "CMDs", message, (result as ExecuteResult?)?.Exception).Log();
