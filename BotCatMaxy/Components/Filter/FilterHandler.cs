@@ -121,13 +121,13 @@ namespace BotCatMaxy.Startup
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
-            IUserMessage message = await cachedMessage.GetOrDownloadAsync();
             SocketGuildChannel chnl = channel as SocketGuildChannel;
             SocketGuild guild = chnl?.Guild;
             if (guild == null) return;
-            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
             try
             {
+                IUserMessage message = await cachedMessage.GetOrDownloadAsync();
+                SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;
