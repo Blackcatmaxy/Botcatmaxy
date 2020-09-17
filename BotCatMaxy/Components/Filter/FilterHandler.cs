@@ -127,7 +127,7 @@ namespace BotCatMaxy.Startup
             try
             {
                 IUserMessage message = await cachedMessage.GetOrDownloadAsync();
-                SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
+                CommandContext context = new CommandContext(client, message);
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;

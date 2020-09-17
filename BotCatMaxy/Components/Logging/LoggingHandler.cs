@@ -43,7 +43,7 @@ namespace BotCatMaxy.Startup
             if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
             {
                 SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
-                DiscordLogging.LogMessage("Role ping", message, guild, true);
+                await DiscordLogging.LogMessage("Role ping", message, guild, true);
             }
         }
 
@@ -103,7 +103,7 @@ namespace BotCatMaxy.Startup
             try
             {
                 if (!(channel is SocketGuildChannel)) return;
-                DiscordLogging.LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
+                await DiscordLogging.LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
             }
             catch (Exception exception)
             {

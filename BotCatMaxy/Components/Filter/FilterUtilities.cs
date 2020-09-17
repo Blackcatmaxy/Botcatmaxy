@@ -86,15 +86,16 @@ namespace BotCatMaxy.Components.Filter
             await context.FilterPunish(context.User as SocketGuildUser, reason, settings, delete: true, warnSize: warnSize);
         }
 
-        public static async Task FilterPunish(this SocketCommandContext context, SocketGuildUser user, string reason, ModerationSettings settings, bool delete = true, float warnSize = 0.5f, string explicitInfo = "")
+        public static async Task FilterPunish(this ICommandContext context, SocketGuildUser user, string reason, ModerationSettings settings, bool delete = true, float warnSize = 0.5f, string explicitInfo = "")
         {
-            string jumpLink = DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user);
+            string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user);
             await user.Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
-            Task<RestUserMessage> warnMessage = null;
-            if (context.Guild.GetTextChannel(logSettings?.pubLogChannel ?? 0) != null)
+            Task<IUserMessage> warnMessage = null;
+            var pubLogChannel = await context.Guild.GetTextChannelAsync(logSettings?.pubLogChannel ?? 0);
+            if (pubLogChannel != null)
             {
-                warnMessage = context.Guild.GetTextChannel(logSettings.pubLogChannel ?? 0).SendMessageAsync($"{user.Mention} has been given their {user.LoadInfractions().Count.Suffix()} infraction because of {reason}");
+                warnMessage = pubLogChannel.SendMessageAsync($"{user.Mention} has been given their {user.LoadInfractions().Count.Suffix()} infraction because of {reason}");
             }
             else
             {

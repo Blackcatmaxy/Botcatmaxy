@@ -13,7 +13,7 @@ namespace BotCatMaxy.Components.Logging
     {
         public static FixedSizedQueue<ulong> deletedMessagesCache = new FixedSizedQueue<ulong>(10);
 
-        public static string LogMessage(string reason, IMessage message, SocketGuild guild = null, bool addJumpLink = false, Color? color = null, IUser authorOveride = null)
+        public static async Task<string> LogMessage(string reason, IMessage message, IGuild guild = null, bool addJumpLink = false, Color? color = null, IUser authorOveride = null)
         {
             try
             {
@@ -30,25 +30,20 @@ namespace BotCatMaxy.Components.Logging
                 }
 
                 LogSettings settings = guild?.LoadFromFile<LogSettings>();
-                SocketGuildChannel gChannel = guild?.GetChannel(settings?.logChannel ?? 0);
-                if (settings == null || gChannel == null || !settings.logDeletes)
+                var logChannel = await guild?.GetTextChannelAsync(settings?.logChannel ?? 0);
+                if (settings == null || logChannel == null || !settings.logDeletes)
                 {
                     return null;
                 }
-                SocketTextChannel logChannel = gChannel as SocketTextChannel;
 
                 var embed = new EmbedBuilder();
                 SocketTextChannel channel = message.Channel as SocketTextChannel;
-                if (message.Content == null || message.Content == "")
-                {
+                if (string.IsNullOrEmpty(message.Content))
                     embed.AddField(reason + " in #" + message.Channel.Name,
-                    "`This message had no text`", true);
-                }
+                        "`This message had no text`", true);
                 else
-                {
                     embed.AddField(reason + " in #" + message.Channel.Name,
-                    message.Content.Truncate(1020), true);
-                }
+                        message.Content.Truncate(1020), true);
 
                 if (addJumpLink)
                 {
