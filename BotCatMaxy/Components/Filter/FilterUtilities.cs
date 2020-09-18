@@ -29,6 +29,8 @@ namespace BotCatMaxy.Components.Filter
             {
                 switch (c)
                 {
+                    case '​': //zero width unicode needs to be removed
+                        break;
                     case '@':
                     case '4':
                         sb.Append('a');
