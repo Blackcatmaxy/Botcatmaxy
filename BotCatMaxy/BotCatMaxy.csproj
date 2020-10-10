@@ -23,9 +23,9 @@
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Interactive" Version="2.0.0" />
     <PackageReference Include="Discord.Addons.Preconditions" Version="2.2.0-dev3" />
-    <PackageReference Include="Discord.Net" Version="2.2.0" />
-    <PackageReference Include="Discord.Net.Commands" Version="2.2.0" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="2.2.0" />
+    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20200904.2" />
+    <PackageReference Include="Discord.Net.Commands" Version="2.3.0-dev-20200904.2" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="2.3.0-dev-20200904.2" />
     <PackageReference Include="Humanizer.Core" Version="2.8.26" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.0.0">
       <PrivateAssets>all</PrivateAssets>
