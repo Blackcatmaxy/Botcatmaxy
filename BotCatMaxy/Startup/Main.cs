@@ -33,11 +33,12 @@ namespace BotCatMaxy
             await new LogMessage(LogSeverity.Info, "Log", $"Program log logging at {AppDomain.CurrentDomain.BaseDirectory}").Log();
             var config = new DiscordSocketConfig
             {
-                AlwaysDownloadUsers = true,
+                AlwaysDownloadUsers = true, //going to keep here for new guilds added, but seems to be broken for startup per https://github.com/discord-net/Discord.Net/issues/1646
                 ConnectionTimeout = 6000,
                 MessageCacheSize = 120,
                 ExclusiveBulkDelete = false,
-                DefaultRetryMode = RetryMode.AlwaysRetry
+                DefaultRetryMode = RetryMode.AlwaysRetry,
+                GatewayIntents = GatewayIntents.GuildBans | GatewayIntents.GuildMembers | GatewayIntents.GuildMessageReactions | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.Guilds
             };
 
             //Maps all the classes
@@ -47,6 +48,9 @@ namespace BotCatMaxy
             _client = new DiscordSocketClient(config);
             _client.Log += ExceptionLogging.Log;
             _client.Ready += Ready;
+
+            //Delete once https://github.com/discord-net/Discord.Net/issues/1646 is fixed
+            _client.GuildAvailable += HandleGuildAvailable;
 
             if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary")
             {
@@ -117,8 +121,6 @@ namespace BotCatMaxy
             await Task.Delay(-1);
         }
 
-
-
         private static async Task Ready()
         {
             _client.Ready -= Ready;
@@ -127,6 +129,18 @@ namespace BotCatMaxy
             BotInfo.logChannel = guild.GetTextChannel(593128958552309761);
 
             await new LogMessage(LogSeverity.Info, "Ready", "Running in " + _client.Guilds.Count + " guilds!").Log();
+        }
+
+        //Delete once https://github.com/discord-net/Discord.Net/issues/1646 is fixed
+        private static async Task HandleGuildAvailable(SocketGuild guild)
+            => _ = Task.Run(() => DownloadUsers(guild));
+
+        private static async Task DownloadUsers(SocketGuild guild)
+        {
+            await guild.DownloadUsersAsync();
+#if DEBUG
+            Console.WriteLine($"Downloaded users from {guild.Name}");
+#endif
         }
     }
 
