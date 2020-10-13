@@ -14,7 +14,7 @@ namespace BotCatMaxy.TypeReaders
             Match match = Regex.Match(input, regex); //Check if it's custom discord emoji
             if (match.Success)
             {
-                return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "This is a custom emoji not a normal one, if you beleive they should work on this command make an issue on the GitHub over at !help"));
+                return await Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "This is a custom emoji not a normal one, if you believe they should work on this command make an issue on the GitHub over at !help"));
             }
             Emoji emoji = new Emoji(input);
             try

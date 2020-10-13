@@ -126,8 +126,9 @@ namespace BotCatMaxy.Startup
             if (guild == null) return;
             try
             {
-                IUserMessage message = await cachedMessage.GetOrDownloadAsync();
-                CommandContext context = new CommandContext(client, message);
+                //Needed to do our own get instead of cachedMessage.GetOrDownloadAsync() because this can be ISystenMessage and not just IUserMessage
+                IMessage message = await channel.GetMessageAsync(cachedMessage.Id);
+                ReactionContext context = new ReactionContext(client, message);
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;
@@ -135,9 +136,9 @@ namespace BotCatMaxy.Startup
                 {
                     return;
                 }
-                if (settings.badUEmojis.Select(emoji => new Emoji(emoji)).Contains(reaction.Emote))
+                if (settings.badUEmojis.Contains(reaction.Emote.Name))
                 {
-                    await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                    await message.RemoveAllReactionsForEmoteAsync(reaction.Emote);
                     await context.FilterPunish(gUser, "bad reaction used", settings, delete: false, warnSize: 1);
                 }
             }
