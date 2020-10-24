@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Globalization;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy.Startup
@@ -45,7 +46,7 @@ namespace BotCatMaxy.Startup
                 // Hook the MessageReceived event into our command handler
                 _client.MessageReceived += HandleCommandAsync;
 
-                //Post Execution handling
+                //Exception and Post Execution handling
                 _commands.Log += ExceptionLogging.Log;
                 _commands.CommandExecuted += CommandExecuted;
 
@@ -97,25 +98,48 @@ namespace BotCatMaxy.Startup
                 services: services);
         }
 
+        const string permissionRegex = @"(.+) requires (.+) permission (.+)\.";
+
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
-            if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
+            if (result.IsSuccess || result.Error == CommandError.UnknownCommand)
             {
-                await context.Channel.SendMessageAsync(result.ErrorReason.Truncate(1500));
-                if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful))
+                return;
+            }
+
+            string message = null;
+            //Idea is to override missing perm messages like "User requires guild permission BanMembers." to be more readable
+            //like "You need server permission ban members."
+            if (result.Error == CommandError.UnmetPrecondition)
+            {
+                var match = Regex.Match(result.ErrorReason, permissionRegex);
+                if (match.Success)
                 {
-                    string message = $"Command !{command.Value?.Name} in";
-                    if (context.Guild != null)
-                    {
-                        message += $" {await context.Guild.Describe()} owned by {(await context.Guild.GetOwnerAsync()).Describe()}";
-                    }
-                    else
-                    {
-                        message += $" {context.User.Describe()} DMs";
-                    }
-                    message += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
-                    await new LogMessage(LogSeverity.Error, "CMDs", message, (result as ExecuteResult?)?.Exception).Log();
+                    //If Bot, say "I", else say "You"
+                    string user = (match.Groups[1].Value == "Bot") ? "I" : "You";
+                    //If guild permission, say "server" permission, else say "channel" permission
+                    string area = (match.Groups[2].Value == "guild") ? "server" : "channel";
+                    message = $"{user} need {area} permission {match.Groups[3].Value.Humanize(LetterCasing.LowerCase)}.";
                 }
+            }
+
+            //Try to use above override, otherwise use provided error reason from event
+            await context.Channel.SendMessageAsync(message ?? result.ErrorReason);
+
+            //Debug info
+            if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful))
+            {
+                string logMessage = $"Command !{command.Value?.Name} in";
+                if (context.Guild != null)
+                {
+                    logMessage += $" {await context.Guild.Describe()} owned by {(await context.Guild.GetOwnerAsync()).Describe()}";
+                }
+                else
+                {
+                    logMessage += $" {context.User.Describe()} DMs";
+                }
+                logMessage += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
+                await new LogMessage(LogSeverity.Error, "CMDs", logMessage, (result as ExecuteResult?)?.Exception).Log();
             }
         }
     }

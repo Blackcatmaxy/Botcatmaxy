@@ -5,17 +5,19 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Settings
 {
     [Name("Slowmode")]
+    [RequireUserPermission(ChannelPermission.ManageChannels)]
+    [RequireBotPermission(ChannelPermission.ManageChannels)]
     public class SlowmodeCommands : ModuleBase
     {
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [Summary("Sets this channel's slowmode.")]
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(int time)
         {
             await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time);
@@ -24,7 +26,6 @@ namespace BotCatMaxy.Components.Settings
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [Summary("Sets this channel's slowmode.")]
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetSlowMode(string time)
         {
             var amount = time.ToTime();
@@ -85,12 +86,14 @@ namespace BotCatMaxy.Components.Settings
             settings.SaveToFile();
         }
 
+        readonly string[] disableStrings = { "null", "off", "none" };
+
         [Command("dynamicslowmode"), Alias("ds")]
         [Summary("Set the factor of dynamic slowmode. Pass `null` or `off` to disable.")]
         [HasAdmin]
         public async Task DynamicSlowmode(string disable)
         {
-            if (disable != "null" && disable != "off")
+            if (disableStrings.Contains(disable.ToLowerInvariant()))
             {
                 await ReplyAsync("Input not understood");
                 return;
