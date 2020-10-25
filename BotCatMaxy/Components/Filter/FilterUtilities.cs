@@ -44,12 +44,14 @@ namespace BotCatMaxy.Components.Filter
                     case '3':
                         sb.Append('e');
                         break;
+                    case '1':
                     case '!':
                         sb.Append('i');
                         break;
                     case '0':
                         sb.Append('o');
                         break;
+                    case '5':
                     case '$':
                         sb.Append('s');
                         break;
