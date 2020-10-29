@@ -77,7 +77,7 @@ namespace BotCatMaxy
             };
         }
 
-        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands", "commandlist")]
+        [Command("dmhelp"), Alias("dmbotinfo", "dmcommands", "commandlist", "listcommands")]
         [Summary("DM's a list of commands you can use.")]
         [RequireContext(ContextType.DM)]
         public async Task DMHelp()
@@ -147,10 +147,10 @@ namespace BotCatMaxy
             await ReplyAsync("These are all the commands you have permissions to use");
         }
 
-        [Command("describecommand"), Alias("describecmd", "dc", "dmhelp")]
+        [Command("describecommand"), Alias("describecmd", "dc", "commanddescribe")]
         [Summary("Find info on a command.")]
         [Priority(10)]
-        public async Task DMHelp(string commandName)
+        public async Task DescribeCMDAsync(string commandName)
         {
             SearchResult res = _service.Search(Context, commandName);
 
