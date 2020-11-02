@@ -155,7 +155,7 @@ namespace BotCatMaxy
             infractions.RemoveAt(index - 1);
 
             userRef.SaveInfractions(infractions, Context.Guild);
-            userRef?.user.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
+            await userRef.user?.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
             await ReplyAsync("Removed " + userRef.Mention() + "'s warning for " + reason);
         }
 
@@ -506,7 +506,7 @@ namespace BotCatMaxy
                 await ReplyAsync("User has already been banned permanently");
                 return;
             }
-            userRef.user?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
+            await userRef.user?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
             Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);

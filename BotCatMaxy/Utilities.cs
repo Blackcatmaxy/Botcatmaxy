@@ -215,27 +215,11 @@ namespace BotCatMaxy
             else return s.Pluralize();
         }
 
-        public static string JoinAll(this IEnumerable<string> list)
-        {
-            string s = "";
-            foreach (string element in list)
-            {
-                if (s.Length > 0) s += " ";
-                s += element;
-            }
-            return s;
-        }
-
-        public static async Task TryNotify(this Task<RestUser> task, string message)
-        {
-            (await task)?.TryNotify(message);
-        }
-
-        public static bool TryNotify(this IUser user, string message)
+        public static async Task<bool> TryNotify(this IUser user, string message)
         {
             try
             {
-                var sentMessage = user.GetOrCreateDMChannelAsync()?.Result.SendMessageAsync(message).Result;
+                var sentMessage = await user?.SendMessageAsync(message);
                 if (sentMessage == null) return false;
                 return true;
             }
@@ -244,11 +228,12 @@ namespace BotCatMaxy
                 return false;
             }
         }
-        public static bool TryNotify(this IUser user, Embed embed)
+
+        public static async Task<bool> TryNotify(this IUser user, Embed embed)
         {
             try
             {
-                var sentMessage = user.GetOrCreateDMChannelAsync()?.Result.SendMessageAsync(embed: embed);
+                var sentMessage = await user?.SendMessageAsync(embed: embed);
                 if (sentMessage == null) return false;
                 return true;
             }

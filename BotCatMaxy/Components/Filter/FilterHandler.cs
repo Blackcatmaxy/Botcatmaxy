@@ -91,7 +91,7 @@ namespace BotCatMaxy.Startup
                     await (channel as SocketTextChannel).SendMessageAsync(embed: embed.Build());
                 }
                 //If user's DMs aren't blocked
-                if (user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord"))
+                if (await user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord"))
                 {
                     await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
                     user.Id.AddWarn(1, "Username with filtered word", guild, null);

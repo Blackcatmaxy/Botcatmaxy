@@ -276,7 +276,7 @@ namespace BotCatMaxy.Moderation
             embed.WithCurrentTimestamp();
             embed.WithColor(color);
             if (author != null) embed.WithAuthor(author);
-            user.TryNotify(embed.Build());
+            await user.TryNotify(embed.Build());
         }
     }
 }
