@@ -2,22 +2,22 @@
 
 namespace BotCatMaxy.Models
 {
-    public class UserRef
+    public record UserRef
     {
-        public readonly SocketGuildUser gUser;
-        public readonly SocketUser user;
-        public readonly ulong ID;
+        public SocketGuildUser GuildUser { get; init; }
+        public SocketUser User { get; init; }
+        public ulong ID { get; init; }
 
         public UserRef(SocketGuildUser gUser)
         {
-            this.gUser = gUser;
-            user = gUser;
+            GuildUser = gUser;
+            User = gUser;
             ID = gUser.Id;
         }
 
         public UserRef(SocketUser user)
         {
-            this.user = user;
+            User = user;
             ID = user.Id;
         }
 
@@ -25,9 +25,9 @@ namespace BotCatMaxy.Models
 
         public UserRef(UserRef userRef, SocketGuild guild)
         {
-            user = userRef.user;
+            User = userRef.User;
             ID = userRef.ID;
-            gUser = guild.GetUser(ID);
+            GuildUser = guild.GetUser(ID);
         }
     }
 }

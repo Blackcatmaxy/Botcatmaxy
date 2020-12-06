@@ -193,7 +193,7 @@ namespace Discord.Commands
                 return PreconditionResult.FromError("This command cannot be used outside of a guild");
             var targetUser = value switch
             {
-                UserRef userRef => userRef.gUser as SocketGuildUser,
+                UserRef userRef => userRef.GuildUser as SocketGuildUser,
                 SocketGuildUser targetGuildUser => targetGuildUser,
                 ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
                 _ => throw new ArgumentOutOfRangeException("Unkown Type used in parameter that requires hierarchy"),

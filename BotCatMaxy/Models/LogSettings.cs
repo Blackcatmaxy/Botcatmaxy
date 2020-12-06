@@ -3,11 +3,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace BotCatMaxy.Models
 {
-    [BsonIgnoreExtraElements]
     public class LogSettings : DataObject
     {
         [BsonId]
-        public string Id = "LogSettings";
+        public const string Id = "LogSettings";
         public ulong? pubLogChannel = null;
         public ulong? logChannel = null;
         public bool logDeletes = true;

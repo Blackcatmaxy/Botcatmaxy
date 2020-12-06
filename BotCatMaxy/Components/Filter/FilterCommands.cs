@@ -113,7 +113,7 @@ namespace BotCatMaxy.Components.Filter
                 if (settings.moderateNames) embed.AddField("Name moderation", "True", true);
                 if (settings.maxNewLines != null) embed.AddField("Maximum new lines", $"{settings.maxNewLines.Value} new lines", true);
             }
-            if (badWords?.all != null && badWords.all.Count > 0 && (useExplicit || badWords.all.Any(word => !string.IsNullOrWhiteSpace(word.euphemism))))
+            if (badWords?.all != null && badWords.all.Count > 0 && (useExplicit || badWords.all.Any(word => !string.IsNullOrWhiteSpace(word.Euphemism))))
             {
                 List<string> words = new List<string>();
                 foreach (List<BadWord> group in badWords.grouped)
@@ -124,21 +124,21 @@ namespace BotCatMaxy.Components.Filter
                         string word = "";
                         if (useExplicit)
                         {
-                            if (group.Count == 1 || group.All(badWord => badWord.size == first.size))
+                            if (group.Count == 1 || group.All(badWord => badWord.Size == first.Size))
                             {
-                                word = $"[{first.size}x] ";
+                                word = $"[{first.Size}x] ";
                             }
                             else
                             {
-                                var sizes = group.Select(badword => badword.size);
+                                var sizes = group.Select(badword => badword.Size);
                                 word = $"[{sizes.Min()}-{sizes.Max()}x] ";
                             }
-                            if (first.euphemism.NotEmpty()) word += $"{first.euphemism} ";
-                            word += $"({group.Select(badWord => $"{badWord.word}{(badWord.partOfWord ? "¤" : "")}").ToArray().ListItems(", ")})";
+                            if (first.Euphemism.NotEmpty()) word += $"{first.Euphemism} ";
+                            word += $"({group.Select(badWord => $"{badWord.Word}{(badWord.PartOfWord ? "¤" : "")}").ToArray().ListItems(", ")})";
                         }
-                        else if (!first.euphemism.IsNullOrEmpty())
-                            word = first.euphemism;
-                        if (first.partOfWord && (!first.euphemism.IsNullOrEmpty() && !useExplicit))
+                        else if (!first.Euphemism.IsNullOrEmpty())
+                            word = first.Euphemism;
+                        if (first.PartOfWord && (!first.Euphemism.IsNullOrEmpty() && !useExplicit))
                         {
                             word += "¤";
                         }
@@ -322,23 +322,31 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin()]
         public async Task ToggleContainBadWord(string word)
         {
-            BadWords badWords = new BadWords(Context.Guild);
-            foreach (BadWord badWord in badWords.all)
+            var file = Context.Guild.LoadFromFile<BadWordList>(false);
+            var badWords = file?.badWords;
+            if (badWords?.Count is null or 0)
             {
-                if (badWord.word.ToLower() == word.ToLower())
+                await ReplyAsync("No badwords have been set");
+                return;
+            }
+            var editedList = new List<BadWord>(badWords);
+            for (int i = 0; i < badWords.Count; i++)
+            {
+                var badWord = badWords[i];
+                if (badWord.Word.Equals(word, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    if (badWord.partOfWord)
+                    if (badWord.PartOfWord)
                     {
-                        badWord.partOfWord = false;
+                        editedList[i] = badWord with { PartOfWord = false };
                         await ReplyAsync("Set badword to not be filtered if it's inside of another word");
                     }
                     else
                     {
-                        badWord.partOfWord = true;
+                        editedList[i] = badWord with { PartOfWord = true };
                         await ReplyAsync("Set badword to be filtered even if it's inside of another word");
                     }
-                    BadWordList badWordList = new BadWordList { badWords = badWords.all, guild = Context.Guild };
-                    badWordList.SaveToFile();
+                    file.badWords = editedList;
+                    file.SaveToFile();
                     return;
                 }
             }
@@ -482,7 +490,7 @@ namespace BotCatMaxy.Components.Filter
                 await ReplyAsync("No bad words are set");
                 return;
             }
-            BadWord badToRemove = badWordsClass.badWords.FirstOrDefault(badWord => badWord.word == word);
+            BadWord badToRemove = badWordsClass.badWords.FirstOrDefault(badWord => badWord.Word == word);
             if (badToRemove != null)
             {
                 badWordsClass.badWords.Remove(badToRemove);
@@ -504,15 +512,15 @@ namespace BotCatMaxy.Components.Filter
         {
             BadWord badWord = new BadWord
             {
-                word = word,
-                euphemism = euphemism,
-                size = size
+                Word = word,
+                Euphemism = euphemism,
+                Size = size
             };
             BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(true);
             badWordsClass.badWords.Add(badWord);
             badWordsClass.SaveToFile();
 
-            await ReplyAsync($"Added {badWord.word}{((badWord.euphemism != null) ? $", also known as {badWord.euphemism}" : "")} to bad word list");
+            await ReplyAsync($"Added {badWord.Word}{((badWord.Euphemism != null) ? $", also known as {badWord.Euphemism}" : "")} to bad word list");
         }
 
         [Command("addanouncementchannel"), HasAdmin]

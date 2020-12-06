@@ -67,9 +67,9 @@ namespace BotCatMaxy.Components.Filter
 
             foreach (BadWord badWord in badWords)
             {
-                if (badWord.partOfWord)
+                if (badWord.PartOfWord)
                 {
-                    if (strippedMessage.Contains(badWord.word, StringComparison.InvariantCultureIgnoreCase))
+                    if (strippedMessage.Contains(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
                     {
                         return badWord;
                     }
@@ -78,7 +78,7 @@ namespace BotCatMaxy.Components.Filter
                 { //If bad word is ignored inside of words
                     foreach (string word in messageParts)
                     {
-                        if (word.Equals(badWord.word, StringComparison.InvariantCultureIgnoreCase))
+                        if (word.Equals(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
                         {
                             return badWord;
                         }

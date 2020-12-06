@@ -308,13 +308,13 @@ namespace BotCatMaxy
         {
             if (userRef == null) return "``ERROR``";
             string name = null;
-            if (userRef.gUser?.Nickname != null)
+            if (userRef.GuildUser?.Nickname != null)
             {
-                name = userRef.gUser.Nickname.StrippedOfPing();
+                name = userRef.GuildUser.Nickname.StrippedOfPing();
                 if (showRealName) //done since people with nicknames might have an innapropriate name under the nickname
-                    name += $" aka {userRef.gUser.Username.StrippedOfPing()}";
+                    name += $" aka {userRef.GuildUser.Username.StrippedOfPing()}";
             }
-            if (name == null && userRef.user != null) name = userRef.user.Username.StrippedOfPing();
+            if (name == null && userRef.User != null) name = userRef.User.Username.StrippedOfPing();
             if (name != null)
             {
                 if (showIDWithUser) name += $" ({userRef.ID})";
@@ -326,14 +326,14 @@ namespace BotCatMaxy
         public static string Mention(this UserRef userRef)
         {
             if (userRef == null) return "``ERROR``";
-            if (userRef.user != null) return userRef.user.Mention;
+            if (userRef.User != null) return userRef.User.Mention;
             return $"User with ID:{userRef.ID}";
         }
 
         public static EmbedBuilder WithAuthor(this EmbedBuilder embed, UserRef userRef)
         {
             Contract.Requires(embed != null);
-            if (userRef.user != null) embed.WithAuthor(userRef.user);
+            if (userRef.User != null) embed.WithAuthor(userRef.User);
             else embed.WithAuthor($"Unkown user with ID:{userRef.ID}");
             return embed;
         }
@@ -344,10 +344,10 @@ namespace BotCatMaxy
             acts.Add(new ActRecord()
             {
                 type = type,
-                length = tempAct.length,
+                length = tempAct.Length,
                 logLink = loglink,
-                reason = tempAct.reason,
-                time = tempAct.dateBanned
+                reason = tempAct.Reason,
+                time = tempAct.DateBanned
             });
             userID.SaveActRecord(guild, acts);
         }
@@ -364,6 +364,7 @@ namespace BotCatMaxy
             return await func.SuperGet();
         }
 
+        public static readonly int[] ignoredHTTPErrors = {500, 503, 530};
         public static async Task<T> SuperGet<T>(this Func<Task<T>> action)
         {
             for (int i = 0; i < 3; i++)
@@ -374,21 +375,18 @@ namespace BotCatMaxy
                 }
                 catch (HttpException e)
                 { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
-                    if (i == 2 || (e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable && e.HttpCode != System.Net.HttpStatusCode.InternalServerError && (int)e.HttpCode != 530)) throw;
+                    if (i == 2 || !ignoredHTTPErrors.Contains((int)e.HttpCode)) throw;
                 }
             }
             throw new Exception($"SuperGet<{typeof(T).Name}> ran out of tries without throwing proper exception?");
         }
 
-        public static async Task<IGuildUser> SuperGetUser(this DiscordSocketClient client, SocketGuild guild, ulong ID)
+        public static async Task<IGuildUser> SuperGetUser(this RestGuild guild, ulong ID)
         {
-            IGuildUser user = guild.GetUser(ID);
-            if (user != null) return user;
             var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
             Func<Task<IGuildUser>> func = async () =>
             {
-                RestGuild restGuild = await client.Rest.GetGuildAsync(guild.Id, requestOptions);
-                return await restGuild.GetUserAsync(ID, requestOptions);
+                return await guild.GetUserAsync(ID, requestOptions);
             };
             return await func.SuperGet();
             /*for (int i = 0; i < 3; i++) {

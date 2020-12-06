@@ -24,8 +24,9 @@ namespace BotCatMaxy
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.File($"{AppDomain.CurrentDomain.BaseDirectory}/log.txt", rollingInterval: RollingInterval.Day);
+            //Maps all the classes
+            _ = DataManipulator.MapTypes();
 #if DEBUG
-            logConfig.WriteTo.File($"C:/Users/bobth/Documents/Bmax-test/log.txt", rollingInterval: RollingInterval.Day);
             BotInfo.debug = true;
             dbClient = new MongoClient(HiddenInfo.debugDB);
 #endif
@@ -40,9 +41,6 @@ namespace BotCatMaxy
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 GatewayIntents = GatewayIntents.GuildBans | GatewayIntents.GuildMembers | GatewayIntents.GuildMessageReactions | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.Guilds
             };
-
-            //Maps all the classes
-            _ = DataManipulator.MapTypes();
 
             //Sets up the events
             _client = new DiscordSocketClient(config);

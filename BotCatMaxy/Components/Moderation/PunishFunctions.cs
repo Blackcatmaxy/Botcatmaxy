@@ -40,10 +40,10 @@ namespace BotCatMaxy.Moderation
         public static async Task<WarnResult> Warn(this UserRef userRef, float size, string reason, SocketTextChannel channel, string logLink = null)
         {
             Contract.Requires(userRef != null);
-            if (userRef.gUser != null)
-                return await userRef.gUser.Warn(size, reason, channel, logLink);
+            if (userRef.GuildUser != null)
+                return await userRef.GuildUser.Warn(size, reason, channel, logLink);
             else
-                return await userRef.ID.Warn(size, reason, channel, userRef.user, logLink);
+                return await userRef.ID.Warn(size, reason, channel, userRef.User, logLink);
         }
 
         public static async Task<WarnResult> Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null)
@@ -102,11 +102,11 @@ namespace BotCatMaxy.Moderation
             List<Infraction> infractions = userID.LoadInfractions(guild, true);
             Infraction newInfraction = new Infraction
             {
-                reason = reason,
-                time = DateTime.UtcNow,
-                size = size
+                Reason = reason,
+                Time = DateTime.UtcNow,
+                Size = size,
+                LogLink = logLink
             };
-            if (!string.IsNullOrEmpty(logLink)) newInfraction.logLink = logLink;
             infractions.Add(newInfraction);
             userID.SaveInfractions(guild, infractions);
             return infractions;
@@ -144,37 +144,37 @@ namespace BotCatMaxy.Moderation
                     Infraction infraction = infractions[i];
 
                     //Gets how long ago all the infractions were
-                    TimeSpan dateAgo = DateTime.UtcNow.Subtract(infraction.time);
-                    totalInfractions.sum += infraction.size;
+                    TimeSpan dateAgo = DateTime.UtcNow.Subtract(infraction.Time);
+                    totalInfractions.sum += infraction.Size;
                     totalInfractions.count++;
                     if (dateAgo.Days <= 7)
                     {
-                        infractions7Days.sum += infraction.size;
+                        infractions7Days.sum += infraction.Size;
                         infractions7Days.count++;
                     }
                     if (dateAgo.Days <= 30)
                     {
-                        infractions30Days.sum += infraction.size;
+                        infractions30Days.sum += infraction.Size;
                         infractions30Days.count++;
                         if (dateAgo.Days < 1)
                         {
-                            infractionsToday.sum += infraction.size;
+                            infractionsToday.sum += infraction.Size;
                             infractionsToday.count++;
                         }
                     }
 
                     string size = "";
-                    if (infraction.size != 1)
+                    if (infraction.Size != 1)
                     {
-                        size = "(" + infraction.size + "x) ";
+                        size = "(" + infraction.Size + "x) ";
                     }
 
                     if (n < amount)
                     {
                         string jumpLink = "";
                         string timeAgo = dateAgo.LimitedHumanize(2);
-                        if (showLinks && !infraction.logLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.logLink})]";
-                        string infracInfo = $"[{MathF.Abs(i - infractions.Count)}] {size}{infraction.reason}{jumpLink} - {timeAgo}";
+                        if (showLinks && !infraction.LogLink.IsNullOrEmpty()) jumpLink = $" [[Logged Here]({infraction.LogLink})]";
+                        string infracInfo = $"[{MathF.Abs(i - infractions.Count)}] {size}{infraction.Reason}{jumpLink} - {timeAgo}";
                         n++;
 
                         //So we don't go over embed character limit of 9000
@@ -230,11 +230,11 @@ namespace BotCatMaxy.Moderation
             actions.SaveToFile();
             await context.Guild.AddBanAsync(userRef.ID, reason: reason);
             DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
-            if (userRef.user != null)
+            if (userRef.User != null)
             {
                 try
                 {
-                    await userRef.user.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
+                    await userRef.User.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
                 }
                 catch (Exception e)
                 {
@@ -250,13 +250,13 @@ namespace BotCatMaxy.Moderation
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile();
-            await userRef.gUser?.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
+            await userRef.GuildUser?.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
             DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "mut", reason, context.Message.GetJumpUrl(), time);
-            if (userRef.user != null)
+            if (userRef.User != null)
             {
                 try
                 {
-                    await userRef.user?.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
+                    await userRef.User?.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
                 }
                 catch (Exception e)
                 {

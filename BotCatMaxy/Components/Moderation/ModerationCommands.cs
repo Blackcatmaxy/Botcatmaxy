@@ -108,7 +108,7 @@ namespace BotCatMaxy
             if (infractions.IsNullOrEmpty())
             {
                 string message = $"{userRef.Mention()} has no infractions";
-                if (userRef.user == null) message += " or doesn't exist";
+                if (userRef.User == null) message += " or doesn't exist";
                 await ReplyAsync(message);
                 return;
             }
@@ -151,11 +151,11 @@ namespace BotCatMaxy
                 await ReplyAsync("Invalid infraction number");
                 return;
             }
-            string reason = infractions[index - 1].reason;
+            string reason = infractions[index - 1].Reason;
             infractions.RemoveAt(index - 1);
 
             userRef.SaveInfractions(infractions, Context.Guild);
-            await userRef.user?.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
+            await userRef.User?.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
             await ReplyAsync("Removed " + userRef.Mention() + "'s warning for " + reason);
         }
 
@@ -218,16 +218,16 @@ namespace BotCatMaxy
                 }
             }
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.user == userRef.ID);
+            TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.User == userRef.ID);
             if (oldAct != null)
             {
-                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)) >= amount)
+                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= amount)
                 {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
                 IUserMessage query = await ReplyAsync(
-                    $"{userRef.Name(true)} is already temp-banned for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
+                    $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
                 SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
                 if (nextMessage?.Content?.ToLower() == "!confirm")
                 {
@@ -278,7 +278,7 @@ namespace BotCatMaxy
             }
             await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.user == userRef.ID))
+            if (actions.tempBans.Any(tempBan => tempBan.User == userRef.ID))
             {
                 Context.Message.DeleteOrRespond($"{userRef.Name()} is already temp-banned (the warn did go through)", Context.Guild);
                 return;
@@ -317,7 +317,7 @@ namespace BotCatMaxy
             }
             await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.user == userRef.ID))
+            if (actions.tempBans.Any(tempBan => tempBan.User == userRef.ID))
             {
                 await ReplyAsync($"{userRef.Name()} is already temp-banned (the warn did go through)");
                 return;
@@ -360,16 +360,16 @@ namespace BotCatMaxy
                 return;
             }
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            TempAct oldAct = actions.tempMutes.FirstOrDefault(tempMute => tempMute.user == userRef.ID);
+            TempAct oldAct = actions.tempMutes.FirstOrDefault(tempMute => tempMute.User == userRef.ID);
             if (oldAct != null)
             {
-                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)) >= amount)
+                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= amount)
                 {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
                 IUserMessage query = await ReplyAsync(
-                    $"{userRef.Name()} is already temp-muted for {oldAct.length.LimitedHumanize()} ({(oldAct.length - (DateTime.UtcNow - oldAct.dateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
+                    $"{userRef.Name()} is already temp-muted for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
                 SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
                 if (nextMessage?.Content?.ToLower() == "!confirm")
                 {
@@ -426,7 +426,7 @@ namespace BotCatMaxy
             }
             await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempMutes.Any(tempMute => tempMute.user == userRef.ID))
+            if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
             {
                 await ReplyAsync($"{userRef.Name()} is already temp-muted, (the warn did go through)");
                 return;
@@ -471,7 +471,7 @@ namespace BotCatMaxy
             }
             await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempMutes.Any(tempMute => tempMute.user == userRef.ID))
+            if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
             {
                 await ReplyAsync($"{userRef.Name()} is already temp-muted, (the warn did go through)");
                 return;
@@ -489,7 +489,7 @@ namespace BotCatMaxy
         public async Task Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
-            if (actions?.tempBans?.Any(tempBan => tempBan.user == userRef.ID) ?? false)
+            if (actions?.tempBans?.Any(tempBan => tempBan.User == userRef.ID) ?? false)
             {
                 var query = await ReplyAsync("User is already tempbanned. Reply with !confirm if you want to override?");
                 var reply = await NextMessageAsync(timeout: TimeSpan.FromMinutes(5));
@@ -499,14 +499,14 @@ namespace BotCatMaxy
                     ReplyAsync("Command Canceled");
                     return;
                 }
-                actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.user == userRef.ID));
+                actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.User == userRef.ID));
             }
             else if ((await Context.Guild.GetBansAsync()).Any(ban => ban.User.Id == userRef.ID))
             {
                 await ReplyAsync("User has already been banned permanently");
                 return;
             }
-            await userRef.user?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
+            await userRef.User?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
             Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
@@ -523,7 +523,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Invalid number");
                 return;
             }
-            if (user?.gUser != null && user.gUser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            if (user?.GuildUser != null && user.GuildUser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
             {
                 await ReplyAsync("Can't target deleted messages belonging to people with higher hierarchy");
                 return;

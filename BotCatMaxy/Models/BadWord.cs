@@ -8,21 +8,17 @@ using System.Linq;
 namespace BotCatMaxy.Models
 {
     [BsonIgnoreExtraElements]
-    public class BadWord
+    public record BadWord
     {
-        public string word;
-        public string euphemism;
-        public float size = 0.5f;
-        public bool partOfWord = true;
-        public object moreWords;
+        public string Word { get; init; }
+        public string Euphemism { get; init; }
+        public float Size { get; init; } = 0.5f;
+        public bool PartOfWord { get; init; } = true;
     }
 
-    [BsonIgnoreExtraElements]
     public class BadWordList : DataObject
     {
-        [BsonId]
-        public string Id = "BadWordList";
-        public List<BadWord> badWords = new List<BadWord>();
+        public List<BadWord> badWords = new();
     }
 
     public class BadWords
@@ -43,10 +39,10 @@ namespace BotCatMaxy.Models
 
             foreach (BadWord badWord in all)
             {
-                if (badWord.partOfWord) insideWords.Add(badWord);
+                if (badWord.PartOfWord) insideWords.Add(badWord);
                 else onlyAlone.Add(badWord);
 
-                List<BadWord> group = grouped.Find(list => list.FirstOrDefault() != null && list.First().euphemism == badWord.euphemism);
+                List<BadWord> group = grouped.Find(list => list.FirstOrDefault() != null && list.First().Euphemism == badWord.Euphemism);
                 if (group != null)
                 {
                     group.Add(badWord);
