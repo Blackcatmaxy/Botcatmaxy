@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {
-    public static class Utilities
+    public static class GeneralUtilities
     {
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true)
         {
@@ -38,72 +38,9 @@ namespace BotCatMaxy
             return null;
         }
 
-        public static bool HasAdmin(this SocketGuildUser user)
-        {
-            if (user == null) return false;
-            if (user.Guild.Owner.Id == user.Id)
-            {
-                return true;
-            }
-
-            foreach (SocketRole role in (user).Roles)
-            {
-                if (role.Permissions.Administrator)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public static bool CanWarn(this SocketGuildUser user)
-        {
-            if (HasAdmin(user))
-            {
-                return true;
-            }
-
-            foreach (SocketRole role in user.Roles)
-            {
-                if (role.Permissions.KickMembers)
-                {
-                    return true;
-                }
-            }
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0)
-            {
-                if (user.RoleIDs().Intersect(settings.ableToWarn).Any())
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public static List<ulong> RoleIDs(this SocketGuildUser user)
         {
             return user.Roles.Select(role => role.Id).ToList();
-        }
-
-        public static bool CantBeWarned(this SocketGuildUser user)
-        {
-            if (user == null) return false;
-            if (user.HasAdmin()) return true;
-
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings != null)
-            {
-                List<SocketRole> rolesUnableToBeWarned = new List<SocketRole>();
-                foreach (ulong roleID in settings.cantBeWarned) rolesUnableToBeWarned.Add(user.Guild.GetRole(roleID));
-                if (user.Roles.Intersect(rolesUnableToBeWarned).Any()) return true;
-            }
-            return false;
-        }
-
-        public static SocketGuild GetGuild(SocketGuildChannel channel)
-        {
-            return channel.Guild;
         }
 
         public static void RemoveNullEntries<T>(this ICollection<T> list)
@@ -198,49 +135,10 @@ namespace BotCatMaxy
             return null;
         }
 
-        public static bool IsNullOrEmpty(this ICollection list)
-        {
-            if (list == null || list.Count == 0) return true;
-            else return false;
-        }
-        public static bool NotEmpty<T>(this IEnumerable<T> list, int needAmount = 0)
-        {
-            if (list == null || list.ToArray().Length <= needAmount) return false;
-            else return true;
-        }
-
         public static string Pluralize(this string s, float num)
         {
             if (num == 1) return s;
             else return s.Pluralize();
-        }
-
-        public static async Task<bool> TryNotify(this IUser user, string message)
-        {
-            try
-            {
-                var sentMessage = await user?.SendMessageAsync(message);
-                if (sentMessage == null) return false;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public static async Task<bool> TryNotify(this IUser user, Embed embed)
-        {
-            try
-            {
-                var sentMessage = await user?.SendMessageAsync(embed: embed);
-                if (sentMessage == null) return false;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         public static void DeleteOrRespond(this SocketMessage message, string toSay, IGuild guild, LogSettings settings = null)
@@ -253,29 +151,6 @@ namespace BotCatMaxy
                 _ = message.DeleteAsync();
                 guild.GetTextChannelAsync(settings.pubLogChannel ?? 0).Result.SendMessageAsync($"{message.Author.Mention}, {toSay}");
             }
-        }
-
-        public static string ListItems(this IEnumerable<string> list, string joiner = " ")
-        {
-            string items = null;
-            if (list.NotEmpty())
-            {
-                (list as ICollection<string>)?.RemoveNullEntries();
-                foreach (string item in list)
-                {
-                    if (items == null) items = "";
-                    else items += joiner;
-                    items += item;
-                }
-            }
-            return items;
-        }
-
-        public static bool CanActOn(this SocketGuildUser focus, SocketGuildUser comparer)
-        {
-            if (focus.Roles.Select(role => role.Position).Max() > comparer.Roles.Select(role => role.Position).Max())
-                return true;
-            return false;
         }
 
         public static string LimitedHumanize(this TimeSpan timeSpan, int precision = 2)
