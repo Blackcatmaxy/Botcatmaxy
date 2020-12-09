@@ -34,11 +34,11 @@ namespace BotCatMaxy
             timer.Change(0, 30000);
         }
 
-        async Task CheckNewUser(SocketGuildUser user)
+        private async Task CheckNewUser(SocketGuildUser user)
         {
             ModerationSettings settings = user.Guild?.LoadFromFile<ModerationSettings>();
             TempActionList actions = user.Guild?.LoadFromFile<TempActionList>();
-            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.IsNullOrEmpty() ?? true)) return;
+            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0)) return;
             if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
@@ -68,7 +68,7 @@ namespace BotCatMaxy
                     currentInfo.checkedGuilds++;
                     if (actions != null)
                     {
-                        if (!actions.tempBans.IsNullOrEmpty())
+                        if (actions.tempBans?.Count is not null or 0)
                         {
                             currentInfo.editedBans = new List<TempAct>(actions.tempBans);
                             foreach (TempAct tempBan in actions.tempBans)
@@ -112,7 +112,7 @@ namespace BotCatMaxy
                         }
                         else if (debug) Console.Write($"no tempbans, ");
                         ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
-                        if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty())
+                        if (settings is not null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes?.Count is not null or 0)
                         {
                             var mutedRole = sockGuild.GetRole(settings.mutedRole);
                             List<TempAct> editedMutes = new List<TempAct>(actions.tempMutes);

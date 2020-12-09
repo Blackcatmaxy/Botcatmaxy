@@ -183,8 +183,8 @@ namespace BotCatMaxy.Moderation
 
                         if ((infractionStrings.LastOrDefault() + infracInfo).Length < 1024)
                         {
-                            if (infractionStrings.LastOrDefault().NotEmpty()) infractionStrings[infractionStrings.Count - 1] += "\n";
-                            infractionStrings[infractionStrings.Count - 1] += infracInfo;
+                            if (infractionStrings.LastOrDefault()?.Length is not null or 0) infractionStrings[infractionStrings.Count - 1] += "\n";
+                            infractionStrings[^1] += infracInfo;
                         }
                         else
                         {

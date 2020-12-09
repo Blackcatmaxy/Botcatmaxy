@@ -229,7 +229,7 @@ namespace BotCatMaxy.Startup
                     }
 
                     //Check for emojis
-                    if (modSettings.badUEmojis.NotEmpty() && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
+                    if (modSettings.badUEmojis?.Count is not null or 0 && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
                     {
                         await context.FilterPunish("Bad emoji used", modSettings, 0.8f);
                         return;

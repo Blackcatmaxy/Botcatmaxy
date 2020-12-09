@@ -21,7 +21,7 @@ namespace BotCatMaxy.Components.Filter
 
         public static BadWord CheckForBadWords(this string message, BadWord[] badWords)
         {
-            if (badWords.IsNullOrEmpty()) return null;
+            if (badWords?.Length is null or 0) return null;
 
             //Checks for bad words
             StringBuilder sb = new StringBuilder();

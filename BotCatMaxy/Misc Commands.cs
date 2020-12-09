@@ -270,7 +270,7 @@ namespace BotCatMaxy
                 TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                 if (actions != null)
                 {
-                    if (!actions.tempBans.IsNullOrEmpty())
+                    if (actions.tempBans?.Count is null or 0)
                     {
                         foreach (TempAct tempBan in actions.tempBans)
                         {
@@ -282,7 +282,7 @@ namespace BotCatMaxy
                     }
 
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
-                    if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty())
+                    if (settings is not null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes?.Count is not null or 0)
                     {
                         foreach (TempAct tempMute in actions.tempMutes)
                         {

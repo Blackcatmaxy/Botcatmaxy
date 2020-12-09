@@ -43,20 +43,6 @@ namespace BotCatMaxy
             return user.Roles.Select(role => role.Id).ToList();
         }
 
-        public static void RemoveNullEntries<T>(this ICollection<T> list)
-        {
-            if (list != null || list.Count > 0)
-            {
-                foreach (T thing in list)
-                {
-                    if (thing == null)
-                    {
-                        list.Remove(thing);
-                    }
-                }
-            }
-        }
-
         public static string Suffix(this int num)
         {
             if (num.ToString().EndsWith("11")) return num.ToString() + "th";

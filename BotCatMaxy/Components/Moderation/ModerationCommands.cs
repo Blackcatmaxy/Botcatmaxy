@@ -105,7 +105,7 @@ namespace BotCatMaxy
             }
 
             List<Infraction> infractions = userRef.LoadInfractions(guild, false);
-            if (infractions.IsNullOrEmpty())
+            if (infractions?.Count is null or 0)
             {
                 string message = $"{userRef.Mention()} has no infractions";
                 if (userRef.User == null) message += " or doesn't exist";
@@ -126,7 +126,7 @@ namespace BotCatMaxy
         {
             userRef ??= new UserRef(Context.User as SocketGuildUser);
             List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
-            if (infractions.IsNullOrEmpty())
+            if (infractions?.Count is null or 0)
             {
                 await ReplyAsync($"{userRef.Name()} has no infractions");
                 return;
@@ -141,7 +141,7 @@ namespace BotCatMaxy
         public async Task RemoveWarnAsync([RequireHierarchy] UserRef userRef, int index)
         {
             List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
-            if (infractions.IsNullOrEmpty())
+            if (infractions?.Count is null or 0)
             {
                 await ReplyAsync("Infractions are null");
                 return;

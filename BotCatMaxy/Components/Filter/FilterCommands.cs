@@ -89,12 +89,12 @@ namespace BotCatMaxy.Components.Filter
                 else
                 {
                     message = settings.allowedLinks.ListItems("\n");
-                    if (message.NotEmpty()) embed.AddField("Allowed links", message, true);
+                    if (message?.Length is not null or 0) embed.AddField("Allowed links", message, true);
                     if (settings.allowedToLink != null && settings.allowedToLink.Count > 0)
                     {
                         message = guild.Roles.Where(
                             role => (role.Permissions.Administrator && !role.IsManaged) || settings.allowedToLink.Contains(role.Id)).Select(role => role.Name).ToArray().ListItems("\n");
-                        if (message.NotEmpty()) embed.AddField("Roles that can post links", message, true);
+                        if (message?.Length is not null or 0) embed.AddField("Roles that can post links", message, true);
                     }
                 }
                 if (settings.allowedCaps > 0)
@@ -133,7 +133,7 @@ namespace BotCatMaxy.Components.Filter
                                 var sizes = group.Select(badword => badword.Size);
                                 word = $"[{sizes.Min()}-{sizes.Max()}x] ";
                             }
-                            if (first.Euphemism.NotEmpty()) word += $"{first.Euphemism} ";
+                            if (first.Euphemism?.Length is not null or 0) word += $"{first.Euphemism} ";
                             word += $"({group.Select(badWord => $"{badWord.Word}{(badWord.PartOfWord ? "¤" : "")}").ToArray().ListItems(", ")})";
                         }
                         else if (!first.Euphemism.IsNullOrEmpty())
@@ -170,7 +170,7 @@ namespace BotCatMaxy.Components.Filter
             settings.maxEmojis = amount;
             settings.SaveToFile();
             string extraInfo = "";
-            if (settings.allowedToLink.NotEmpty()) extraInfo = " except by role allowed to link";
+            if (settings.allowedToLink?.Count is not null or 0) extraInfo = " except by role allowed to link";
             if (amount == 0) await ReplyAsync("No emojis are allowed" + extraInfo);
             else await ReplyAsync($"Max {amount} emojis are allowed{extraInfo}");
         }
@@ -201,7 +201,7 @@ namespace BotCatMaxy.Components.Filter
                     settings.maxEmojis = 0;
                     settings.SaveToFile();
                     string extraInfo = "";
-                    if (settings.allowedToLink.NotEmpty()) extraInfo = " except by role allowed to link";
+                    if (settings.allowedToLink?.Count is not null or 0) extraInfo = " except by role allowed to link";
                     await ReplyAsync("Emojis are now no longer allowed" + extraInfo);
                     break;
                 default:

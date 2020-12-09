@@ -50,7 +50,7 @@ namespace BotCatMaxy
             //Delete once https://github.com/discord-net/Discord.Net/issues/1646 is fixed
             _client.GuildAvailable += HandleGuildAvailable;
 
-            if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary")
+            if (args.Length > 1 && !string.IsNullOrEmpty(args[1]) && args[1].ToLower() == "canary")
             {
                 await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
                 dbClient = new MongoClient(HiddenInfo.debugDB);
@@ -88,7 +88,7 @@ namespace BotCatMaxy
             }
 
             StatusManager statusManager;
-            if (args.Length > 0 && args[0].NotEmpty())
+            if (args.Length > 0 && !string.IsNullOrEmpty(args[0]))
             {
                 await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
                 statusManager = new StatusManager(_client, args[0]);

@@ -99,7 +99,7 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
             embed.WithFooter("User ID: " + Context.Message.Author.Id);
             embed.WithCurrentTimestamp();
             string links = "";
-            if (reportMsg.Attachments.NotEmpty())
+            if (reportMsg.Attachments?.Count is not null or 0)
                 links = reportMsg.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
             var channel = guild.GetTextChannel(settings.channelID.Value);
             await channel.SendMessageAsync(embed: embed.Build());
