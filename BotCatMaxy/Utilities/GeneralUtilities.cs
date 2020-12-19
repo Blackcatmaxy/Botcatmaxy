@@ -8,6 +8,7 @@ using Discord.WebSocket;
 using Humanizer;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Polly;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -228,18 +229,11 @@ namespace BotCatMaxy
         public static readonly int[] ignoredHTTPErrors = {500, 503, 530};
         public static async Task<T> SuperGet<T>(this Func<Task<T>> action)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                try
-                {
-                    return await action();
-                }
-                catch (HttpException e)
-                { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
-                    if (i == 2 || !ignoredHTTPErrors.Contains((int)e.HttpCode)) throw;
-                }
-            }
-            throw new Exception($"SuperGet<{typeof(T).Name}> ran out of tries without throwing proper exception?");
+            var result = await Policy
+                        .Handle<HttpException>(e => ignoredHTTPErrors.Contains((int)e.HttpCode))
+                        .RetryAsync(3)
+                        .ExecuteAndCaptureAsync(action);
+            return result.FinalHandledResult;
         }
 
         public static async Task<IGuildUser> SuperGetUser(this RestGuild guild, ulong ID)

@@ -5,6 +5,8 @@ using BotCatMaxy.Moderation;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Humanizer;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +20,7 @@ namespace BotCatMaxy
         readonly DiscordSocketClient client;
         public static CurrentTempActionInfo currentInfo = new CurrentTempActionInfo();
         public static CachedTempActionInfo cachedInfo = new CachedTempActionInfo();
-        public Timer timer;
+        private Timer timer;
 
         public TempActions(DiscordSocketClient client)
         {
@@ -27,22 +29,23 @@ namespace BotCatMaxy
             client.UserJoined += CheckNewUser;
         }
 
-        public async Task Ready()
+        private async Task Ready()
         {
             client.Ready -= Ready;
             timer = new Timer((_) => _ = ActCheckExec());
-            timer.Change(0, 30000);
+            timer.Change(0, 45000);
         }
 
         private async Task CheckNewUser(SocketGuildUser user)
         {
             ModerationSettings settings = user.Guild?.LoadFromFile<ModerationSettings>();
             TempActionList actions = user.Guild?.LoadFromFile<TempActionList>();
+            //Can be done better and cleaner
             if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0)) return;
-            if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
+            if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id)) await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
-        public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false)
+        public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false, CancellationToken? ct = null)
         {
             RequestOptions requestOptions = RequestOptions.Default;
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
@@ -51,6 +54,7 @@ namespace BotCatMaxy
                 currentInfo.checkedGuilds = 0;
                 foreach (SocketGuild sockGuild in client.Guilds)
                 {
+                    ct?.ThrowIfCancellationRequested();
                     currentInfo.checkedMutes = 0;
                     if (currentInfo.checkedGuilds > client.Guilds.Count)
                     {
@@ -175,7 +179,7 @@ namespace BotCatMaxy
                 _ = (currentInfo.checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempacts?");
 
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong checking temp actions", e).Log();
             }
@@ -185,13 +189,25 @@ namespace BotCatMaxy
         {
             if (currentInfo.checking)
             {
-                await new LogMessage(LogSeverity.Critical, "TempAct", $"Temp actions took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
+                await new LogMessage(LogSeverity.Critical, "TempAct",
+                    $"Check took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
                 return;
             }
 
             currentInfo.checking = true;
             DateTime start = DateTime.UtcNow;
-            await CheckTempActs(client);
+            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) => {
+                    await new LogMessage(LogSeverity.Critical, "TempAct",
+                        $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
+                    //Won't continue to below so have to do this?
+                    ResetInfo(start); });
+            await timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(client, ct: ct), CancellationToken.None, false);
+            //Won't continue if above times out?
+            ResetInfo(start);
+        }
+
+        public void ResetInfo(DateTime start)
+        {
             TimeSpan execTime = DateTime.UtcNow.Subtract(start);
             cachedInfo.checkExecutionTimes.Enqueue(execTime);
             cachedInfo.lastCheck = DateTime.UtcNow;
