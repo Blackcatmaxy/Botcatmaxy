@@ -40,7 +40,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00905" />
   </ItemGroup>
 
-  <Import Project="Properties\Tokens.targets" />
+  <Import Project="Properties\Tokens.targets"/>
 
   <Target Name="WriteLaunchers" AfterTargets="CopyFilesToOutputDirectory">
     <Message Importance ="High" Text="$(FileLines)"/>
