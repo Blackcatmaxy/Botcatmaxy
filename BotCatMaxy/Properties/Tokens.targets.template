@@ -2,6 +2,7 @@
 <Project>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <!-- Debug tokens-->
+    <!--Use "mongodb://localhost" for local mongo storage-->
     <DataToken>Value1D</DataToken>
     <DiscordToken>Value2D</DiscordToken>
   </PropertyGroup>
