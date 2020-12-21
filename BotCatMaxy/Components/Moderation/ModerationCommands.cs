@@ -424,7 +424,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
+            await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, Context.Message.GetJumpUrl());
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
             {
