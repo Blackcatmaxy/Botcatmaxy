@@ -31,7 +31,7 @@ namespace BotCatMaxy.Components.Filter
 
             for (int i = 0; i < mutualGuilds.Length; i++)
             {
-                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
+                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", mutualGuilds[i].Id);
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
