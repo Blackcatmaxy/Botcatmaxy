@@ -196,7 +196,7 @@ namespace Discord.Commands
                 UserRef userRef => userRef.GuildUser as SocketGuildUser,
                 SocketGuildUser targetGuildUser => targetGuildUser,
                 ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
-                _ => throw new ArgumentOutOfRangeException("Unkown Type used in parameter that requires hierarchy"),
+                _ => throw new ArgumentOutOfRangeException("Unknown Type used in parameter that requires hierarchy"),
             };
             if (targetUser == null)
                 if (value is UserRef)

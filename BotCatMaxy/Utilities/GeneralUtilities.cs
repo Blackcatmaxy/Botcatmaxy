@@ -196,7 +196,7 @@ namespace BotCatMaxy
         {
             Contract.Requires(embed != null);
             if (userRef.User != null) embed.WithAuthor(userRef.User);
-            else embed.WithAuthor($"Unkown user with ID:{userRef.ID}");
+            else embed.WithAuthor($"Unknown user with ID:{userRef.ID}");
             return embed;
         }
 
