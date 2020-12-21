@@ -22,15 +22,11 @@
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Interactive" Version="2.0.0" />
     <PackageReference Include="Discord.Addons.Preconditions" Version="2.2.0-dev3" />
-    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20200904.2" />
-    <PackageReference Include="Discord.Net.Commands" Version="2.3.0-dev-20200904.2" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="2.3.0-dev-20200904.2" />
+    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20201220.5" />
+    <PackageReference Include="Discord.Net.Commands" Version="2.3.0-dev-20201220.5" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="2.3.0-dev-20201220.5" />
     <PackageReference Include="DotNetEnv" Version="2.0.0" />
     <PackageReference Include="Humanizer.Core" Version="2.8.26" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="Microsoft.Web.WebJobs.Publish" Version="2.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.12.0-beta1" />
@@ -40,10 +36,10 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00905" />
   </ItemGroup>
 
-  <Import Project="Properties\Tokens.targets"/>
+  <Import Project="Properties\Tokens.targets" />
 
   <Target Name="WriteLaunchers" AfterTargets="CopyFilesToOutputDirectory">
-    <Message Importance ="High" Text="$(FileLines)"/>
+    <Message Importance="High" Text="$(FileLines)" />
     <WriteLinesToFile File="$(OutputPath)$(AssemblyName).env" Overwrite="true" Lines="$(FileLines)" />
   </Target>
 </Project>
