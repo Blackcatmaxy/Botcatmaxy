@@ -54,6 +54,7 @@ namespace BotCatMaxy.Startup
                 _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
                 _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
                 _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
+                _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
 
                 // See Dependency Injection guide for more information.
                 await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),

@@ -26,21 +26,15 @@ namespace BotCatMaxy.Components.Settings
 
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [Summary("Sets this channel's slowmode.")]
-        public async Task SetSlowMode(string time)
+        public async Task SetSlowMode(TimeSpan time)
         {
-            var amount = time.ToTime();
-            if (amount == null)
-            {
-                await ReplyAsync($"Unable to parse '{time.StrippedOfPing()}', be careful with decimals");
-                return;
-            }
-            if (amount.Value.TotalSeconds % 1 != 0)
+            if (time.TotalSeconds % 1 != 0)
             {
                 await ReplyAsync("Can't set slowmode precision for less than a second");
                 return;
             }
-            await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = (int)amount.Value.TotalSeconds);
-            await ReplyAsync($"Set channel slowmode to {amount.Value.LimitedHumanize()}");
+            await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time.Seconds);
+            await ReplyAsync($"Set channel slowmode to {time.LimitedHumanize()}");
         }
 
         [Command("dynamicslowmode"), Alias("ds"), Priority(5)]

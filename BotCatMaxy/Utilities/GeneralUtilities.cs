@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -86,40 +87,6 @@ namespace BotCatMaxy
             }
             if (user.Nickname.IsNullOrEmpty()) return user.Username;
             else return user.Nickname;
-        }
-
-        public static TimeSpan? ToTime(this string s)
-        {
-            try
-            {
-                double amount = double.Parse(s.Remove(s.Length - 1));
-                if (s.ToLower().EndsWith("w"))
-                {
-                    return TimeSpan.FromDays(amount * 7);
-                }
-                else if (s.ToLower().EndsWith('d'))
-                {
-                    return TimeSpan.FromDays(amount);
-                }
-                else if (s.ToLower().EndsWith('h'))
-                {
-                    return TimeSpan.FromHours(amount);
-                }
-                else if (s.ToLower().EndsWith("m"))
-                {
-                    return TimeSpan.FromMinutes(amount);
-                }
-                else if (s.ToLower().EndsWith("s"))
-                {
-                    return TimeSpan.FromSeconds(amount);
-                }
-                else if (s.ToLower().EndsWith("y"))
-                {
-                    return TimeSpan.FromDays(amount * 365.2425);
-                }
-            }
-            catch { }
-            return null;
         }
 
         public static string Pluralize(this string s, float num)
@@ -226,7 +193,7 @@ namespace BotCatMaxy
             return await func.SuperGet();
         }
 
-        public static readonly int[] ignoredHTTPErrors = {500, 503, 530};
+        public static readonly int[] ignoredHTTPErrors = { 500, 503, 530 };
         public static async Task<T> SuperGet<T>(this Func<Task<T>> action)
         {
             var result = await Policy
