@@ -24,7 +24,8 @@ namespace BotCatMaxy.TypeReaders
 
         public static TimeSpan? ParseTime(string input)
         {
-            var results = Regex.Matches(input, regex);
+            input = input.ToLowerInvariant();
+            var results = Regex.Matches(input, regex, RegexOptions.CultureInvariant | RegexOptions.Compiled);
             if (results.Count == 0 || results.Sum(m => m.Length) != input.Length) return null;
             TimeSpan result = new TimeSpan();
             foreach (Match match in results)
