@@ -562,8 +562,6 @@ namespace BotCatMaxy.Components.Filter
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
             settings.moderateNames = !settings.moderateNames;
             settings.SaveToFile();
-            string extra = "";
-            if (settings.moderateNames) extra = " note: existing usernames and nicknames won't be filtered";
             await ReplyAsync("Set user name and nickname filtering to " + settings.moderateNames.ToString().ToLowerInvariant());
         }
 

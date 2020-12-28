@@ -14,13 +14,8 @@ namespace BotCatMaxy.TypeReaders
     {
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
-            IReadOnlyCollection<IGuildUser> guildUsers = ImmutableArray.Create<IGuildUser>();
             SocketGuildUser gUserResult = null;
-            SocketUser userResult = null;
-            ulong? IDResult = null;
-
-            if (context.Guild != null)
-                guildUsers = await context.Guild.GetUsersAsync(CacheMode.CacheOnly).ConfigureAwait(false);
+            SocketUser userResult;
 
             //By Mention (1.0)
             if (MentionUtils.TryParseUser(input, out var id))
