@@ -77,11 +77,11 @@ namespace BotCatMaxy
                 userRef = new UserRef(Context.Message.Author);
 
             var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the the number next to the guild you want to check the infractions from");
+            guildsEmbed.WithTitle("Reply with the number next to the guild you want to check the infractions from");
 
             for (int i = 0; i < mutualGuilds.Length; i++)
             {
-                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
+                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", mutualGuilds[i].Id);
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
