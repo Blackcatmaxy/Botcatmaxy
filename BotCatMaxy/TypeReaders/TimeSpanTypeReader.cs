@@ -6,44 +6,45 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace BotCatMaxy.TypeReaders
 {
     public class TimeSpanTypeReader : TypeReader
     {
-        private static readonly string[] Formats = {
-            //Decimals time formats
-         ///@"%d\.FF'd'%h\.FF'h'%m\.FF'm'%s's'", //1.23d4.56h7.89m1s
-            @"%d\.FF'd'",                        //7.89d
-            @"%h\.FF'h'",                        //     4.56h
-            @"%m\.FF'm'",                        //          4.56m
-            //Normal time formats
-            "%d'd'%h'h'%m'm'%s's'", //4d3h2m1s
-            "%d'd'%h'h'%m'm'",      //4d3h2m
-            "%d'd'%h'h'%s's'",      //4d3h  1s
-            "%d'd'%h'h'",           //4d3h
-            "%d'd'%m'm'%s's'",      //4d  2m1s
-            "%d'd'%m'm'",           //4d  2m
-            "%d'd'%s's'",           //4d    1s
-            "%d'd'",                //4d
-            "%h'h'%m'm'%s's'",      //  3h2m1s
-            "%h'h'%m'm'",           //  3h2m
-            "%h'h'%s's'",           //  3h  1s
-            "%h'h'",                //  3h
-            "%m'm'%s's'",           //    2m1s
-            "%m'm'",                //    2m
-            "%s's'",                //      1s
-        };
+        private const string regex = @"\d+\.?\d?[ywdhms]";
 
         public override Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
-            => TimeSpan.TryParseExact(input.ToLowerInvariant(), Formats, CultureInfo.InvariantCulture, out var timeSpan)
-                ? Task.FromResult(TypeReaderResult.FromSuccess(timeSpan))
+        {
+            var result = ParseTime(input);
+            return (result != null) ?
+                Task.FromResult(TypeReaderResult.FromSuccess(result))
                 : Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "Failed to parse TimeSpan"));
+        }
 
-        public static TimeSpan? ParseTime(string s)
-            => TimeSpan.TryParseExact(s.ToLowerInvariant(), Formats, CultureInfo.InvariantCulture, out var timeSpan)
-                ? timeSpan
-                : null;
+        public static TimeSpan? ParseTime(string input)
+        {
+            var results = Regex.Matches(input, regex);
+            if (results.Count == 0 || results.Sum(m => m.Length) != input.Length) return null;
+            TimeSpan result = new TimeSpan();
+            foreach (Match match in results)
+            {
+                string s = match.Value;
+                if (!double.TryParse(s.Remove(match.Length - 1), out double amount)) return null;
+                TimeSpan increment = s.Last() switch
+                {
+                    'y' => TimeSpan.FromDays(amount * 365.2425),
+                    'w' => TimeSpan.FromDays(amount * 7),
+                    'd' => TimeSpan.FromDays(amount),
+                    'h' => TimeSpan.FromHours(amount),
+                    'm' => TimeSpan.FromMinutes(amount),
+                    's' => TimeSpan.FromSeconds(amount),
+                    _ => throw new NotImplementedException(),
+                };
+                result = result.Add(increment);
+            }
+            return result;
+        }
     }
 }
 
