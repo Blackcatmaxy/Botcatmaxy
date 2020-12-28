@@ -10,7 +10,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>true</Optimize>
-  <Deterministic>false</Deterministic>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Prefer32Bit>true</Prefer32Bit>
@@ -36,9 +36,9 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00905" />
   </ItemGroup>
 
-  <Import Project="Properties\Tokens.targets" />
+  <Import Condition="$(IsBuildAction)==''" Project="Properties\Tokens.targets" />
 
-  <Target Name="WriteLaunchers" AfterTargets="CopyFilesToOutputDirectory">
+  <Target Condition="$(IsBuildAction)==''" Name="WriteLaunchers" AfterTargets="CopyFilesToOutputDirectory">
     <Message Importance="High" Text="$(FileLines)" />
     <WriteLinesToFile File="$(OutputPath)$(AssemblyName).env" Overwrite="true" Lines="$(FileLines)" />
   </Target>
