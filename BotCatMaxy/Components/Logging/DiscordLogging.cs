@@ -22,7 +22,7 @@ namespace BotCatMaxy.Components.Logging
 
                 if (guild == null)
                 {
-                    guild = Utilities.GetGuild(message.Channel as SocketGuildChannel);
+                    guild = (message.Channel as SocketGuildChannel).Guild;
                     if (guild == null)
                     {
                         return null;
@@ -51,7 +51,7 @@ namespace BotCatMaxy.Components.Logging
                 }
 
                 string links = "";
-                if (message.Attachments.NotEmpty())
+                if (message.Attachments?.Count is not null or 0)
                 {
                     foreach (IAttachment attachment in message.Attachments)
                     {

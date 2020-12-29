@@ -8,18 +8,20 @@ using Discord.WebSocket;
 using Humanizer;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Polly;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy
 {
-    public static class Utilities
+    public static class GeneralUtilities
     {
         public static IMongoCollection<BsonDocument> GetCollection(this IGuild guild, bool createDir = true)
         {
@@ -38,86 +40,9 @@ namespace BotCatMaxy
             return null;
         }
 
-        public static bool HasAdmin(this SocketGuildUser user)
-        {
-            if (user == null) return false;
-            if (user.Guild.Owner.Id == user.Id)
-            {
-                return true;
-            }
-
-            foreach (SocketRole role in (user).Roles)
-            {
-                if (role.Permissions.Administrator)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public static bool CanWarn(this SocketGuildUser user)
-        {
-            if (HasAdmin(user))
-            {
-                return true;
-            }
-
-            foreach (SocketRole role in user.Roles)
-            {
-                if (role.Permissions.KickMembers)
-                {
-                    return true;
-                }
-            }
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0)
-            {
-                if (user.RoleIDs().Intersect(settings.ableToWarn).Any())
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public static List<ulong> RoleIDs(this SocketGuildUser user)
         {
             return user.Roles.Select(role => role.Id).ToList();
-        }
-
-        public static bool CantBeWarned(this SocketGuildUser user)
-        {
-            if (user == null) return false;
-            if (user.HasAdmin()) return true;
-
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings != null)
-            {
-                List<SocketRole> rolesUnableToBeWarned = new List<SocketRole>();
-                foreach (ulong roleID in settings.cantBeWarned) rolesUnableToBeWarned.Add(user.Guild.GetRole(roleID));
-                if (user.Roles.Intersect(rolesUnableToBeWarned).Any()) return true;
-            }
-            return false;
-        }
-
-        public static SocketGuild GetGuild(SocketGuildChannel channel)
-        {
-            return channel.Guild;
-        }
-
-        public static void RemoveNullEntries<T>(this ICollection<T> list)
-        {
-            if (list != null || list.Count > 0)
-            {
-                foreach (T thing in list)
-                {
-                    if (thing == null)
-                    {
-                        list.Remove(thing);
-                    }
-                }
-            }
         }
 
         public static string Suffix(this int num)
@@ -164,83 +89,10 @@ namespace BotCatMaxy
             else return user.Nickname;
         }
 
-        public static TimeSpan? ToTime(this string s)
-        {
-            try
-            {
-                double amount = double.Parse(s.Remove(s.Length - 1));
-                if (s.ToLower().EndsWith("w"))
-                {
-                    return TimeSpan.FromDays(amount * 7);
-                }
-                else if (s.ToLower().EndsWith('d'))
-                {
-                    return TimeSpan.FromDays(amount);
-                }
-                else if (s.ToLower().EndsWith('h'))
-                {
-                    return TimeSpan.FromHours(amount);
-                }
-                else if (s.ToLower().EndsWith("m"))
-                {
-                    return TimeSpan.FromMinutes(amount);
-                }
-                else if (s.ToLower().EndsWith("s"))
-                {
-                    return TimeSpan.FromSeconds(amount);
-                }
-                else if (s.ToLower().EndsWith("y"))
-                {
-                    return TimeSpan.FromDays(amount * 365.2425);
-                }
-            }
-            catch { }
-            return null;
-        }
-
-        public static bool IsNullOrEmpty(this ICollection list)
-        {
-            if (list == null || list.Count == 0) return true;
-            else return false;
-        }
-        public static bool NotEmpty<T>(this IEnumerable<T> list, int needAmount = 0)
-        {
-            if (list == null || list.ToArray().Length <= needAmount) return false;
-            else return true;
-        }
-
         public static string Pluralize(this string s, float num)
         {
             if (num == 1) return s;
             else return s.Pluralize();
-        }
-
-        public static async Task<bool> TryNotify(this IUser user, string message)
-        {
-            try
-            {
-                var sentMessage = await user?.SendMessageAsync(message);
-                if (sentMessage == null) return false;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public static async Task<bool> TryNotify(this IUser user, Embed embed)
-        {
-            try
-            {
-                var sentMessage = await user?.SendMessageAsync(embed: embed);
-                if (sentMessage == null) return false;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         public static void DeleteOrRespond(this SocketMessage message, string toSay, IGuild guild, LogSettings settings = null)
@@ -253,29 +105,6 @@ namespace BotCatMaxy
                 _ = message.DeleteAsync();
                 guild.GetTextChannelAsync(settings.pubLogChannel ?? 0).Result.SendMessageAsync($"{message.Author.Mention}, {toSay}");
             }
-        }
-
-        public static string ListItems(this IEnumerable<string> list, string joiner = " ")
-        {
-            string items = null;
-            if (list.NotEmpty())
-            {
-                (list as ICollection<string>)?.RemoveNullEntries();
-                foreach (string item in list)
-                {
-                    if (items == null) items = "";
-                    else items += joiner;
-                    items += item;
-                }
-            }
-            return items;
-        }
-
-        public static bool CanActOn(this SocketGuildUser focus, SocketGuildUser comparer)
-        {
-            if (focus.Roles.Select(role => role.Position).Max() > comparer.Roles.Select(role => role.Position).Max())
-                return true;
-            return false;
         }
 
         public static string LimitedHumanize(this TimeSpan timeSpan, int precision = 2)
@@ -308,13 +137,13 @@ namespace BotCatMaxy
         {
             if (userRef == null) return "``ERROR``";
             string name = null;
-            if (userRef.gUser?.Nickname != null)
+            if (userRef.GuildUser?.Nickname != null)
             {
-                name = userRef.gUser.Nickname.StrippedOfPing();
+                name = userRef.GuildUser.Nickname.StrippedOfPing();
                 if (showRealName) //done since people with nicknames might have an innapropriate name under the nickname
-                    name += $" aka {userRef.gUser.Username.StrippedOfPing()}";
+                    name += $" aka {userRef.GuildUser.Username.StrippedOfPing()}";
             }
-            if (name == null && userRef.user != null) name = userRef.user.Username.StrippedOfPing();
+            if (name == null && userRef.User != null) name = userRef.User.Username.StrippedOfPing();
             if (name != null)
             {
                 if (showIDWithUser) name += $" ({userRef.ID})";
@@ -326,15 +155,15 @@ namespace BotCatMaxy
         public static string Mention(this UserRef userRef)
         {
             if (userRef == null) return "``ERROR``";
-            if (userRef.user != null) return userRef.user.Mention;
+            if (userRef.User != null) return userRef.User.Mention;
             return $"User with ID:{userRef.ID}";
         }
 
         public static EmbedBuilder WithAuthor(this EmbedBuilder embed, UserRef userRef)
         {
             Contract.Requires(embed != null);
-            if (userRef.user != null) embed.WithAuthor(userRef.user);
-            else embed.WithAuthor($"Unkown user with ID:{userRef.ID}");
+            if (userRef.User != null) embed.WithAuthor(userRef.User);
+            else embed.WithAuthor($"Unknown user with ID:{userRef.ID}");
             return embed;
         }
 
@@ -344,10 +173,10 @@ namespace BotCatMaxy
             acts.Add(new ActRecord()
             {
                 type = type,
-                length = tempAct.length,
+                length = tempAct.Length,
                 logLink = loglink,
-                reason = tempAct.reason,
-                time = tempAct.dateBanned
+                reason = tempAct.Reason,
+                time = tempAct.DateBanned
             });
             userID.SaveActRecord(guild, acts);
         }
@@ -364,31 +193,22 @@ namespace BotCatMaxy
             return await func.SuperGet();
         }
 
+        public static readonly int[] ignoredHTTPErrors = { 500, 503, 530 };
         public static async Task<T> SuperGet<T>(this Func<Task<T>> action)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                try
-                {
-                    return await action();
-                }
-                catch (HttpException e)
-                { //If error happens and either has failed 3 times or non 500, 503, or 530 (not logged in) error
-                    if (i == 2 || (e.HttpCode != System.Net.HttpStatusCode.ServiceUnavailable && e.HttpCode != System.Net.HttpStatusCode.InternalServerError && (int)e.HttpCode != 530)) throw;
-                }
-            }
-            throw new Exception($"SuperGet<{typeof(T).Name}> ran out of tries without throwing proper exception?");
+            var result = await Policy
+                        .Handle<HttpException>(e => ignoredHTTPErrors.Contains((int)e.HttpCode))
+                        .RetryAsync(3)
+                        .ExecuteAndCaptureAsync(action);
+            return result.FinalHandledResult;
         }
 
-        public static async Task<IGuildUser> SuperGetUser(this DiscordSocketClient client, SocketGuild guild, ulong ID)
+        public static async Task<IGuildUser> SuperGetUser(this RestGuild guild, ulong ID)
         {
-            IGuildUser user = guild.GetUser(ID);
-            if (user != null) return user;
             var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
             Func<Task<IGuildUser>> func = async () =>
             {
-                RestGuild restGuild = await client.Rest.GetGuildAsync(guild.Id, requestOptions);
-                return await restGuild.GetUserAsync(ID, requestOptions);
+                return await guild.GetUserAsync(ID, requestOptions);
             };
             return await func.SuperGet();
             /*for (int i = 0; i < 3; i++) {

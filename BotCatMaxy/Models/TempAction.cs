@@ -5,30 +5,30 @@ using System.Collections.Generic;
 
 namespace BotCatMaxy.Models
 {
-    public class TempAct
+    public record TempAct
     {
         public TempAct(ulong userID, TimeSpan length, string reason)
         {
-            user = userID;
-            this.reason = reason;
-            dateBanned = DateTime.UtcNow;
-            this.length = length;
+            User = userID;
+            Reason = reason;
+            DateBanned = DateTime.UtcNow;
+            Length = length;
         }
         public TempAct(UserRef userRef, TimeSpan length, string reason)
         {
-            user = userRef.ID;
-            this.reason = reason;
-            dateBanned = DateTime.UtcNow;
-            this.length = length;
+            User = userRef.ID;
+            Reason = reason;
+            DateBanned = DateTime.UtcNow;
+            Length = length;
         }
 
-        public DateTime End => dateBanned.Add(length);
+        public DateTime End => DateBanned.Add(Length);
 
-        public string reason;
-        public ulong user;
-        public TimeSpan length;
+        public string Reason { get; init; }
+        public ulong User { get; init; }
+        public TimeSpan Length { get; init; }
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-        public DateTime dateBanned;
+        public DateTime DateBanned { get; init; }
     }
 
     public enum TempActType
@@ -39,20 +39,18 @@ namespace BotCatMaxy.Models
 
     public class TempActionList : DataObject
     {
-        [BsonId]
-        public string ID = "TempActionList";
-        public List<TempAct> tempBans = new List<TempAct>();
-        public List<TempAct> tempMutes = new List<TempAct>();
+        public List<TempAct> tempBans = new();
+        public List<TempAct> tempMutes = new();
     }
 
-    public class TypedTempAct : TempAct
+    public record TypedTempAct : TempAct
     {
-        public TempActType type;
+        public TempActType Type { get; }
 
-        public TypedTempAct(TempAct tempAct, TempActType type) : base(tempAct.user, tempAct.length, tempAct.reason)
+        public TypedTempAct(TempAct tempAct, TempActType type) : base(tempAct.User, tempAct.Length, tempAct.Reason)
         {
-            dateBanned = tempAct.dateBanned;
-            this.type = type;
+            DateBanned = tempAct.DateBanned;
+            Type = type;
         }
     }
 }

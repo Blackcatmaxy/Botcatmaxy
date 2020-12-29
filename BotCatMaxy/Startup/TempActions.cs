@@ -5,6 +5,8 @@ using BotCatMaxy.Moderation;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Humanizer;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +20,7 @@ namespace BotCatMaxy
         readonly DiscordSocketClient client;
         public static CurrentTempActionInfo currentInfo = new CurrentTempActionInfo();
         public static CachedTempActionInfo cachedInfo = new CachedTempActionInfo();
-        public Timer timer;
+        private Timer timer;
 
         public TempActions(DiscordSocketClient client)
         {
@@ -27,22 +29,23 @@ namespace BotCatMaxy
             client.UserJoined += CheckNewUser;
         }
 
-        public async Task Ready()
+        private async Task Ready()
         {
             client.Ready -= Ready;
             timer = new Timer((_) => _ = ActCheckExec());
-            timer.Change(0, 30000);
+            timer.Change(0, 45000);
         }
 
-        async Task CheckNewUser(SocketGuildUser user)
+        private async Task CheckNewUser(SocketGuildUser user)
         {
             ModerationSettings settings = user.Guild?.LoadFromFile<ModerationSettings>();
             TempActionList actions = user.Guild?.LoadFromFile<TempActionList>();
-            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.IsNullOrEmpty() ?? true)) return;
-            if (actions.tempMutes.Any(tempMute => tempMute.user == user.Id)) _ = user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
+            //Can be done better and cleaner
+            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0)) return;
+            if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id)) await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
-        public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false)
+        public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false, CancellationToken? ct = null)
         {
             RequestOptions requestOptions = RequestOptions.Default;
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
@@ -51,6 +54,7 @@ namespace BotCatMaxy
                 currentInfo.checkedGuilds = 0;
                 foreach (SocketGuild sockGuild in client.Guilds)
                 {
+                    ct?.ThrowIfCancellationRequested();
                     currentInfo.checkedMutes = 0;
                     if (currentInfo.checkedGuilds > client.Guilds.Count)
                     {
@@ -68,36 +72,31 @@ namespace BotCatMaxy
                     currentInfo.checkedGuilds++;
                     if (actions != null)
                     {
-                        if (!actions.tempBans.IsNullOrEmpty())
+                        if (actions.tempBans?.Count is not null or 0)
                         {
-                            var bans = await sockGuild.GetBansAsync(requestOptions);
                             currentInfo.editedBans = new List<TempAct>(actions.tempBans);
                             foreach (TempAct tempBan in actions.tempBans)
                             {
                                 try
                                 {
-                                    RestBan ban = bans.FirstOrDefault(tBan => tBan.User.Id == tempBan.user);
-                                    if (ban == null && bans != null)
+                                    RestBan ban = await sockGuild.GetBanAsync(tempBan.User, requestOptions);
+                                    if (ban == null)
                                     { //If manual unban
-                                        var user = await client.Rest.GetUserAsync(tempBan.user);
+                                        var user = await client.Rest.GetUserAsync(tempBan.User);
                                         currentInfo.editedBans.Remove(tempBan);
                                         user?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");
                                         //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         if (user == null)
-                                        {
-                                            DiscordLogging.LogManualEndTempAct(sockGuild, tempBan.user, "bann", tempBan.dateBanned);
-                                        }
+                                            DiscordLogging.LogManualEndTempAct(sockGuild, tempBan.User, "bann", tempBan.DateBanned);
                                         else
-                                        {
-                                            DiscordLogging.LogManualEndTempAct(sockGuild, user, "bann", tempBan.dateBanned);
-                                        }
+                                            DiscordLogging.LogManualEndTempAct(sockGuild, user, "bann", tempBan.DateBanned);
                                     }
-                                    else if (DateTime.UtcNow >= tempBan.dateBanned.Add(tempBan.length))
+                                    else if (DateTime.UtcNow >= tempBan.DateBanned.Add(tempBan.Length))
                                     {
                                         RestUser rUser = ban.User;
-                                        await restGuild.RemoveBanAsync(tempBan.user, requestOptions);
+                                        await sockGuild.RemoveBanAsync(tempBan.User, requestOptions);
                                         currentInfo.editedBans.Remove(tempBan);
-                                        DiscordLogging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.reason, tempBan.length);
+                                        DiscordLogging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.Reason, tempBan.Length);
                                     }
                                 }
                                 catch (Exception e)
@@ -117,24 +116,24 @@ namespace BotCatMaxy
                         }
                         else if (debug) Console.Write($"no tempbans, ");
                         ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
-                        if (settings != null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes.NotEmpty())
+                        if (settings is not null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes?.Count is not null or 0)
                         {
-                            RestRole mutedRole = restGuild.GetRole(settings.mutedRole);
+                            var mutedRole = sockGuild.GetRole(settings.mutedRole);
                             List<TempAct> editedMutes = new List<TempAct>(actions.tempMutes);
                             foreach (TempAct tempMute in actions.tempMutes)
                             {
                                 currentInfo.checkedMutes++;
                                 try
                                 {
-                                    IGuildUser gUser = await client.SuperGetUser(sockGuild, tempMute.user);
+                                    IGuildUser gUser = sockGuild.GetUser(tempMute.User) ?? await restGuild.SuperGetUser(tempMute.User);
                                     if (gUser != null && !gUser.RoleIds.Contains(settings.mutedRole))
                                     { //User missing muted role, must have been manually unmuted
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
-                                        DiscordLogging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.dateBanned);
+                                        DiscordLogging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.DateBanned);
                                         _ = (!editedMutes.Contains(tempMute)).AssertAsync("Tempmute not removed?!");
                                     }
-                                    else if (DateTime.UtcNow >= tempMute.dateBanned.Add(tempMute.length))
+                                    else if (DateTime.UtcNow >= tempMute.DateBanned.Add(tempMute.Length))
                                     { //Normal mute end
                                         if (gUser != null)
                                         {
@@ -143,11 +142,11 @@ namespace BotCatMaxy
                                         if (gUser == null || !gUser.RoleIds.Contains(settings.mutedRole))
                                         { //Doesn't remove tempmute if unmuting fails
                                             IUser user = gUser; //Gets user to try to message
-                                            user ??= await client.SuperGetUser(tempMute.user);
+                                            user ??= await client.SuperGetUser(tempMute.User);
                                             if (user != null)
                                             { // if possible to message, message and log
-                                                DiscordLogging.LogEndTempAct(sockGuild, user, "mut", tempMute.reason, tempMute.length);
-                                                _ = user.Notify($"untemp-muted", tempMute.reason, sockGuild);
+                                                DiscordLogging.LogEndTempAct(sockGuild, user, "mut", tempMute.Reason, tempMute.Length);
+                                                _ = user.Notify($"untemp-muted", tempMute.Reason, sockGuild);
                                             }
                                             editedMutes.Remove(tempMute);
                                         }
@@ -180,7 +179,7 @@ namespace BotCatMaxy
                 _ = (currentInfo.checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempacts?");
 
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong checking temp actions", e).Log();
             }
@@ -190,13 +189,25 @@ namespace BotCatMaxy
         {
             if (currentInfo.checking)
             {
-                await new LogMessage(LogSeverity.Critical, "TempAct", $"Temp actions took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
+                await new LogMessage(LogSeverity.Critical, "TempAct",
+                    $"Check took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
                 return;
             }
 
             currentInfo.checking = true;
             DateTime start = DateTime.UtcNow;
-            await CheckTempActs(client);
+            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) => {
+                    await new LogMessage(LogSeverity.Critical, "TempAct",
+                        $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
+                    //Won't continue to below so have to do this?
+                    ResetInfo(start); });
+            await timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(client, ct: ct), CancellationToken.None, false);
+            //Won't continue if above times out?
+            ResetInfo(start);
+        }
+
+        public void ResetInfo(DateTime start)
+        {
             TimeSpan execTime = DateTime.UtcNow.Subtract(start);
             cachedInfo.checkExecutionTimes.Enqueue(execTime);
             cachedInfo.lastCheck = DateTime.UtcNow;

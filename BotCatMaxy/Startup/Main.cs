@@ -9,7 +9,11 @@ using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy
@@ -20,17 +24,22 @@ namespace BotCatMaxy
         public static MongoClient dbClient;
         public static async Task Main(string[] args)
         {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var logConfig = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.File($"{AppDomain.CurrentDomain.BaseDirectory}/log.txt", rollingInterval: RollingInterval.Day);
-#if DEBUG
-            logConfig.WriteTo.File($"C:/Users/bobth/Documents/Bmax-test/log.txt", rollingInterval: RollingInterval.Day);
-            BotInfo.debug = true;
-            dbClient = new MongoClient(HiddenInfo.debugDB);
-#endif
+                .WriteTo.File($"{baseDir}/log.txt", rollingInterval: RollingInterval.Day);
             ExceptionLogging.logger = logConfig.CreateLogger();
-            await new LogMessage(LogSeverity.Info, "Log", $"Program log logging at {AppDomain.CurrentDomain.BaseDirectory}").Log();
+            await new LogMessage(LogSeverity.Info, "App", $"Starting with logging at {baseDir}").Log();
+
+            await DataManipulator.MapTypes();
+#if DEBUG
+            BotInfo.debug = true;
+#endif
+            DotNetEnv.Env.Load("BotCatMaxy.env");
+            var dbKey = Environment.GetEnvironmentVariable("DataToken");
+            dbClient = new MongoClient();
+
             var config = new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = true, //going to keep here for new guilds added, but seems to be broken for startup per https://github.com/discord-net/Discord.Net/issues/1646
@@ -38,11 +47,9 @@ namespace BotCatMaxy
                 MessageCacheSize = 120,
                 ExclusiveBulkDelete = false,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
-                GatewayIntents = GatewayIntents.GuildBans | GatewayIntents.GuildMembers | GatewayIntents.GuildMessageReactions | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.Guilds
+                GatewayIntents = GatewayIntents.GuildBans | GatewayIntents.GuildMembers |
+                    GatewayIntents.GuildMessageReactions | GatewayIntents.GuildMessages | GatewayIntents.DirectMessages | GatewayIntents.Guilds
             };
-
-            //Maps all the classes
-            _ = DataManipulator.MapTypes();
 
             //Sets up the events
             _client = new DiscordSocketClient(config);
@@ -52,22 +59,7 @@ namespace BotCatMaxy
             //Delete once https://github.com/discord-net/Discord.Net/issues/1646 is fixed
             _client.GuildAvailable += HandleGuildAvailable;
 
-            if (args.Length > 1 && args[1].NotEmpty() && args[1].ToLower() == "canary")
-            {
-                await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
-                dbClient = new MongoClient(HiddenInfo.debugDB);
-                BotInfo.debug = true;
-            }
-            else
-            {
-#if DEBUG
-                await _client.LoginAsync(TokenType.Bot, HiddenInfo.testToken);
-#else
-                dbClient ??= new MongoClient(HiddenInfo.mainDB);
-                await _client.LoginAsync(TokenType.Bot, HiddenInfo.mainToken);
-#endif
-            }
-            await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();
+            await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DiscordToken"));
             await _client.StartAsync();
             SettingsCache cacher = new SettingsCache(_client);
 
@@ -89,17 +81,11 @@ namespace BotCatMaxy
                 }
             }
 
-            StatusManager statusManager;
-            if (args.Length > 0 && args[0].NotEmpty())
-            {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {args[0]}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
-                statusManager = new StatusManager(_client, args[0]);
-            }
-            else
-            {
-                await new LogMessage(LogSeverity.Info, "Main", $"Starting with no version num, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
-                statusManager = new StatusManager(_client, "unknown");
-            }
+            string version = args.ElementAtOrDefault(0) ?? "unknown";
+            await new LogMessage(LogSeverity.Info, "Main", $"Starting with version {version}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago").Log();
+            StatusManager statusManager = new StatusManager(_client, version);
+
+            await new LogMessage(LogSeverity.Info, "Mongo", $"Connected to cluster {dbClient.Cluster.ClusterId} with {dbClient.ListDatabases().ToList().Count} databases").Log();
 
             var serviceConfig = new CommandServiceConfig
             {

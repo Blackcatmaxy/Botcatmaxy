@@ -4,7 +4,6 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # User-specific files
-BotCatMaxy/HiddenInfo.cs
 *.rsuser
 *.suo
 *.user
@@ -339,3 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Tokens file
+/BotCatMaxy/Properties/Tokens.targets

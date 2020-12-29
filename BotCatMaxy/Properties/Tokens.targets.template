@@ -1,0 +1,23 @@
+﻿<!--Rename the file to Tokens.targets and input tokens to compile and run-->
+<Project>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <!-- Debug tokens-->
+    <!--Use "mongodb://localhost" for local mongo storage-->
+    <DataToken>Value1D</DataToken>
+    <DiscordToken>Value2D</DiscordToken>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <!--Release tokens, feel free to delete if you'll only use debug-->
+    <DataToken>Value1R</DataToken>
+    <DiscordToken>Value2R</DiscordToken>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <FileLines>
+<!--Lines below cannot be indented, is there expression to ignore indentation?-->
+DataToken=$(DataToken)
+DiscordToken=$(DiscordToken)
+    </FileLines>
+  </PropertyGroup>
+</Project>

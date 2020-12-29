@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,9 @@ namespace BotCatMaxy.Data
         {
             try
             {
+                var conventionPack = new ConventionPack { new CamelCaseElementNameConvention() };
+                ConventionRegistry.Register("camelCase", conventionPack, t => true);
+
                 BsonClassMap.RegisterClassMap<ModerationSettings>();
                 BsonClassMap.RegisterClassMap<UserInfractions>();
                 BsonClassMap.RegisterClassMap<LogSettings>();
@@ -120,12 +124,13 @@ namespace BotCatMaxy.Data
 
         public static void SaveToFile<T>(this T file) where T : DataObject
         {
-            if (file.guild == null) throw new InvalidOperationException("Data file does not have a guild");
-
             file.AddToCache();
             var collection = file.guild.GetCollection(true);
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", typeof(T).Name));
-            collection.InsertOne(file.ToBsonDocument());
+            var name = typeof(T).Name;
+            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", name));
+            var doc = file.ToBsonDocument();
+            doc.Set("_id", name);
+            collection.InsertOne(doc);
         }
 
         public static IMongoCollection<BsonDocument> GetInfractionsCollection(this IGuild guild, bool createDir = true)
@@ -211,6 +216,7 @@ namespace BotCatMaxy.Data
         }
     }
 
+    [BsonIgnoreExtraElements(Inherited = true)]
     public class DataObject
     {
         [BsonIgnore]

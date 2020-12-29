@@ -1,17 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish">
+﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish" InitialTargets="WriteLaunchers">
   <PropertyGroup>
     <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</SourceRevisionId>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <StartupObject>BotCatMaxy.MainClass</StartupObject>
     <AssemblyName>BotCatMaxy</AssemblyName>
     <Authors>Blackcatmaxy</Authors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile></DocumentationFile>
-    <OutputPath>C:\Users\bobth\Documents\Botcatmaxy</OutputPath>
     <Optimize>true</Optimize>
-  <Deterministic>false</Deterministic>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Prefer32Bit>true</Prefer32Bit>
@@ -23,19 +22,24 @@
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Interactive" Version="2.0.0" />
     <PackageReference Include="Discord.Addons.Preconditions" Version="2.2.0-dev3" />
-    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20200904.2" />
-    <PackageReference Include="Discord.Net.Commands" Version="2.3.0-dev-20200904.2" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="2.3.0-dev-20200904.2" />
+    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20201220.5" />
+    <PackageReference Include="Discord.Net.Commands" Version="2.3.0-dev-20201220.5" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="2.3.0-dev-20201220.5" />
+    <PackageReference Include="DotNetEnv" Version="2.0.0" />
     <PackageReference Include="Humanizer.Core" Version="2.8.26" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="Microsoft.Web.WebJobs.Publish" Version="2.0.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.11.2" />
-    <PackageReference Include="Serilog" Version="2.10.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.12.0-beta1" />
+    <PackageReference Include="Polly" Version="7.2.1" />
+    <PackageReference Include="Serilog" Version="2.10.1-dev-01265" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00905" />
   </ItemGroup>
+
+  <Import Condition="$(IsBuildAction)==''" Project="Properties\Tokens.targets" />
+
+  <Target Condition="$(IsBuildAction)==''" Name="WriteLaunchers" AfterTargets="CopyFilesToOutputDirectory">
+    <Message Importance="High" Text="$(FileLines)" />
+    <WriteLinesToFile File="$(OutputPath)$(AssemblyName).env" Overwrite="true" Lines="$(FileLines)" />
+  </Target>
 </Project>

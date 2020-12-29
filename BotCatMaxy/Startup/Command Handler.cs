@@ -54,6 +54,7 @@ namespace BotCatMaxy.Startup
                 _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
                 _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
                 _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
+                _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
 
                 // See Dependency Injection guide for more information.
                 await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
@@ -193,10 +194,10 @@ namespace Discord.Commands
                 return PreconditionResult.FromError("This command cannot be used outside of a guild");
             var targetUser = value switch
             {
-                UserRef userRef => userRef.gUser as SocketGuildUser,
+                UserRef userRef => userRef.GuildUser as SocketGuildUser,
                 SocketGuildUser targetGuildUser => targetGuildUser,
                 ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
-                _ => throw new ArgumentOutOfRangeException("Unkown Type used in parameter that requires hierarchy"),
+                _ => throw new ArgumentOutOfRangeException("Unknown Type used in parameter that requires hierarchy"),
             };
             if (targetUser == null)
                 if (value is UserRef)

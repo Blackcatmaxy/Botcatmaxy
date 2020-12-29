@@ -17,7 +17,7 @@ namespace BotCatMaxy.Models
     public class UserActs
     {
         [BsonId]
-        public ulong ID = 0;
-        public List<ActRecord> acts = new List<ActRecord>();
+        public ulong ID { get; init; }
+        public List<ActRecord> acts = new();
     }
 }

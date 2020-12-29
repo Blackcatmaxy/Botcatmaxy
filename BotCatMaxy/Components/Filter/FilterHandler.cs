@@ -85,15 +85,15 @@ namespace BotCatMaxy.Startup
                     embed.WithColor(Color.DarkMagenta);
                     embed.WithAuthor(user);
                     embed.WithTitle("User kicked for bad username");
-                    embed.WithDescription($"Name '{name}' contained '{detectedBadWord.word}'");
+                    embed.WithDescription($"Name '{name}' contained '{detectedBadWord.Word}'");
                     embed.WithCurrentTimestamp();
                     embed.WithFooter("User ID: " + user.Id);
                     await (channel as SocketTextChannel).SendMessageAsync(embed: embed.Build());
                 }
                 //If user's DMs aren't blocked
-                if (await user.TryNotify($"Your username contains a filtered word ({detectedBadWord.word}). Please change it before rejoining {guild.Name} Discord"))
+                if (await user.TryNotify($"Your username contains a filtered word ({detectedBadWord.Word}). Please change it before rejoining {guild.Name} Discord"))
                 {
-                    await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
+                    await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.Word}'");
                     user.Id.AddWarn(1, "Username with filtered word", guild, null);
                     return;
                 }//If user's DMs are blocked
@@ -104,7 +104,7 @@ namespace BotCatMaxy.Startup
                     else if (guild.TryGetTextChannel(logSettings.pubLogChannel, out ITextChannel pubChannel))
                         await pubChannel.SendMessageAsync($"{user.Mention} your username contains a bad word but your DMs are closed. Please clean up your username before rejoining");
                     await Task.Delay(10000);
-                    await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.word}'");
+                    await gUser.KickAsync($"Username '{name}' triggered autofilter for '{detectedBadWord.Word}'");
                     user.Id.AddWarn(1, "Username with filtered word (Note: DMs closed)", guild, null);
 
                 }
@@ -229,7 +229,7 @@ namespace BotCatMaxy.Startup
                     }
 
                     //Check for emojis
-                    if (modSettings.badUEmojis.NotEmpty() && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
+                    if (modSettings.badUEmojis?.Count is not null or 0 && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
                     {
                         await context.FilterPunish("Bad emoji used", modSettings, 0.8f);
                         return;
@@ -256,14 +256,14 @@ namespace BotCatMaxy.Startup
                 BadWord detectedBadWord = msgContent.CheckForBadWords(badWords?.ToArray());
                 if (detectedBadWord != null)
                 {
-                    if (!string.IsNullOrEmpty(detectedBadWord.euphemism))
+                    if (!string.IsNullOrEmpty(detectedBadWord.Euphemism))
                     {
-                        await context.FilterPunish("Bad word used (" + detectedBadWord.euphemism + ")", modSettings, detectedBadWord.size);
+                        await context.FilterPunish("Bad word used (" + detectedBadWord.Euphemism + ")", modSettings, detectedBadWord.Size);
                         return;
                     }
                     else
                     {
-                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.size);
+                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.Size);
                         return;
                     }
                 }
