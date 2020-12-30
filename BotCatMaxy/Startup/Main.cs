@@ -36,9 +36,8 @@ namespace BotCatMaxy
 #if DEBUG
             BotInfo.debug = true;
 #endif
-            DotNetEnv.Env.Load("BotCatMaxy.env");
-            var dbKey = Environment.GetEnvironmentVariable("DataToken");
-            dbClient = new MongoClient();
+            DotNetEnv.Env.Load($"{baseDir}/BotCatMaxy.env");
+            dbClient = new MongoClient(Environment.GetEnvironmentVariable("DataToken"));
 
             var config = new DiscordSocketConfig
             {
