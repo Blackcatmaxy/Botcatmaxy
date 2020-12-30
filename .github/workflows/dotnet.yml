@@ -26,7 +26,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Setup 
-      run: move /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets
+      run: mv /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets
     - name: Build
       run: dotnet build --no-restore
     - name: Test
