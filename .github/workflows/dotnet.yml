@@ -1,4 +1,4 @@
-name: .NET
+name: dotNET
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
           NUGET_AUTH_TOKEN: ${{secrets.NUGET_TOKEN}}
     - name: Restore dependencies
       run: dotnet restore
-    - name: Setup 
+    - name: Setup token file
       run: mv /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets
     - name: Build
       run: dotnet build --no-restore
