@@ -92,7 +92,7 @@ namespace BotCatMaxy.Moderation
             catch (Exception e)
             {
                 List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
-                await new LogMessage(LogSeverity.Error, "Warn", $"An exception has happened while warning a user ({userID}) with {infractions.Count} warns in {channel.Guild.Describe()}", e).Log();
+                await new LogMessage(LogSeverity.Error, "Warn", $"An exception has happened while warning a user ({userID}) with {infractions.Count} warns in {await channel.Guild.Describe()}", e).Log();
                 return new WarnResult(("Something has gone wrong with trying to warn. Try again in a while, if it's still not working email blackcatmaxy@gmail.com or leave an issue on the GitHub" + e.ToString()).Truncate(1500));
             }
         }
