@@ -44,17 +44,19 @@ namespace BotCatMaxy.Data
         public static T GetFromCache<T>(this IGuild guild, out FieldInfo field, out GuildSettings gCache) where T : DataObject
         {
             if (guild == null)
-                throw new ArgumentNullException(nameof(guild));
+                throw new ArgumentNullException("Guild is null");
 
             string tName = typeof(T).Name;
             tName = char.ToLower(tName[0], CultureInfo.InvariantCulture) + tName.Substring(1);
             field = cacheType.GetField(tName);
             gCache = null;
-            if (SettingsCache.guildSettings == null || SettingsCache.guildSettings.Count == 0) return null;
+            if (SettingsCache.guildSettings.Count == 0)
+                return null;
+
             gCache = SettingsCache.guildSettings.FirstOrDefault(g => g.ID == guild.Id);
-            if (gCache == null) return null;
-            object cached = field.GetValue(gCache);
-            return cached as T;
+            if (gCache == null)
+                return null;
+            return field.GetValue(gCache) as T;
         }
 
         public static void AddToCache<T>(this T file, FieldInfo field = null, GuildSettings gCache = null) where T : DataObject
@@ -67,23 +69,22 @@ namespace BotCatMaxy.Data
                     tName = char.ToLower(tName[0], CultureInfo.InvariantCulture) + tName.Substring(1);
                     field = cacheType.GetField(tName);
                 }
-                if (file == null || file.guild == null) throw new NullReferenceException();
-                if (gCache == null && SettingsCache.guildSettings != null && SettingsCache.guildSettings.Count > 0)
+                if (file?.guild == null) throw new NullReferenceException("File or Guild is null");
+                if (gCache == null && SettingsCache.guildSettings.Count > 0)
                 {
                     if (file?.guild?.Id == null || SettingsCache.guildSettings.Any(g => g?.ID == null)) throw new NullReferenceException();
-                    SettingsCache.guildSettings.FirstOrDefault(g => g.ID == file.guild.Id);
+                    gCache = SettingsCache.guildSettings.FirstOrDefault(g => g.ID == file.guild.Id);
                 }
                 if (gCache == null)
                 {
                     SettingsCache.guildSettings.Add(new GuildSettings(file.guild));
                     gCache = SettingsCache.guildSettings.First(g => g.ID == file.guild.Id);
                 }
-                if (field == null) throw new NullReferenceException();
                 field.SetValue(gCache, file);
             }
             catch (Exception e)
             {
-                new LogMessage(LogSeverity.Error, "Cache", "Something went wrong with cache", e).Log();
+                new LogMessage(LogSeverity.Critical, "Cache", "Something went wrong with cache", e).Log();
             }
         }
 
