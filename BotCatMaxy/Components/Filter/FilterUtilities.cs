@@ -128,32 +128,21 @@ namespace BotCatMaxy.Components.Filter
             string infractionAmount = user.LoadInfractions().Count.Suffix();
 
             var messages = (await context.Channel.GetMessagesAsync(5).FlattenAsync()).Where(msg => msg.Author.Id == context.Client.CurrentUser.Id);
+            //If need to go from "@person has been given their 3rd infractions because of fdsfd" to "@person has been given their 3rd-4th infractions because of fdsfd"
             if (messages.MatchInMessages(user.Id, out Match match, out IMessage message))
             {
                 int oldInfraction = int.Parse(match.Groups[2].Value);
                 await (message as IUserMessage).ModifyAsync(msg => msg.Content = $"{user.Mention} has been given their {oldInfraction.Suffix()}-{infractionAmount} infraction because of {reason}");
-                //if (string.IsNullOrEmpty(match.Groups[3].Value))
-                //{//If need to go from "@person has been given their 3rd infractions because of fdsfd" to "@person has been given their 3rd-4th infractions because of fdsfd"
-                //    await (message as IUserMessage).ModifyAsync(msg => msg.Content = $"{user.Mention}");
-                //}
-                //else
-                //{
-                //    await (message as IUserMessage).ModifyAsync(msg => msg.Content = $"");
-                //}
                 return null;
             } else
             {
+                //Public channel nonsense if someone want a public log (don't think this has been used since the old Vesteria Discord but backward compat)
                 string toSay = $"{user.Mention} has been given their {infractionAmount} infraction because of {reason}";
                 var pubLogChannel = await context.Guild.GetTextChannelAsync(logSettings?.pubLogChannel ?? 0);
                 if (pubLogChannel != null)
-                {
                     warnMessage = pubLogChannel.SendMessageAsync(toSay);
-                }
                 else
-                {
-
                     warnMessage = context.Channel.SendMessageAsync(toSay);
-                }
                 return warnMessage;
             }
         }

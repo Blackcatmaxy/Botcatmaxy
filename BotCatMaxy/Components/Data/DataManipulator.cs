@@ -64,22 +64,20 @@ namespace BotCatMaxy.Data
             try
             {
                 if (field == null)
-                {
+                {//Figures out where to put file
                     string tName = typeof(T).Name;
                     tName = char.ToLower(tName[0], CultureInfo.InvariantCulture) + tName.Substring(1);
                     field = cacheType.GetField(tName);
                 }
                 if (file?.guild == null) throw new NullReferenceException("File or Guild is null");
                 if (gCache == null && SettingsCache.guildSettings.Count > 0)
-                {
-                    if (file?.guild?.Id == null || SettingsCache.guildSettings.Any(g => g?.ID == null)) throw new NullReferenceException();
                     gCache = SettingsCache.guildSettings.FirstOrDefault(g => g.ID == file.guild.Id);
-                }
                 if (gCache == null)
-                {
+                {//This is messy but idea is that if here then there's no guild settings with the right ID
                     SettingsCache.guildSettings.Add(new GuildSettings(file.guild));
                     gCache = SettingsCache.guildSettings.First(g => g.ID == file.guild.Id);
                 }
+                //Sets cache of file to value
                 field.SetValue(gCache, file);
             }
             catch (Exception e)
