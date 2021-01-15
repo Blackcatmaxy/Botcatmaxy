@@ -35,9 +35,6 @@ namespace BotCatMaxy.Components.Filter
                     case '4':
                         sb.Append('a');
                         break;
-                    case '8':
-                        sb.Append('b');
-                        break;
                     case '¢':
                         sb.Append('c');
                         break;
