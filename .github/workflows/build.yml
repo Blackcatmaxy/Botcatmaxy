@@ -1,4 +1,4 @@
-name: .NET
+name: build
 
 on:
   push:
@@ -12,7 +12,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -21,10 +20,13 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.x'
+        source-url: https://www.myget.org/F/discord-net/api/v3/index.json
       env:
-          IsBuildAction: True
+          NUGET_AUTH_TOKEN: ${{secrets.NUGET_TOKEN}}
     - name: Restore dependencies
       run: dotnet restore
+    - name: Setup token file
+      run: mv /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets
     - name: Build
       run: dotnet build --no-restore
     - name: Test
