@@ -510,12 +510,7 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task AddBadWord(string word, string euphemism = null, float size = 0.5f)
         {
-            BadWord badWord = new BadWord
-            {
-                Word = word,
-                Euphemism = euphemism,
-                Size = size
-            };
+            BadWord badWord = new BadWord(word, euphemism, size);
             BadWordList badWordsClass = Context.Guild.LoadFromFile<BadWordList>(true);
             badWordsClass.badWords.Add(badWord);
             badWordsClass.SaveToFile();

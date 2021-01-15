@@ -8,13 +8,11 @@ using System.Linq;
 namespace BotCatMaxy.Models
 {
     [BsonIgnoreExtraElements]
-    public record BadWord
-    {
-        public string Word { get; init; }
-        public string Euphemism { get; init; }
-        public float Size { get; init; } = 0.5f;
-        public bool PartOfWord { get; init; } = true;
-    }
+    public record BadWord(
+        string Word = null,
+        string Euphemism = null,
+        float Size = 0.5f,
+        bool PartOfWord = true);
 
     public class BadWordList : DataObject
     {
