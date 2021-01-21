@@ -4,7 +4,7 @@ using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using BotCatMaxy.Moderation;
 using Discord;
-using Discord.Addons.Interactive;
+using Interactivity;
 using Discord.Commands;
 using Discord.WebSocket;
 using Humanizer;
@@ -12,12 +12,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Interactivity.Confirmation;
 
 namespace BotCatMaxy
 {
     [Name("Moderation")]
-    public class ModerationCommands : InteractiveBase<SocketCommandContext>
+    public class ModerationCommands : ModuleBase<SocketCommandContext>
     {
+        public InteractivityService Interactivity { get; set; }
+
         [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [Summary("Warn a user with an option reason.")]
@@ -87,7 +90,8 @@ namespace BotCatMaxy
             SocketGuild guild;
             while (true)
             {
-                SocketMessage message = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var message = result.Value;
                 if (message == null || message.Content == "cancel")
                 {
                     await ReplyAsync("You have timed out or canceled");
@@ -220,20 +224,18 @@ namespace BotCatMaxy
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
-                IUserMessage query = await ReplyAsync(
-                    $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
-                SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
-                if (nextMessage?.Content?.ToLower() == "!confirm")
+                var text = $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), are you sure you want to change the length?";
+                var request = new ConfirmationBuilder()
+                    .WithContent(new PageBuilder().WithText(text))
+                    .Build();
+                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(2));
+                if (result.Value)
                 {
-                    _ = query.DeleteAsync();
-                    _ = nextMessage.DeleteAsync();
                     actions.tempBans.Remove(oldAct);
                     actions.SaveToFile();
                 }
                 else
                 {
-                    _ = query.DeleteAsync();
-                    if (nextMessage != null) _ = nextMessage.DeleteAsync();
                     await ReplyAsync("Command canceled");
                     return;
                 }
@@ -344,20 +346,18 @@ namespace BotCatMaxy
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
-                IUserMessage query = await ReplyAsync(
-                    $"{userRef.Name()} is already temp-muted for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), reply with !confirm within 2 minutes to confirm you want to change the length");
-                SocketMessage nextMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
-                if (nextMessage?.Content?.ToLower() == "!confirm")
+                string text = $"{userRef.Name()} is already temp-muted for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), are you sure you want to change the length?";
+                var request = new ConfirmationBuilder()
+                    .WithContent(new PageBuilder().WithText(text))
+                    .Build();
+                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(2));
+                if (result.Value)
                 {
-                    _ = query.DeleteAsync();
-                    _ = nextMessage.DeleteAsync();
                     actions.tempMutes.Remove(oldAct);
                     actions.SaveToFile();
                 }
                 else
                 {
-                    _ = query.DeleteAsync();
-                    if (nextMessage != null) _ = nextMessage.DeleteAsync();
                     await ReplyAsync("Command canceled");
                     return;
                 }
@@ -454,12 +454,14 @@ namespace BotCatMaxy
         {
             if (reason.Split(' ').First().ToTime() != null)
             {
-                var query = await ReplyAsync("Are you sure you don't mean to use !tempban? Reply with !confirm if you want to override");
-                var reply = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
-                if (reply?.Content?.ToLower() != "!confirm")
+                var query = "Are you sure you don't mean to use !tempban?";
+                var request = new ConfirmationBuilder()
+                    .WithContent(new PageBuilder().WithText(query))
+                    .Build();
+                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(1));
+                if (result.Value)
                 {
-                    Context.Channel.DeleteMessageAsync(query);
-                    ReplyAsync("Command Canceled");
+                    await ReplyAsync("Command Canceled");
                     return;
                 }
             }
@@ -467,12 +469,14 @@ namespace BotCatMaxy
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.User == userRef.ID) ?? false)
             {
-                var query = await ReplyAsync("User is already tempbanned. Reply with !confirm if you want to override");
-                var reply = await NextMessageAsync(timeout: TimeSpan.FromMinutes(2));
-                if (reply?.Content?.ToLower() != "!confirm")
+                var query = "User is already tempbanned, are you use you want to ban?";
+                var request = new ConfirmationBuilder()
+                    .WithContent(new PageBuilder().WithText(query))
+                    .Build();
+                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(2));
+                if (result.Value)
                 {
-                    Context.Channel.DeleteMessageAsync(query);
-                    ReplyAsync("Command Canceled");
+                    await ReplyAsync("Command Canceled");
                     return;
                 }
                 actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.User == userRef.ID));

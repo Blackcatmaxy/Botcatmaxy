@@ -1,10 +1,10 @@
 ﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using Interactivity;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -16,8 +16,10 @@ namespace BotCatMaxy.Components.Filter
     [Group("automod")]
     [Summary("Manages the automoderator.")]
     [Alias("automod", "auto -mod", "filter")]
-    public class FilterCommands : InteractiveBase<SocketCommandContext>
+    public class FilterCommands : ModuleBase<SocketCommandContext>
     {
+        public InteractivityService Interactivity { get; set; }
+
         [Command("list")]
         [Summary("View filter information.")]
         [Alias("info")]
@@ -37,7 +39,8 @@ namespace BotCatMaxy.Components.Filter
             SocketGuild guild;
             while (true)
             {
-                SocketMessage reply = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var reply = result.Value;
                 if (reply == null || reply.Content == "cancel")
                 {
                     await ReplyAsync("You have timed out or canceled");

@@ -2,17 +2,19 @@
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using Interactivity;
 using Humanizer;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
 [Name("Report")]
-public class ReportModule : InteractiveBase<SocketCommandContext>
+public class ReportModule : ModuleBase<SocketCommandContext>
 {
+    public InteractivityService Interactivity { get; set; }
+
     [Command("report", RunMode = RunMode.Async)]
     [Summary("Create a new report.")]
     [RequireContext(ContextType.DM)]
@@ -31,7 +33,8 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
             SocketGuild guild;
             while (true)
             {
-                SocketMessage message = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var message = result.Value;
                 if (message == null || message.Content == "cancel")
                 {
                     await ReplyAsync("You have timed out or canceled");
@@ -89,18 +92,22 @@ public class ReportModule : InteractiveBase<SocketCommandContext>
             }
 
             await ReplyAsync("Please reply with what you want to report");
-            var reportMsg = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
-            if (reportMsg == null) ReplyAsync("Report aborted");
+            var reportMsg = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(5));
+            if (!reportMsg.IsSuccess)
+            {
+                await ReplyAsync("Report aborted");
+                return;
+            }
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(Context.Message.Author);
             embed.WithTitle("Report");
-            embed.WithDescription(reportMsg.Content);
+            embed.WithDescription(reportMsg.Value.Content);
             embed.WithFooter("User ID: " + Context.Message.Author.Id);
             embed.WithCurrentTimestamp();
             string links = "";
-            if (reportMsg.Attachments?.Count is not null or 0)
-                links = reportMsg.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
+            if (reportMsg.Value.Attachments?.Count is not null or 0)
+                links = reportMsg.Value.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
             var channel = guild.GetTextChannel(settings.channelID.Value);
             await channel.SendMessageAsync(embed: embed.Build());
             if (!string.IsNullOrEmpty(links))
