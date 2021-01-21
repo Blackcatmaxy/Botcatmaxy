@@ -2,7 +2,7 @@
 using BotCatMaxy.Models;
 using BotCatMaxy.TypeReaders;
 using Discord;
-using Discord.Addons.Interactive;
+using Interactivity;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -34,7 +34,7 @@ namespace BotCatMaxy.Startup
             _client = client;
             services = new ServiceCollection()
                 .AddSingleton(_client)
-                .AddSingleton(new InteractiveService(client))
+                .AddSingleton(new InteractivityService(client, TimeSpan.FromMinutes(3)))
                 .BuildServiceProvider();
             _ = InstallCommandsAsync();
         }

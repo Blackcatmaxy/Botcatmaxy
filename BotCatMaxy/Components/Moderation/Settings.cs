@@ -1,7 +1,6 @@
 ﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
@@ -11,8 +10,9 @@ namespace BotCatMaxy
 {
     //I want to move away from vague files like settings since conflicts are annoying
     [Name("Settings")]
-    public class SettingsModule : InteractiveBase<SocketCommandContext>
+    public class SettingsModule : ModuleBase<SocketCommandContext>
     {
+
         [Command("Settings Info")]
         [Summary("View settings.")]
         [RequireContext(ContextType.Guild)]
