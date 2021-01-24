@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.ObjectModel;
 
 namespace Tests.Mocks
 {
@@ -49,18 +50,26 @@ namespace Tests.Mocks
 
         public IAsyncEnumerable<IReadOnlyCollection<IMessage>> GetMessagesAsync(int limit = 100, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            if (limit > messages.Count) limit = messages.Count;
+            var range = messages.GetRange(0, limit).Select(message => (IMessage)message).ToList();
+            IReadOnlyCollection<IMessage>[] collections = { new ReadOnlyCollection<IMessage>(range) };
+            return collections.ToAsyncEnumerable();
         }
 
         public IAsyncEnumerable<IReadOnlyCollection<IMessage>> GetMessagesAsync(ulong fromMessageId, Direction dir, int limit = 100, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            if (dir is Direction.Around or Direction.Before) throw new NotImplementedException();
+            if (!messages.Any(message => message.Id == fromMessageId)) return null;
+            var index = messages.FindIndex(message => message.Id == fromMessageId);
+            if (limit > messages.Count) limit = messages.Count - index;
+
+            var range = messages.GetRange(index, limit).Select(message => (IMessage)message).ToList();
+            IReadOnlyCollection<IMessage>[] collections = { new ReadOnlyCollection<IMessage>(range) };
+            return collections.ToAsyncEnumerable();
         }
 
         public IAsyncEnumerable<IReadOnlyCollection<IMessage>> GetMessagesAsync(IMessage fromMessage, Direction dir, int limit = 100, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
+            => GetMessagesAsync(fromMessage.Id, dir, limit, mode, options);
 
         public Task<IReadOnlyCollection<IMessage>> GetPinnedMessagesAsync(RequestOptions options = null)
         {
@@ -90,7 +99,7 @@ namespace Tests.Mocks
         public Task<IUserMessage> SendMessageAsync(string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null)
         {
             var message = new UserMockMessage(text, this);
-            messages.Add(message);
+            messages.Insert(0, message);
             return Task.FromResult(message as IUserMessage);
         }
 
