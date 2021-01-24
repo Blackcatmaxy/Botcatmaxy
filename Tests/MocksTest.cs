@@ -6,15 +6,20 @@ using System.Threading.Tasks;
 using Xunit;
 using BotCatMaxy.Models;
 using Tests.Mocks;
+using Tests.Mocks.Guild;
+using Discord;
 
 namespace Tests
 {
     public class MocksTest
     {
         [Fact]
-        public async Task MessageTest()
+        public async Task GuildTest()
         {
-            var channel = new MockMessageChannel();
+            var guild = new MockGuild();
+            var channel = await guild.CreateTextChannelAsync("Channel");
+            //Messages
+            Assert.Equal(channel.Id, (await guild.GetTextChannelAsync(channel.Id))?.Id);
             var message = await channel.SendMessageAsync("Test");
             Assert.Equal("Test", message.Content);
             message = await channel.GetMessageAsync(message.Id) as UserMockMessage;
@@ -22,6 +27,21 @@ namespace Tests
             await channel.DeleteMessageAsync(message.Id);
             message = await channel.GetMessageAsync(message.Id) as UserMockMessage;
             Assert.Null(message);
+
+            //Users
+            await guild.DownloadUsersAsync();
+            var userID = guild.AddUser(new MockGuildUser("Someone", guild));
+            var users = guild.ApproximateMemberCount;
+
+            var user = await guild.GetUserAsync(userID);
+            Assert.Equal(userID, user.Id);
+            await user.KickAsync("Test");
+            Assert.Null(await guild.GetBanAsync(user));
+            Assert.NotEqual(users, guild.ApproximateMemberCount);
+
+            guild.AddUser(user as MockGuildUser);
+            await guild.AddBanAsync(user, reason: "Test");
+            Assert.NotNull(await guild.GetBanAsync(user));
         }
 
         [Fact]

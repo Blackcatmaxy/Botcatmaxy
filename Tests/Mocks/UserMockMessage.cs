@@ -9,7 +9,7 @@ namespace Tests.Mocks
 {
     public class UserMockMessage : MockMessage, IUserMessage
     {
-        public UserMockMessage(string content, IMessageChannel channel) : base(content, channel) { }
+        public UserMockMessage(string content, IMessageChannel channel, IUser auther) : base(content, channel, auther) { }
 
         public IUserMessage ReferencedMessage => throw new NotImplementedException();
 
