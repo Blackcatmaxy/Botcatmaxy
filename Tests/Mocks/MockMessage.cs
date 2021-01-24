@@ -9,10 +9,11 @@ namespace Tests.Mocks
 {
     public class MockMessage : IMessage
     {
-        public MockMessage(string content, IMessageChannel channel)
+        public MockMessage(string content, IMessageChannel channel, IUser author)
         {
             Content = content;
             Channel = channel;
+            Author = author;
             var random = new Random();
             Id = (ulong)random.Next(0, int.MaxValue);
         }
@@ -37,7 +38,7 @@ namespace Tests.Mocks
 
         public IMessageChannel Channel { get; init; }
 
-        public IUser Author => throw new NotImplementedException();
+        public IUser Author { get; init; }
 
         public IReadOnlyCollection<IAttachment> Attachments => throw new NotImplementedException();
 
@@ -71,9 +72,7 @@ namespace Tests.Mocks
         }
 
         public Task DeleteAsync(RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
+            => Channel.DeleteMessageAsync(Id, options);
 
         public IAsyncEnumerable<IReadOnlyCollection<IUser>> GetReactionUsersAsync(IEmote emoji, int limit, RequestOptions options = null)
         {

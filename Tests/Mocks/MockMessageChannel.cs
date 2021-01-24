@@ -98,7 +98,7 @@ namespace Tests.Mocks
 
         public Task<IUserMessage> SendMessageAsync(string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null)
         {
-            var message = new UserMockMessage(text, this);
+            var message = new UserMockMessage(text, this, null);
             messages.Insert(0, message);
             return Task.FromResult(message as IUserMessage);
         }
