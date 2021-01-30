@@ -21,7 +21,7 @@ namespace BotCatMaxy
     public class MainClass
     {
         private static DiscordSocketClient _client;
-        public static MongoClient dbClient;
+        public static IMongoClient dbClient;
         public static async Task Main(string[] args)
         {
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
