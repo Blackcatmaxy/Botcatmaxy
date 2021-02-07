@@ -10,13 +10,17 @@ namespace Tests.Mocks
 {
     public class MockMessageChannel : IMessageChannel
     {
-        public MockMessageChannel()
+        public MockMessageChannel(ISelfUser bot, string name = null)
         {
+            Bot = bot;
             var random = new Random();
             Id = (ulong)random.Next(0, int.MaxValue);
+            Name = name;
         }
 
-        public string Name => throw new NotImplementedException();
+        protected ISelfUser Bot { get; init; }
+
+        public string Name { get; init; }
 
         public DateTimeOffset CreatedAt => throw new NotImplementedException();
 
@@ -51,7 +55,8 @@ namespace Tests.Mocks
         public IAsyncEnumerable<IReadOnlyCollection<IMessage>> GetMessagesAsync(int limit = 100, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
             if (limit > messages.Count) limit = messages.Count;
-            var range = messages.GetRange(0, limit).Select(message => (IMessage)message).ToList();
+            var range = messages.GetRange(0, limit).Select(message => (IMessage)message)
+                .ToList();
             IReadOnlyCollection<IMessage>[] collections = { new ReadOnlyCollection<IMessage>(range) };
             return collections.ToAsyncEnumerable();
         }
@@ -98,9 +103,16 @@ namespace Tests.Mocks
 
         public Task<IUserMessage> SendMessageAsync(string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null)
         {
-            var message = new UserMockMessage(text, this, null);
+            var message = new MockUserMessage(text, this, Bot);
             messages.Insert(0, message);
             return Task.FromResult(message as IUserMessage);
+        }
+
+        public IUserMessage SendMessageAsOther(string text, IUser user = null)
+        {
+            var message = new MockUserMessage(text, this, user);
+            messages.Insert(0, message);
+            return message;
         }
 
         public Task TriggerTypingAsync(RequestOptions options = null)

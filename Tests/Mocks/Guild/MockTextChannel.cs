@@ -8,9 +8,9 @@ using Discord;
 
 namespace Tests.Mocks.Guild
 {
-    public class MockTextChannel : MockMessageChannel, ITextChannel
+    public class MockTextChannel : MockMessageChannel, ITextChannel, IGuildChannel
     {
-        public MockTextChannel(IGuild guild) : base()
+        public MockTextChannel(ISelfUser user, IGuild guild, string name) : base(user, name)
         {
             Guild = guild;
         }

@@ -10,15 +10,10 @@ namespace Tests.Mocks
 {
     public class MockUser : IUser
     {
-        public MockUser(string username, bool isSelf = false)
+        public MockUser(string username)
         {
-            IsBot = isSelf;
-            if (isSelf)
-            {
-                Username = "BotCatMaxy";
-            }
-            else
-                Username = username;
+            Username = username;
+            IsBot = false;
             var random = new Random();
             Id = (ulong)random.Next(0, int.MaxValue);
         }

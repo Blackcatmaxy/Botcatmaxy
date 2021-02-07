@@ -10,7 +10,7 @@ namespace BotCatMaxy
 {
     //I want to move away from vague files like settings since conflicts are annoying
     [Name("Settings")]
-    public class SettingsModule : ModuleBase<SocketCommandContext>
+    public class SettingsModule : ModuleBase<ICommandContext>
     {
 
         [Command("Settings Info")]
@@ -36,7 +36,7 @@ namespace BotCatMaxy
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("toggleserverstorage", RunMode = RunMode.Async)]
+        [Command("toggleserverstorage")]
         [Summary("Legacy feature. Run for instruction on how to enable.")]
         [HasAdmin]
         public async Task ToggleServerIDUse()

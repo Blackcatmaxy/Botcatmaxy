@@ -1,5 +1,6 @@
 ﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -11,20 +12,19 @@ namespace BotCatMaxy
 {
     public static class PermissionUtilities
     {
-        public static bool HasAdmin(this SocketGuildUser user)
+        public static bool HasAdmin(this IGuildUser user)
         {
             if (user == null) return false;
-            if (user.Guild.Owner.Id == user.Id)
+            if (user.Guild.OwnerId == user.Id)
             {
                 return true;
             }
 
-            foreach (SocketRole role in (user).Roles)
+            foreach (ulong id in user.RoleIds)
             {
-                if (role.Permissions.Administrator)
-                {
+                if (user.Guild.Roles.First(role => role.Id == id)
+                    .Permissions.Administrator)
                     return true;
-                }
             }
             return false;
         }
