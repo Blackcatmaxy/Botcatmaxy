@@ -18,6 +18,9 @@ namespace BotCatMaxy.Components.Filter
     [Alias("automod", "auto -mod", "filter")]
     public class FilterCommands : ModuleBase<SocketCommandContext>
     {
+#if !TEST
+    [DontInject]
+#endif
         public InteractivityService Interactivity { get; set; }
 
         [Command("list")]

@@ -19,6 +19,9 @@ namespace BotCatMaxy
     [Name("Moderation")]
     public class ModerationCommands : ModuleBase<SocketCommandContext>
     {
+#if !TEST
+    [DontInject]
+#endif
         public InteractivityService Interactivity { get; set; }
 
         [RequireContext(ContextType.Guild)]

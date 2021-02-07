@@ -7,9 +7,9 @@ using Discord;
 
 namespace Tests.Mocks
 {
-    public class UserMockMessage : MockMessage, IUserMessage
+    public class MockUserMessage : MockMessage, IUserMessage
     {
-        public UserMockMessage(string content, IMessageChannel channel, IUser auther) : base(content, channel, auther) { }
+        public MockUserMessage(string content, IMessageChannel channel, IUser auther) : base(content, channel, auther) { }
 
         public IUserMessage ReferencedMessage => throw new NotImplementedException();
 

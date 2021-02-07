@@ -22,10 +22,10 @@ namespace Tests
             Assert.Equal(channel.Id, (await guild.GetTextChannelAsync(channel.Id))?.Id);
             var message = await channel.SendMessageAsync("Test");
             Assert.Equal("Test", message.Content);
-            message = await channel.GetMessageAsync(message.Id) as UserMockMessage;
+            message = await channel.GetMessageAsync(message.Id) as MockUserMessage;
             Assert.Equal("Test", message?.Content);
             await channel.DeleteMessageAsync(message.Id);
-            message = await channel.GetMessageAsync(message.Id) as UserMockMessage;
+            message = await channel.GetMessageAsync(message.Id) as MockUserMessage;
             Assert.Null(message);
 
             //Users
@@ -47,7 +47,7 @@ namespace Tests
         [Fact]
         public async Task MultipleMessageTest()
         {
-            var channel = new MockMessageChannel();
+            var channel = new MockMessageChannel(new MockSelfUser());
             var message1 = await channel.SendMessageAsync("Test1");
             var message2 = await channel.SendMessageAsync("Test2");
             var messages = await channel.GetMessagesAsync(2).ToArrayAsync();

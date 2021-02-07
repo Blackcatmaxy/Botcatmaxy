@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 [Name("Report")]
 public class ReportModule : ModuleBase<SocketCommandContext>
 {
+#if !TEST
+    [DontInject]
+#endif
     public InteractivityService Interactivity { get; set; }
 
     [Command("report", RunMode = RunMode.Async)]

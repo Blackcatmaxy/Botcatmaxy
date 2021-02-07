@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -160,7 +161,7 @@ namespace Tests.Mocks.Guild
 
         public Task<ITextChannel> CreateTextChannelAsync(string name, Action<TextChannelProperties> func = null, RequestOptions options = null)
         {
-            var channel = new MockTextChannel(this);
+            var channel = new MockTextChannel(new MockSelfUser(), this, name);
             channels.Add(channel);
             return Task.FromResult(channel as ITextChannel);
         }
@@ -183,7 +184,7 @@ namespace Tests.Mocks.Guild
         public Task DownloadUsersAsync()
         {
             userList = new(4);
-            userList.Add(new MockGuildUser("Bot", this, true));
+            userList.Add(new MockGuildUser("BotCatMaxy", this, true));
             var owner = new MockGuildUser("Owner", this);
             OwnerId = owner.Id;
             userList.Add(owner);
@@ -292,9 +293,10 @@ namespace Tests.Mocks.Guild
         public Task<IGuildUser> GetUserAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
                     => Task.FromResult(userList.FirstOrDefault(user => user.Id == id) as IGuildUser);
 
-        public Task<IReadOnlyCollection<IGuildUser>> GetUsersAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        public async Task<IReadOnlyCollection<IGuildUser>> GetUsersAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            if (userList.Count == 0) await DownloadUsersAsync();
+            return new ReadOnlyCollection<IGuildUser>(userList.Select(user => user as IGuildUser).ToList());
         }
 
         public Task<IInviteMetadata> GetVanityInviteAsync(RequestOptions options = null)

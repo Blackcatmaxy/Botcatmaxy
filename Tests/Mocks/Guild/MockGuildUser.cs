@@ -9,9 +9,10 @@ namespace Tests.Mocks.Guild
 {
     public class MockGuildUser : MockUser, IGuildUser
     {
-        public MockGuildUser(string username, IGuild guild, bool isSelf = false) : base(username, isSelf)
+        public MockGuildUser(string username, IGuild guild, bool isBot = false) : base(username)
         {
             Guild = guild;
+            IsBot = isBot;
         }
 
         public DateTimeOffset? JoinedAt => throw new NotImplementedException();

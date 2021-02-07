@@ -24,27 +24,29 @@ namespace BotCatMaxy.Startup
                             "User requires guild permission KickMembers.", "Bot requires guild permission ManageRoles.",
                             "Command can only be run by the owner of the bot.", "You don't have the permissions to use this.",
                             "User requires channel permission ManageMessages.", "Failed to parse UInt32." };*/
-        private readonly DiscordSocketClient _client;
+        private readonly IDiscordClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider services;
 
-        public CommandHandler(DiscordSocketClient client, CommandService commands)
+        public CommandHandler(IDiscordClient client, CommandService commands)
         {
             _commands = commands;
             _client = client;
-            services = new ServiceCollection()
-                .AddSingleton(_client)
-                .AddSingleton(new InteractivityService(client, TimeSpan.FromMinutes(3)))
-                .BuildServiceProvider();
+            var serviceBuilder = new ServiceCollection()
+                .AddSingleton(_client);
+            if (client is DiscordSocketClient socketClient)
+                serviceBuilder.AddSingleton(new InteractivityService(socketClient, TimeSpan.FromMinutes(3)));
+            services = serviceBuilder.BuildServiceProvider();
             _ = InstallCommandsAsync();
         }
 
-        public async Task InstallCommandsAsync()
+        private async Task InstallCommandsAsync()
         {
             try
             {
-                // Hook the MessageReceived event into our command handler
-                _client.MessageReceived += HandleCommandAsync;
+                if (_client is DiscordSocketClient socketClient)
+                    // Hook the MessageReceived event into our command handler
+                    socketClient.MessageReceived += HandleCommandAsync;
 
                 //Exception and Post Execution handling
                 _commands.Log += ExceptionLogging.Log;
@@ -57,7 +59,7 @@ namespace BotCatMaxy.Startup
                 _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
 
                 // See Dependency Injection guide for more information.
-                await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(),
+                await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(MainClass)),
                                                 services: services);
                 await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
             }
@@ -68,10 +70,12 @@ namespace BotCatMaxy.Startup
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
+            => await ExecuteCommand(messageParam);
+
+        public async Task ExecuteCommand(IMessage messageParam, ICommandContext context = null)
         {
             // Don't process the command if it was a system message
-            SocketUserMessage message = messageParam as SocketUserMessage;
-            if (message == null)
+            if (messageParam is not IUserMessage message)
                 return;
 
             // Create a number to track where the prefix ends and the command begins
@@ -83,8 +87,8 @@ namespace BotCatMaxy.Startup
                 message.Author.IsBot)
                 return;
 
-            // Create a WebSocket-based command context based on the message
-            var context = new SocketCommandContext(_client, message);
+            // Create a WebSocket-based command context based on the message and assume if no mock context then use Socket
+            context ??= new SocketCommandContext((DiscordSocketClient)_client, (SocketUserMessage)message);
 
             //var res = filter.CheckMessage(message, context);
 
@@ -171,7 +175,7 @@ namespace Discord.Commands
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             //Makes sure it's in a server
-            if (context.User is SocketGuildUser gUser)
+            if (context.User is IGuildUser gUser)
             {
                 // If this command was executed by a user with administrator permission, return a success
                 if (gUser.HasAdmin())
