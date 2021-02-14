@@ -1,6 +1,7 @@
 ﻿using BotCatMaxy;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
+using BotCatMaxy.Moderation;
 using Mongo2Go;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -14,19 +15,22 @@ using Xunit;
 
 namespace Tests
 {
-    public class DataTests : IDisposable
+    //Forces all tests that inherit from this to run serialized
+    //In theory it should work in parallel but seems unstable
+    [Collection("Data")]
+    public class BaseDataTests : IDisposable
     {
         protected MongoDbRunner runner;
         protected MongoCollectionBase<BsonDocument> collection;
-        protected IMongoDatabase settings;
+        protected IMongoDatabase settingsDB;
 
-        public DataTests()
+        public BaseDataTests()
         {
             runner = MongoDbRunner.Start();
 
             MongoClient client = new MongoClient(runner.ConnectionString);
             MainClass.dbClient = client;
-            settings = client.GetDatabase("Settings");
+            settingsDB = client.GetDatabase("Settings");
             var database = client.GetDatabase("IntegrationTest");
             collection = (MongoCollectionBase<BsonDocument>)database.GetCollection<BsonDocument>("TestCollection");
         }
@@ -35,7 +39,10 @@ namespace Tests
         {
             runner.Dispose();
         }
+    }
 
+    public class DataTests : BaseDataTests, IDisposable
+    {
         [Fact]
         public void TestBasic()
         {
@@ -64,8 +71,8 @@ namespace Tests
             Assert.NotNull(collection);
             Assert.Equal(guild.Id.ToString(), collection.CollectionNamespace.CollectionName);
 
-            var ownerCollection = settings.GetCollection<BsonDocument>(guild.OwnerId.ToString());
-            ownerCollection.InsertOne(new BsonDocument());
+            var ownerCollection = settingsDB.GetCollection<BsonDocument>(guild.OwnerId.ToString());
+            ownerCollection.InsertOne(new BsonDocument("Test", "Value"));
             collection = guild.GetCollection(false);
             Assert.NotNull(collection);
             Assert.Equal(guild.OwnerId.ToString(), collection.CollectionNamespace.CollectionName);
@@ -80,6 +87,11 @@ namespace Tests
             Assert.Null(infractions);
             infractions = userID.LoadInfractions(guild, true);
             Assert.NotNull(infractions);
+            Assert.Empty(infractions);
+            userID.AddWarn(1, "Test", guild, "link");
+            infractions = userID.LoadInfractions(guild, false);
+            Assert.NotNull(infractions);
+            Assert.NotEmpty(infractions);
         }
     }
 }

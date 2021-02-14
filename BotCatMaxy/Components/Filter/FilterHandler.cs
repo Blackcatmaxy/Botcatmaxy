@@ -16,24 +16,28 @@ namespace BotCatMaxy.Startup
 {
     public class FilterHandler
     {
-        const string inviteRegex = @"(?:http|https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li|com)|discord(?:app)?\.com\/invite)\/(\S+)";
-        RegexOptions regexOptions;
+        private const string inviteRegex = @"(?:http|https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li|com)|discord(?:app)?\.com\/invite)\/(\S+)";
+        private const RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
 
-        readonly DiscordSocketClient client;
-        public FilterHandler(DiscordSocketClient client)
+        private readonly IDiscordClient client;
+
+        public FilterHandler(IDiscordClient client)
         {
             this.client = client;
-            client.MessageReceived += CheckMessage;
-            client.MessageUpdated += HandleEdit;
-            client.ReactionAdded += HandleReaction;
-            client.UserJoined += HandleUserJoin;
-            client.UserUpdated += HandleUserChange;
-            client.GuildMemberUpdated += HandleUserChange;
-            regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
+            if (client is BaseSocketClient socketClient)
+            {
+                socketClient.MessageReceived += HandleMessage;
+                socketClient.MessageUpdated += HandleEdit;
+                socketClient.ReactionAdded += HandleReaction;
+                socketClient.UserJoined += HandleUserJoin;
+                socketClient.UserUpdated += HandleUserChange;
+                socketClient.GuildMemberUpdated += HandleUserChange;
+            }
+
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
-        public async Task HandleEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
+        private async Task HandleEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
             => await Task.Run(() => CheckMessage(editedMessage)).ConfigureAwait(false);
 
         public async Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
@@ -60,19 +64,20 @@ namespace BotCatMaxy.Startup
         }
 
         public async Task HandleMessage(SocketMessage message)
-            => await Task.Run(() => CheckMessage(message)).ConfigureAwait(false);
+            => await Task.Run(() => CheckMessage(message));
 
-        public async Task CheckNameInGuild(IUser user, string name, SocketGuild guild)
+        public async Task CheckNameInGuild(IUser user, string name, IGuild guild)
         {
             try
             {
-                if (!guild.CurrentUser.GuildPermissions.KickMembers) return;
+                var currentUser = await guild.GetCurrentUserAsync();
+                if (!currentUser.GuildPermissions.KickMembers) return;
                 ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
 
-                SocketGuildUser gUser = user as SocketGuildUser ?? guild.GetUser(user.Id);
-                if (gUser.CantBeWarned() || !gUser.CanActOn(guild.CurrentUser))
+                IGuildUser gUser = user as IGuildUser ?? await guild.GetUserAsync(user.Id);
+                if (gUser.CantBeWarned() || !gUser.CanActOn(currentUser))
                     return;
 
                 BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
@@ -117,7 +122,7 @@ namespace BotCatMaxy.Startup
 
         public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is SocketGuildChannel))
+            if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is IGuildChannel))
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
@@ -148,21 +153,20 @@ namespace BotCatMaxy.Startup
             }
         }
 
-        public async Task CheckMessage(SocketMessage message)
+        public async Task CheckMessage(IMessage message, ICommandContext context = null)
         {
-            if (message.Author.IsBot || !(message.Channel is SocketGuildChannel) || !(message is SocketUserMessage) || string.IsNullOrWhiteSpace(message.Content))
+            if (message.Author.IsBot || message.Channel is not IGuildChannel chnl || message is not IUserMessage userMessage || string.IsNullOrWhiteSpace(message.Content))
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
-            SocketCommandContext context = new SocketCommandContext(client, message as SocketUserMessage);
-            SocketGuildChannel chnl = message.Channel as SocketGuildChannel;
-            if (chnl?.Guild == null || (message.Author as SocketGuildUser).CantBeWarned()) return;
+            context ??= new SocketCommandContext((DiscordSocketClient)client, (SocketUserMessage)message);
+            IGuildUser gUser = message.Author as IGuildUser;
+            if (chnl?.Guild == null || gUser.CantBeWarned()) return;
             var guild = chnl.Guild;
 
             try
             {
                 ModerationSettings modSettings = guild.LoadFromFile<ModerationSettings>();
-                SocketGuildUser gUser = message.Author as SocketGuildUser;
                 List<BadWord> badWords = guild.LoadFromFile<BadWordList>()?.badWords;
 
                 string msgContent = message.Content;
@@ -218,7 +222,7 @@ namespace BotCatMaxy.Startup
                         if (msgContent.Equals(match.Value, StringComparison.InvariantCultureIgnoreCase)) return;
                         msgContent = msgContent.Replace(match.Value, "", StringComparison.InvariantCultureIgnoreCase);
                         //Checks for links
-                        if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIDs().Intersect(modSettings.allowedToLink).Any()))
+                        if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIds.Intersect(modSettings.allowedToLink).Any()))
                         {
                             if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower())))
                             {

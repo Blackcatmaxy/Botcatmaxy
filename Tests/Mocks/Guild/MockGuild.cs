@@ -22,7 +22,7 @@ namespace Tests.Mocks.Guild
         protected List<MockTextChannel> channels = new(4);
         protected List<MockBan> bans = new(4);
 
-        public string Name => throw new NotImplementedException();
+        public string Name => "TestName";
 
         public int AFKTimeout => throw new NotImplementedException();
 
