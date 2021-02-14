@@ -54,26 +54,37 @@ namespace BotCatMaxy
             return false;
         }
 
-        public static bool CantBeWarned(this SocketGuildUser user)
+        //Naming violation, should be WarnImmune
+        public static bool CantBeWarned(this IGuildUser user)
         {
             if (user == null) return false;
             if (user.HasAdmin()) return true;
 
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings != null)
-            {
-                List<SocketRole> rolesUnableToBeWarned = new List<SocketRole>();
-                foreach (ulong roleID in settings.cantBeWarned) rolesUnableToBeWarned.Add(user.Guild.GetRole(roleID));
-                if (user.Roles.Intersect(rolesUnableToBeWarned).Any()) return true;
-            }
+            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>(false);
+            if (settings != null && user.RoleIds.Intersect(settings.cantBeWarned).Any())
+                return true;
             return false;
         }
 
-        public static bool CanActOn(this SocketGuildUser focus, SocketGuildUser comparer)
+        public static bool CanActOn(this IGuildUser focus, IGuildUser comparer)
         {
-            if (focus.Roles.Select(role => role.Position).Max() > comparer.Roles.Select(role => role.Position).Max())
+            var focusPositions = focus.GetRoles()
+                .Select(role => role.Position);
+            var comparerPositions = comparer.GetRoles()
+                .Select(role => role.Position);
+
+            if (focusPositions.Max() > comparerPositions.Max())
                 return true;
             return false;
+        }
+
+        public static IEnumerable<IRole> GetRoles(this IGuildUser user)
+        {
+            if (user is SocketGuildUser gUser)
+                return gUser.Roles;
+
+            return user.RoleIds.Select(id =>
+                user.Guild.Roles.First(role => role.Id == id));
         }
     }
 }

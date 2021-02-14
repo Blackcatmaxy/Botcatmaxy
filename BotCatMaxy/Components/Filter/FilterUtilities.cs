@@ -85,15 +85,15 @@ namespace BotCatMaxy.Components.Filter
             return null;
         }
 
-        public static async Task FilterPunish(this SocketCommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f)
+        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f)
         {
-            await context.FilterPunish(context.User as SocketGuildUser, reason, settings, delete: true, warnSize: warnSize);
+            await context.FilterPunish(context.User as IGuildUser, reason, settings, delete: true, warnSize: warnSize);
         }
 
-        public static async Task FilterPunish(this ICommandContext context, SocketGuildUser user, string reason, ModerationSettings settings, bool delete = true, float warnSize = 0.5f, string explicitInfo = "")
+        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, bool delete = true, float warnSize = 0.5f, string explicitInfo = "")
         {
             string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user);
-            await user.Warn(warnSize, reason, context.Channel as SocketTextChannel, logLink: jumpLink);
+            await user.Warn(warnSize, reason, context.Channel as ITextChannel, logLink: jumpLink);
 
             if (settings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
                 return;
@@ -117,7 +117,7 @@ namespace BotCatMaxy.Components.Filter
 
         public const string notifyInfoRegex = @"<@!?(\d+)> has been given their (\d+)\w+-?(?:\d+\w+)? infraction because of (.+)";
 
-        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, SocketGuildUser user, string reason, ModerationSettings settings)
+        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, IGuildUser user, string reason, ModerationSettings settings)
         {
             Task<IUserMessage> warnMessage = null;
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);

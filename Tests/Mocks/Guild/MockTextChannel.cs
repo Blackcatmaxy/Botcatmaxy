@@ -15,6 +15,8 @@ namespace Tests.Mocks.Guild
             Guild = guild;
         }
 
+        IReadOnlyCollection<IGuildUser> users;
+
         public bool IsNsfw => throw new NotImplementedException();
 
         public string Topic => throw new NotImplementedException();
@@ -128,9 +130,15 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public async Task DownloadUsers()
+        {
+            users = await Guild.GetUsersAsync();
+        }
+
         IAsyncEnumerable<IReadOnlyCollection<IGuildUser>> IGuildChannel.GetUsersAsync(CacheMode mode, RequestOptions options)
         {
-            throw new NotImplementedException();
+            IReadOnlyCollection<IGuildUser>[] collection = { users };
+            return collection.ToAsyncEnumerable();
         }
     }
 }

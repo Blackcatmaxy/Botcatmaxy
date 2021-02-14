@@ -159,7 +159,7 @@ namespace BotCatMaxy.Data
             return null;
         }
 
-        public static List<Infraction> LoadInfractions(this SocketGuildUser user, bool createDir = false) =>
+        public static List<Infraction> LoadInfractions(this IGuildUser user, bool createDir = false) =>
             user?.Id.LoadInfractions(user.Guild, createDir);
 
 

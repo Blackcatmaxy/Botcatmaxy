@@ -37,7 +37,7 @@ namespace BotCatMaxy.Moderation
 
     public static class PunishFunctions
     {
-        public static async Task<WarnResult> Warn(this UserRef userRef, float size, string reason, SocketTextChannel channel, string logLink = null)
+        public static async Task<WarnResult> Warn(this UserRef userRef, float size, string reason, ITextChannel channel, string logLink = null)
         {
             Contract.Requires(userRef != null);
             if (userRef.GuildUser != null)
@@ -46,7 +46,7 @@ namespace BotCatMaxy.Moderation
                 return await userRef.ID.Warn(size, reason, channel, userRef.User, logLink);
         }
 
-        public static async Task<WarnResult> Warn(this SocketGuildUser user, float size, string reason, SocketTextChannel channel, string logLink = null)
+        public static async Task<WarnResult> Warn(this IGuildUser user, float size, string reason, ITextChannel channel, string logLink = null)
         {
 
             if (user.CantBeWarned())
@@ -58,7 +58,7 @@ namespace BotCatMaxy.Moderation
 
         }
 
-        public static async Task<WarnResult> Warn(this ulong userID, float size, string reason, SocketTextChannel channel, IUser warnee = null, string logLink = null)
+        public static async Task<WarnResult> Warn(this ulong userID, float size, string reason, ITextChannel channel, IUser warnee = null, string logLink = null)
         {
             if (size > 999 || size < 0.01)
             {
@@ -77,9 +77,9 @@ namespace BotCatMaxy.Moderation
                         LogSettings logSettings = channel.Guild.LoadFromFile<LogSettings>(false);
                         IUser[] users = null;
                         if (logSettings?.pubLogChannel != null && channel.Guild.TryGetChannel(logSettings.pubLogChannel.Value, out IGuildChannel logChannel))
-                            users = await (logChannel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
+                            users = await (logChannel as IMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
                         else
-                            users = await (channel as ISocketMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
+                            users = await (channel as IMessageChannel).GetUsersAsync().Flatten().ToArrayAsync();
                         if (!users.Any(xUser => xUser.Id == userID))
                         {
                             warnee.TryNotify($"You have been warned in {channel.Guild.Name} discord for \"{reason}\" in a channel you can't view");

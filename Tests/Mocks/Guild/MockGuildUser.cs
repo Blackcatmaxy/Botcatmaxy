@@ -1,6 +1,7 @@
 ﻿using Discord;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ namespace Tests.Mocks.Guild
             IsBot = isBot;
         }
 
+        List<IRole> roles = new();
+
         public DateTimeOffset? JoinedAt => throw new NotImplementedException();
 
         public string Nickname => throw new NotImplementedException();
@@ -27,7 +30,7 @@ namespace Tests.Mocks.Guild
 
         public DateTimeOffset? PremiumSince => throw new NotImplementedException();
 
-        public IReadOnlyCollection<ulong> RoleIds => throw new NotImplementedException();
+        public IReadOnlyCollection<ulong> RoleIds => new ReadOnlyCollection<ulong>(roles.Select(role => role.Id).ToList());
 
         public bool? IsPending => throw new NotImplementedException();
 

@@ -2,6 +2,7 @@
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
+using Discord.Commands;
 using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
