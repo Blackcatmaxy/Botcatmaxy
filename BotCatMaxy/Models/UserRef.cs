@@ -1,33 +1,26 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
 
 namespace BotCatMaxy.Models
 {
     public record UserRef
     {
-        public SocketGuildUser GuildUser { get; init; }
-        public SocketUser User { get; init; }
+        public IGuildUser GuildUser { get; init; }
+        public IUser User { get; init; }
         public ulong ID { get; init; }
 
-        public UserRef(SocketGuildUser gUser)
+        public UserRef(IGuildUser gUser)
         {
             GuildUser = gUser;
             User = gUser;
             ID = gUser.Id;
         }
 
-        public UserRef(SocketUser user)
+        public UserRef(IUser user)
         {
             User = user;
             ID = user.Id;
         }
 
         public UserRef(ulong ID) => this.ID = ID;
-
-        public UserRef(UserRef userRef, SocketGuild guild)
-        {
-            User = userRef.User;
-            ID = userRef.ID;
-            GuildUser = guild.GetUser(ID);
-        }
     }
 }

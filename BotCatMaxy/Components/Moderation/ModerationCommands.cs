@@ -119,7 +119,7 @@ namespace BotCatMaxy
                 await ReplyAsync(message);
                 return;
             }
-            userRef = new UserRef(userRef, guild);
+            userRef = userRef with { GuildUser = guild.GetUser(userRef.ID) };
             await ReplyAsync($"Here are {userRef.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
                 embed: infractions.GetEmbed(userRef, amount: amount));
         }
@@ -506,7 +506,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Invalid number");
                 return;
             }
-            if (user?.GuildUser != null && user.GuildUser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            if (user?.GuildUser != null && ((SocketGuildUser)user.GuildUser).Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
             {
                 await ReplyAsync("Can't target deleted messages belonging to people with higher hierarchy");
                 return;
