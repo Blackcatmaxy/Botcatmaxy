@@ -193,14 +193,13 @@ namespace Discord.Commands
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context,
             ParameterInfo parameter, object value, IServiceProvider services)
         {
-            // Hierarchy is only available under the socket variant of the user.
-            if (!(context.User is SocketGuildUser guildUser))
+            if (context.User is not IGuildUser guildUser)
                 return PreconditionResult.FromError("This command cannot be used outside of a guild");
             var targetUser = value switch
             {
-                UserRef userRef => userRef.GuildUser as SocketGuildUser,
-                SocketGuildUser targetGuildUser => targetGuildUser,
-                ulong userId => await context.Guild.GetUserAsync(userId).ConfigureAwait(false) as SocketGuildUser,
+                UserRef userRef => userRef.GuildUser,
+                IGuildUser targetGuildUser => targetGuildUser,
+                ulong userId => await context.Guild.GetUserAsync(userId),
                 _ => throw new ArgumentOutOfRangeException("Unknown Type used in parameter that requires hierarchy"),
             };
             if (targetUser == null)
@@ -209,11 +208,11 @@ namespace Discord.Commands
                 else
                     return PreconditionResult.FromError("Target user not found");
 
-            if (guildUser.Hierarchy <= targetUser.Hierarchy)
+            if (guildUser.GetHierarchy() <= targetUser.GetHierarchy())
                 return PreconditionResult.FromError("You cannot target anyone else whose roles are higher than yours");
 
-            var currentUser = await context.Guild.GetCurrentUserAsync().ConfigureAwait(false) as SocketGuildUser;
-            if (currentUser?.Hierarchy < targetUser.Hierarchy)
+            var currentUser = await context.Guild.GetCurrentUserAsync();
+            if (currentUser?.GetHierarchy() < targetUser.GetHierarchy())
                 return PreconditionResult.FromError("The bot's role is lower than the targeted user.");
 
             return PreconditionResult.FromSuccess();
