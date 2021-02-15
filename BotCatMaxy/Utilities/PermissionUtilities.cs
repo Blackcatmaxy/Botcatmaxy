@@ -29,14 +29,14 @@ namespace BotCatMaxy
             return false;
         }
 
-        public static bool CanWarn(this SocketGuildUser user)
+        public static bool CanWarn(this IGuildUser user)
         {
             if (HasAdmin(user))
             {
                 return true;
             }
 
-            foreach (SocketRole role in user.Roles)
+            foreach (IRole role in user.GetRoles())
             {
                 if (role.Permissions.KickMembers)
                 {
@@ -46,7 +46,7 @@ namespace BotCatMaxy
             ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
             if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0)
             {
-                if (user.RoleIDs().Intersect(settings.ableToWarn).Any())
+                if (user.RoleIds.Intersect(settings.ableToWarn).Any())
                 {
                     return true;
                 }

@@ -157,7 +157,7 @@ namespace Discord.Commands
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             //Makes sure it's in a server
-            if (context.User is SocketGuildUser gUser)
+            if (context.User is IGuildUser gUser)
             {
                 // If this command was executed by a user with the appropriate role, return a success
                 if (gUser.CanWarn())
