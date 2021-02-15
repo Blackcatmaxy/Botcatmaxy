@@ -86,5 +86,16 @@ namespace BotCatMaxy
             return user.RoleIds.Select(id =>
                 user.Guild.Roles.First(role => role.Id == id));
         }
+
+        public static int GetHierarchy(this IGuildUser user)
+        {
+            if (user is SocketGuildUser socketUser)
+                return socketUser.Hierarchy;
+
+            if (user.Guild.OwnerId == user.Id)
+                return int.MaxValue;
+
+            return user.RoleIds.Max(role => user.Guild.GetRole(role).Position);
+        }
     }
 }
