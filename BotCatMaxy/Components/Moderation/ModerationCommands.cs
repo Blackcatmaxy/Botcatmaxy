@@ -17,21 +17,19 @@ using Interactivity.Confirmation;
 namespace BotCatMaxy
 {
     [Name("Moderation")]
-    public class ModerationCommands : ModuleBase<SocketCommandContext>
+    public class ModerationCommands : ModuleBase<ICommandContext>
     {
 #if !TEST
     [DontInject]
 #endif
         public InteractivityService Interactivity { get; set; }
 
-        [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [Summary("Warn a user with an option reason.")]
-        [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
+            WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
 
             if (result.success)
                 Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
@@ -53,7 +51,7 @@ namespace BotCatMaxy
         public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, logLink: logMessage?.GetJumpUrl());
+            WarnResult result = await userRef.Warn(size, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
             if (result.success)
                 Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
             else
@@ -78,7 +76,8 @@ namespace BotCatMaxy
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
             }
-            var mutualGuilds = Context.Message.Author.MutualGuilds.ToArray();
+            
+            var mutualGuilds = (await Context.Message.Author.GetMutualGuildsAsync(Context.Client)).ToArray();
             if (userRef == null)
                 userRef = new UserRef(Context.Message.Author);
 
@@ -90,7 +89,7 @@ namespace BotCatMaxy
                 guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", mutualGuilds[i].Id);
             }
             await ReplyAsync(embed: guildsEmbed.Build());
-            SocketGuild guild;
+            IGuild guild;
             while (true)
             {
                 var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
@@ -119,7 +118,7 @@ namespace BotCatMaxy
                 await ReplyAsync(message);
                 return;
             }
-            userRef = userRef with { GuildUser = guild.GetUser(userRef.ID) };
+            userRef = userRef with { GuildUser = await guild.GetUserAsync(userRef.ID) };
             await ReplyAsync($"Here are {userRef.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
                 embed: infractions.GetEmbed(userRef, amount: amount));
         }
@@ -131,7 +130,7 @@ namespace BotCatMaxy
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(UserRef userRef = null, int amount = 5)
         {
-            userRef ??= new UserRef(Context.User as SocketGuildUser);
+            userRef ??= new UserRef(Context.User as IGuildUser);
             List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
             if (infractions?.Count is null or 0)
             {
@@ -173,7 +172,7 @@ namespace BotCatMaxy
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
         {
-            await user.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
+            await user.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
             await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
@@ -188,7 +187,7 @@ namespace BotCatMaxy
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified")
         {
-            await user.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
+            await user.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
             await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, user.Id, reason, Context.Message.GetJumpUrl(), "kick");
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
@@ -209,7 +208,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-            if (!(Context.Message.Author as SocketGuildUser).HasAdmin())
+            if (!(Context.Message.Author as IGuildUser).HasAdmin())
             {
                 ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
                 if (settings?.maxTempAction != null && time > settings.maxTempAction)
@@ -222,7 +221,7 @@ namespace BotCatMaxy
             TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.User == userRef.ID);
             if (oldAct != null)
             {
-                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= time)
+                if (!(Context.Message.Author as IGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= time)
                 {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
@@ -260,7 +259,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-            if (!(Context.Message.Author as SocketGuildUser).HasAdmin())
+            if (!(Context.Message.Author as IGuildUser).HasAdmin())
             {
                 ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
                 if (settings?.maxTempAction != null && time > settings.maxTempAction)
@@ -269,7 +268,7 @@ namespace BotCatMaxy
                     return;
                 }
             }
-            await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, "Discord");
+            await userRef.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.User == userRef.ID))
             {
@@ -293,7 +292,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Can't temp-ban for less than a minute");
                 return;
             }
-            if (!(Context.Message.Author as SocketGuildUser).HasAdmin())
+            if (!(Context.Message.Author as IGuildUser).HasAdmin())
             {
                 ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
                 if (settings?.maxTempAction != null && time > settings.maxTempAction)
@@ -302,7 +301,7 @@ namespace BotCatMaxy
                     return;
                 }
             }
-            await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
+            await userRef.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempBans.Any(tempBan => tempBan.User == userRef.ID))
             {
@@ -327,7 +326,7 @@ namespace BotCatMaxy
                 return;
             }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (!(Context.Message.Author as SocketGuildUser).HasAdmin())
+            if (!(Context.Message.Author as IGuildUser).HasAdmin())
             {
                 if (settings?.maxTempAction != null && time > settings.maxTempAction)
                 {
@@ -344,7 +343,7 @@ namespace BotCatMaxy
             TempAct oldAct = actions.tempMutes.FirstOrDefault(tempMute => tempMute.User == userRef.ID);
             if (oldAct != null)
             {
-                if (!(Context.Message.Author as SocketGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= time)
+                if (!(Context.Message.Author as IGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= time)
                 {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
@@ -384,7 +383,7 @@ namespace BotCatMaxy
                 return;
             }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (!(Context.Message.Author as SocketGuildUser).HasAdmin())
+            if (!(Context.Message.Author as IGuildUser).HasAdmin())
             {
                 if (settings?.maxTempAction != null && time > settings.maxTempAction)
                 {
@@ -397,7 +396,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            await userRef.Warn(1, reason, Context.Channel as SocketTextChannel, Context.Message.GetJumpUrl());
+            await userRef.Warn(1, reason, Context.Channel as ITextChannel, Context.Message.GetJumpUrl());
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
             {
@@ -423,7 +422,7 @@ namespace BotCatMaxy
                 return;
             }
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (!(Context.Message.Author as SocketGuildUser).HasAdmin())
+            if (!(Context.Message.Author as IGuildUser).HasAdmin())
             {
                 if (settings?.maxTempAction != null && time > settings.maxTempAction)
                 {
@@ -436,7 +435,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Muted role is null or invalid");
                 return;
             }
-            await userRef.Warn(size, reason, Context.Channel as SocketTextChannel, "Discord");
+            await userRef.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
             if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
             {
@@ -506,7 +505,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Invalid number");
                 return;
             }
-            if (user?.GuildUser != null && ((SocketGuildUser)user.GuildUser).Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            if (user?.GuildUser != null && user.GuildUser.GetHierarchy() >= ((IGuildUser)Context.User).GetHierarchy())
             {
                 await ReplyAsync("Can't target deleted messages belonging to people with higher hierarchy");
                 return;
@@ -549,7 +548,7 @@ namespace BotCatMaxy
                 await ExceptionLogging.AssertAsync(messages.Count <= number);
 
                 //No need to delete messages or log if no actual messages deleted
-                await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+                await (Context.Channel as ITextChannel).DeleteMessagesAsync(messages);
                 LogSettings logSettings = Context.Guild.LoadFromFile<LogSettings>(false);
                 if (Context.Guild.TryGetChannel(logSettings?.logChannel ?? 0, out IGuildChannel logChannel))
                 {
@@ -560,7 +559,7 @@ namespace BotCatMaxy
                     embed.WithTitle("Mass message deletion");
                     embed.AddField("Messages searched", $"{searchedMessages} messages", true);
                     embed.AddField("Messages deleted", $"{messages.Count} messages", true);
-                    embed.AddField("Channel", ((SocketTextChannel)Context.Channel).Mention, true);
+                    embed.AddField("Channel", ((ITextChannel)Context.Channel).Mention, true);
                     await ((ISocketMessageChannel)logChannel).SendMessageAsync(embed: embed.Build());
                 }
             }

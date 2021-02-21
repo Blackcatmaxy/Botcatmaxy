@@ -9,17 +9,16 @@ namespace BotCatMaxy.Cache
     public class SettingsCache
     {
         public static HashSet<GuildSettings> guildSettings = new HashSet<GuildSettings>();
-        private DiscordSocketClient client;
-        public SettingsCache(DiscordSocketClient client)
-        {
-            this.client = client;
-            this.client.LeftGuild += RemoveGuild;
+        public SettingsCache(IDiscordClient client) { 
+            if (client is BaseSocketClient socketClient)
+                socketClient.LeftGuild += RemoveGuild;
         }
 
 
-        public async Task RemoveGuild(SocketGuild guild)
+        public Task RemoveGuild(SocketGuild guild)
         {
             guildSettings.RemoveWhere(g => g.ID == guild.Id);
+            return Task.CompletedTask;
         }
     }
 

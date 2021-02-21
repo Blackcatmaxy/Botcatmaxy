@@ -4,6 +4,7 @@ using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -96,6 +97,19 @@ namespace BotCatMaxy
                 return int.MaxValue;
 
             return user.RoleIds.Max(role => user.Guild.GetRole(role).Position);
+        }
+
+        public static async Task<IReadOnlyCollection<IGuild>> GetMutualGuildsAsync(this IUser user, IDiscordClient client)
+        {
+            if (user is SocketUser socketUser)
+                return socketUser.MutualGuilds;
+
+            var guilds = await client.GetGuildsAsync();
+            var result = new List<IGuild>(1);
+            foreach (var guild in guilds)
+                if (await guild.GetUserAsync(user.Id) != null)
+                    result.Add(guild);
+            return result.ToImmutableArray();
         }
     }
 }

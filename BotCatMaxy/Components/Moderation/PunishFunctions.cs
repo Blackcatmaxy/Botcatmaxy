@@ -222,7 +222,7 @@ namespace BotCatMaxy.Moderation
             return embed.Build();
         }
 
-        public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, TempActionList actions = null)
+        public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, ICommandContext context, TempActionList actions = null)
         {
             TempAct tempBan = new TempAct(userRef, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
@@ -244,7 +244,7 @@ namespace BotCatMaxy.Moderation
             userRef.ID.RecordAct(context.Guild, tempBan, "tempban", context.Message.GetJumpUrl());
         }
 
-        public static async Task TempMute(this UserRef userRef, TimeSpan time, string reason, SocketCommandContext context, ModerationSettings settings, TempActionList actions = null)
+        public static async Task TempMute(this UserRef userRef, TimeSpan time, string reason, ICommandContext context, ModerationSettings settings, TempActionList actions = null)
         {
             TempAct tempMute = new TempAct(userRef.ID, time, reason);
             if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
@@ -266,7 +266,7 @@ namespace BotCatMaxy.Moderation
             userRef.ID.RecordAct(context.Guild, tempMute, "tempmute", context.Message.GetJumpUrl());
         }
 
-        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, SocketUser author = null, string article = "from", Color color = default)
+        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, IUser author = null, string article = "from", Color color = default)
         {
             if (color == default) color = Color.LightGrey;
             var embed = new EmbedBuilder();
