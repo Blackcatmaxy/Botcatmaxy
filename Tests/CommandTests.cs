@@ -1,4 +1,8 @@
-﻿using BotCatMaxy.Startup;
+﻿using BotCatMaxy.Cache;
+using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using BotCatMaxy.Startup;
+using BotCatMaxy.TypeReaders;
 using Discord;
 using Discord.Commands;
 using System;
@@ -12,18 +16,17 @@ using Xunit;
 
 namespace Tests
 {
-    public class CommandTests
+    public class CommandTests : BaseDataTests
     {
         MockDiscordClient client = new();
         MockGuild guild = new();
         CommandService service;
         CommandHandler handler;
-        Task<ITextChannel> channelTask;
 
-        public CommandTests()
+        public CommandTests() : base()
         {
+            cache = new SettingsCache(client);
             client.guilds.Add(guild);
-            channelTask = guild.CreateTextChannelAsync("TestChannel");
             service = new CommandService();
             handler = new CommandHandler(client, service);
             service.CommandExecuted += CommandExecuted;
@@ -32,7 +35,7 @@ namespace Tests
         [Fact]
         public async Task BasicCommandCheck()
         {
-            var channel = await channelTask as MockMessageChannel;
+            var channel = await guild.CreateTextChannelAsync("BasicChannel") as MockTextChannel;
             var users = await guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
             var message = channel.SendMessageAsOther("!toggleserverstorage", owner);
@@ -45,6 +48,40 @@ namespace Tests
             var response = messages.First();
             var expected = "This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you";
             Assert.Equal(expected, response.Content);
+        }
+
+        [Fact]
+        public async Task TypeReaderTest()
+        {
+            var channel = await guild.CreateTextChannelAsync("TypeReaderChannel") as MockTextChannel;
+            var users = await guild.GetUsersAsync();
+            var owner = users.First(user => user.Username == "Owner");
+            var testee = users.First(user => user.Username == "Testee");
+            var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
+            MockCommandContext context = new(client, message);
+            var userRefReader = new UserRefTypeReader();
+            var result = await userRefReader.ReadAsync(context, testee.Id.ToString(), handler.services);
+            Assert.True(result.IsSuccess);
+            var match = result.BestMatch as UserRef;
+            Assert.NotNull(match);
+
+        }
+
+        [Fact]
+        public async Task WarnCommandTest()
+        {
+            var channel = await guild.CreateTextChannelAsync("WarnChannel") as MockTextChannel;
+            var users = await guild.GetUsersAsync();
+            var owner = users.First(user => user.Username == "Owner");
+            var testee = users.First(user => user.Username == "Testee");
+            var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
+            MockCommandContext context = new(client, message);
+            await handler.ExecuteCommand(message, context);
+            var messages = await channel.GetMessagesAsync().FlattenAsync();
+            Assert.Equal(2, messages.Count());
+            var infractions = testee.LoadInfractions(false);
+            Assert.NotNull(infractions);
+            Assert.NotEmpty(infractions);
         }
 
         private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult result)

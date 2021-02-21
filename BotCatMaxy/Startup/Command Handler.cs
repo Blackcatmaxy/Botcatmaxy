@@ -61,7 +61,7 @@ namespace BotCatMaxy.Startup
                 // See Dependency Injection guide for more information.
                 await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(MainClass)),
                                                 services: services);
-                await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
+                //await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
             }
             catch (Exception e)
             {

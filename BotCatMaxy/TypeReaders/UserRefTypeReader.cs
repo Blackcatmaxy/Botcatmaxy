@@ -14,18 +14,18 @@ namespace BotCatMaxy.TypeReaders
     {
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
-            SocketGuildUser gUserResult = null;
-            SocketUser userResult;
+            IGuildUser gUserResult = null;
+            IUser userResult;
 
             //By Mention (1.0)
             if (MentionUtils.TryParseUser(input, out var id))
             {
                 if (context.Guild != null)
-                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
+                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
                 if (gUserResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
                 else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser;
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
                 if (userResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(userResult));
                 else
@@ -36,11 +36,11 @@ namespace BotCatMaxy.TypeReaders
             if (ulong.TryParse(input, NumberStyles.None, CultureInfo.InvariantCulture, out id))
             {
                 if (context.Guild != null)
-                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload) as SocketGuildUser;
+                    gUserResult = await context.Guild.GetUserAsync(id, CacheMode.AllowDownload);
                 if (gUserResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(gUserResult));
                 else
-                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload) as SocketUser;
+                    userResult = await context.Client.GetUserAsync(id, CacheMode.AllowDownload);
                 if (userResult != null)
                     return TypeReaderResult.FromSuccess(new UserRef(userResult));
                 else

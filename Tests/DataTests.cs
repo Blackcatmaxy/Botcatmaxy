@@ -1,4 +1,5 @@
 ﻿using BotCatMaxy;
+using BotCatMaxy.Cache;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using BotCatMaxy.Moderation;
@@ -23,11 +24,11 @@ namespace Tests
         protected MongoDbRunner runner;
         protected MongoCollectionBase<BsonDocument> collection;
         protected IMongoDatabase settingsDB;
+        protected SettingsCache cache;
 
         public BaseDataTests()
         {
             runner = MongoDbRunner.Start();
-
             MongoClient client = new MongoClient(runner.ConnectionString);
             MainClass.dbClient = client;
             settingsDB = client.GetDatabase("Settings");

@@ -96,7 +96,7 @@ namespace BotCatMaxy
             else return s.Pluralize();
         }
 
-        public static void DeleteOrRespond(this SocketMessage message, string toSay, IGuild guild, LogSettings settings = null)
+        public static void DeleteOrRespond(this IMessage message, string toSay, IGuild guild, LogSettings settings = null)
         {
             if (settings == null) settings = guild.LoadFromFile<LogSettings>(false);
             if (guild.GetChannelAsync(settings?.pubLogChannel ?? 0).Result == null) message.Channel.SendMessageAsync(toSay);
