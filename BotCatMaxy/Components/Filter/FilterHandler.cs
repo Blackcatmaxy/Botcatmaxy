@@ -144,7 +144,7 @@ namespace BotCatMaxy.Startup
                 if (settings.badUEmojis.Contains(reaction.Emote.Name))
                 {
                     await message.RemoveAllReactionsForEmoteAsync(reaction.Emote);
-                    await context.FilterPunish(gUser, "bad reaction used", settings, delete: false, warnSize: 1);
+                    await context.FilterPunish(gUser, $"bad reaction used ({reaction.Emote.Name})", settings, delete: false, warnSize: 1);
                 }
             }
             catch (Exception e)
