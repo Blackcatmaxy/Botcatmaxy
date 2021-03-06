@@ -17,7 +17,7 @@ namespace BotCatMaxy.Components.Filter
 {
     public static class FilterUtilities
     {
-        readonly static char[] splitters = @"#.,;/\|=_- ".ToCharArray();
+        readonly static char[] splitters = @"#.,/\|=_- ".ToCharArray();
 
         public static BadWord CheckForBadWords(this string message, BadWord[] badWords)
         {
