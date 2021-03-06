@@ -26,6 +26,7 @@ namespace BotCatMaxy
 
         [Command("warn")]
         [Summary("Warn a user with an option reason.")]
+        [CanWarn()]
         public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
@@ -44,7 +45,6 @@ namespace BotCatMaxy
             }
         }
 
-        [RequireContext(ContextType.Guild)]
         [Command("warn")]
         [Summary("Warn a user with a specific size, along with an option reason.")]
         [CanWarn()]
