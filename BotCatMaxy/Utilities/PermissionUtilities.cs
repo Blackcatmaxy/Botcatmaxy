@@ -96,6 +96,7 @@ namespace BotCatMaxy
             if (user.Guild.OwnerId == user.Id)
                 return int.MaxValue;
 
+            if (user.RoleIds.Count == 0) return 0;
             return user.RoleIds.Max(role => user.Guild.GetRole(role).Position);
         }
 
