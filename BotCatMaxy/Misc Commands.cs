@@ -18,7 +18,7 @@ namespace BotCatMaxy
 {
     public class MiscCommands : ModuleBase<SocketCommandContext>
     {
-        public object TempActs { get; private set; }
+        private const string GITHUB = "https://github.com/Blackcatmaxy/Botcatmaxy";
         private readonly CommandService _service;
 
         public MiscCommands(CommandService service)
@@ -32,10 +32,10 @@ namespace BotCatMaxy
         {
             var embed = new EmbedBuilder
             {
-                Description = "Say !dmhelp in the bot's dms for a full list of commands you can use."
+                Description = "Say !dmhelp in the bot's direct messages for a full list of commands you can use."
             };
-            embed.AddField("To see commands", "[Click here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
-            embed.AddField("Report issues and contribute at", "[Click here for GitHub link](http://bot.blackcatmaxy.com)", true);
+            embed.AddField("To see commands", $"[Click Here]({GITHUB}/wiki)", true);
+            embed.AddField("Report issues and contribute at", $"[Click Here]({GITHUB})", true);
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -47,24 +47,31 @@ namespace BotCatMaxy
                 args += $"[{param.Name}] ";
             }
 
-            const string guildMessage = "in guilds only";
-            RequireContextAttribute contextAttribute = command.Preconditions.FirstOrDefault(attribute => attribute is RequireContextAttribute) as RequireContextAttribute;
-            string context = contextAttribute?.Contexts switch
-            {
-                ContextType.Guild => guildMessage,
-                ContextType.DM    => "in DMs only",
-                _                 => "anywhere",
-            };
+            const string GUILDMESSSAGE = "in guilds only";
+            string context = null;
 
             if (command.Preconditions.Any(attribute => attribute is HasAdminAttribute))
-                context = $"{guildMessage} \n**Requires administrator permission**";
+                context = $"{GUILDMESSSAGE} \n**Requires administrator permission**";
             else if (command.Preconditions.Any(attribute => attribute is CanWarnAttribute))
-                context = $"{guildMessage} \n**Requires ability to warn**";
+                context = $"{GUILDMESSSAGE} \n**Requires ability to warn**";
             else
             {
-                RequireUserPermissionAttribute permissionAttribute = command.Preconditions.FirstOrDefault(attribute => attribute is RequireUserPermissionAttribute) as RequireUserPermissionAttribute;
+                var permissionAttribute = command.Preconditions
+                    .FirstOrDefault(attribute => attribute is RequireUserPermissionAttribute) as RequireUserPermissionAttribute;
                 if (permissionAttribute?.GuildPermission != null)
-                    context = $"{guildMessage} \n**Requires {permissionAttribute.GuildPermission.Value.Humanize(LetterCasing.LowerCase)} permission**";
+                    context = $"{GUILDMESSSAGE} \n**Requires {permissionAttribute.GuildPermission.Value.Humanize(LetterCasing.LowerCase)} permission**";
+            }
+
+            if (context == null)
+            {
+                var contextAttribute = command.Preconditions
+                    .FirstOrDefault(attribute => attribute is RequireContextAttribute) as RequireContextAttribute;
+                context = contextAttribute?.Contexts switch
+                {
+                    ContextType.Guild => GUILDMESSSAGE,
+                    ContextType.DM => "in DMs only",
+                    _ => "anywhere",
+                };
             }
 
             string description = command.Summary ?? "*No description.*";
@@ -78,40 +85,34 @@ namespace BotCatMaxy
         }
 
         [Command("dmhelp"), Alias("dmbotinfo", "dmcommands", "commandlist", "listcommands")]
-        [Summary("DM's a list of commands you can use.")]
+        [Summary("Direct messagess a full list of commands you can use.")]
         [RequireContext(ContextType.DM)]
         public async Task DMHelp()
         {
             EmbedBuilder extraHelpEmbed = new EmbedBuilder();
-            extraHelpEmbed.AddField("Wiki", "[Click Here](https://github.com/Blackcatmaxy/Botcatmaxy/wiki)", true);
-            extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", "[Click Here](http://bot.blackcatmaxy.com)", true);
+            extraHelpEmbed.AddField("Wiki", $"[Click Here]({GITHUB}/wiki)", true);
+            extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", $"[Click Here]({GITHUB})", true);
             await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
             IUserMessage msg = await Context.User.SendMessageAsync("Fetching commands...");
 
-            ICollection<ICommandContext> contexts = new List<ICommandContext>();
-            contexts.Add(Context);
-
+            List<ICommandContext> contexts = new() { Context };
             foreach (SocketGuild guild in Context.User.MutualGuilds)
             {
-                IMessageChannel channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
-                if (channel == null)
-                    continue;
+                var channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
 
-                WriteableCommandContext tmpCtx = new WriteableCommandContext
+                contexts.Add(new WriteableCommandContext
                 {
                     Client = Context.Client,
                     Message = Context.Message,
                     Guild = guild,
                     Channel = channel,
                     User = guild.GetUser(Context.User.Id)
-                };
-
-                contexts.Add(tmpCtx);
+                });
             }
 
             foreach (ModuleInfo module in _service.Modules)
             {
-                EmbedBuilder embed = new EmbedBuilder
+                EmbedBuilder embed = new()
                 {
                     Title = module.Name
                 };
