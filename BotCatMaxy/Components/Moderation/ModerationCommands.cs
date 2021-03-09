@@ -20,7 +20,7 @@ namespace BotCatMaxy
     public class ModerationCommands : ModuleBase<ICommandContext>
     {
 #if !TEST
-    [DontInject]
+        [DontInject]
 #endif
         public InteractivityService Interactivity { get; set; }
 
@@ -76,7 +76,7 @@ namespace BotCatMaxy
                 await ReplyAsync("Why would you want to see that many infractions?");
                 return;
             }
-            
+
             var mutualGuilds = (await Context.Message.Author.GetMutualGuildsAsync(Context.Client)).ToArray();
             if (userRef == null)
                 userRef = new UserRef(Context.Message.Author);
@@ -144,25 +144,23 @@ namespace BotCatMaxy
         [Summary("Removes a warn from a user.")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task RemoveWarnAsync([RequireHierarchy] UserRef userRef, int index)
+        public async Task<RuntimeResult> RemoveWarnAsync([RequireHierarchy] UserRef userRef, int index)
         {
             List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
             if (infractions?.Count is null or 0)
             {
-                await ReplyAsync("Infractions are null");
-                return;
+                return CommandResult.FromError("Infractions are null");
             }
             if (infractions.Count < index || index <= 0)
             {
-                await ReplyAsync("Invalid infraction number");
-                return;
+                return CommandResult.FromError("Invalid infraction number");
             }
             string reason = infractions[index - 1].Reason;
             infractions.RemoveAt(index - 1);
 
             userRef.SaveInfractions(infractions, Context.Guild);
             await userRef.User?.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
-            await ReplyAsync("Removed " + userRef.Mention() + "'s warning for " + reason);
+            return CommandResult.FromSuccess($"Removed {userRef.Mention()}'s warning for {reason}");
         }
 
         [Command("kickwarn")]

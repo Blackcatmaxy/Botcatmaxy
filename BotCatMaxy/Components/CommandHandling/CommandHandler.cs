@@ -107,6 +107,12 @@ namespace BotCatMaxy.Startup
 
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
+            if (result is CommandResult)
+            {
+                await context.Channel.SendMessageAsync(result.ErrorReason);
+                return;
+            }
+
             if (result.IsSuccess || result.Error == CommandError.UnknownCommand)
             {
                 return;
