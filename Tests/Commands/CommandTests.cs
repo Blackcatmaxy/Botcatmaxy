@@ -18,10 +18,10 @@ namespace Tests
 {
     public class CommandTests : BaseDataTests
     {
-        MockDiscordClient client = new();
-        MockGuild guild = new();
-        CommandService service;
-        CommandHandler handler;
+        protected readonly MockDiscordClient client = new();
+        protected readonly MockGuild guild = new();
+        protected readonly CommandService service;
+        protected readonly CommandHandler handler;
 
         public CommandTests() : base()
         {
@@ -32,6 +32,16 @@ namespace Tests
             service.CommandExecuted += CommandExecuted;
         }
 
+        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult result)
+        {
+            if (result.Error == CommandError.Exception) throw ((ExecuteResult)result).Exception;
+            if (!result.IsSuccess) throw new Exception(result.ErrorReason);
+            return Task.CompletedTask;
+        }
+    }
+
+    public class BasicCommandTests : CommandTests
+    {
         [Fact]
         public async Task BasicCommandCheck()
         {
@@ -67,28 +77,6 @@ namespace Tests
 
         }
 
-        [Fact]
-        public async Task WarnCommandTest()
-        {
-            var channel = await guild.CreateTextChannelAsync("WarnChannel") as MockTextChannel;
-            var users = await guild.GetUsersAsync();
-            var owner = users.First(user => user.Username == "Owner");
-            var testee = users.First(user => user.Username == "Testee");
-            var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
-            MockCommandContext context = new(client, message);
-            await handler.ExecuteCommand(message, context);
-            var messages = await channel.GetMessagesAsync().FlattenAsync();
-            Assert.Equal(2, messages.Count());
-            var infractions = testee.LoadInfractions(false);
-            Assert.NotNull(infractions);
-            Assert.NotEmpty(infractions);
-        }
 
-        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult result)
-        {
-            if (result.Error == CommandError.Exception) throw ((ExecuteResult)result).Exception;
-            if (!result.IsSuccess) throw new Exception(result.ErrorReason);
-            return Task.CompletedTask;
-        }
     }
 }
