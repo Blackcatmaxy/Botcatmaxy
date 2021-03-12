@@ -22,6 +22,8 @@ namespace Tests
         protected readonly MockGuild guild = new();
         protected readonly CommandService service;
         protected readonly CommandHandler handler;
+        protected CommandResult commandResult;
+        protected TaskCompletionSource<CommandResult> completionSource;
 
         public CommandTests() : base()
         {
@@ -32,12 +34,38 @@ namespace Tests
             service.CommandExecuted += CommandExecuted;
         }
 
-        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext arg2, IResult result)
+        public async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
         {
-            if (result.Error == CommandError.Exception) throw ((ExecuteResult)result).Exception;
-            if (!result.IsSuccess) throw new Exception(result.ErrorReason);
+            Assert.NotNull(channel);
+            Assert.NotNull(user);
+            var message = channel.SendMessageAsOther(text, user);
+            var context = new MockCommandContext(client, message);
+            completionSource = new TaskCompletionSource<CommandResult>();
+            await handler.ExecuteCommand(message, context);
+            return await completionSource.Task;
+        }
+
+        /// <summary>
+        /// Executes after command is finished with full info <seealso cref="CommandHandler"/>'s CommandExecuted
+        /// </summary>
+        private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext context, IResult result)
+        {
+            if (result is CommandResult commandResult)
+            {
+                this.commandResult = commandResult;
+                completionSource.SetResult(commandResult);
+            }
+            else if (result.Error == CommandError.Exception) completionSource.SetException(((ExecuteResult)result).Exception);
+            else if (!result.IsSuccess) completionSource.SetException(new Exception(result.ErrorReason));
+            else completionSource.SetResult(new CommandResult(null, "Test"));
+
             return Task.CompletedTask;
         }
+    }
+
+    public class CommandTestException : Exception
+    {
+        public CommandTestException(IResult result) : base(result.ErrorReason) { }
     }
 
     public class BasicCommandTests : CommandTests
@@ -46,14 +74,13 @@ namespace Tests
         public async Task BasicCommandCheck()
         {
             var channel = await guild.CreateTextChannelAsync("BasicChannel") as MockTextChannel;
+            var messages = await channel.GetMessagesAsync().FlattenAsync();
+            Assert.Empty(messages);
             var users = await guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
-            var message = channel.SendMessageAsOther("!toggleserverstorage", owner);
-            MockCommandContext context = new(client, message);
-            Assert.True(context.Channel is IGuildChannel);
-            Assert.True(context.User is IGuildUser);
-            await handler.ExecuteCommand(message, context);
-            var messages = await channel.GetMessagesAsync().FlattenAsync();
+            var result = await TryExecuteCommand("!toggleserverstorage", owner, channel);
+            messages = await channel.GetMessagesAsync().FlattenAsync();
+            Assert.True(result.IsSuccess);
             Assert.Equal(2, messages.Count());
             var response = messages.First();
             var expected = "This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you";

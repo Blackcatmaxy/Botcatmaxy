@@ -18,6 +18,7 @@ namespace Tests.Mocks
             Id = (ulong)random.Next(0, int.MaxValue);
         }
 
+        MockDMChannel channel;
         public string AvatarId => throw new NotImplementedException();
 
         public string Discriminator => $"#{DiscriminatorValue}";
@@ -58,7 +59,8 @@ namespace Tests.Mocks
 
         public Task<IDMChannel> GetOrCreateDMChannelAsync(RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            channel ??= new MockDMChannel(new MockSelfUser(), this);
+            return Task.FromResult<IDMChannel>(channel);
         }
     }
 }
