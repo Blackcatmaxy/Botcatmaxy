@@ -27,13 +27,16 @@ namespace BotCatMaxy
         [Command("warn")]
         [Summary("Warn a user with an option reason.")]
         [CanWarn()]
-        public async Task WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
+        public async Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
             WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
 
             if (result.success)
+            {
                 Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
+                return CommandResult.FromSuccess(null);
+            }
             else
             {
                 if (logMessage != null)
@@ -41,7 +44,7 @@ namespace BotCatMaxy
                     DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
                     await logMessage.DeleteAsync();
                 }
-                await ReplyAsync(result.description.Truncate(1500));
+                return CommandResult.FromError(result.description.Truncate(1500));
             }
         }
 
@@ -159,7 +162,8 @@ namespace BotCatMaxy
             infractions.RemoveAt(index - 1);
 
             userRef.SaveInfractions(infractions, Context.Guild);
-            await userRef.User?.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
+            if (userRef.User != null) //Can't use null propagation on awaited tasks since it would be awaiting null
+                await userRef.User.TryNotify($"Your {index.Ordinalize()} warning in {Context.Guild.Name} discord for {reason} has been removed");
             return CommandResult.FromSuccess($"Removed {userRef.Mention()}'s warning for {reason}");
         }
 

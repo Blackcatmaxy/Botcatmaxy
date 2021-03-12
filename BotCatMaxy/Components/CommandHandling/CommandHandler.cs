@@ -109,7 +109,8 @@ namespace BotCatMaxy.Startup
         {
             if (result is CommandResult)
             {
-                await context.Channel.SendMessageAsync(result.ErrorReason);
+                if (!string.IsNullOrEmpty(result.ErrorReason))
+                    await context.Channel.SendMessageAsync(result.ErrorReason);
                 return;
             }
 

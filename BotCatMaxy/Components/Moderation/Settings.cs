@@ -39,9 +39,10 @@ namespace BotCatMaxy
         [Command("toggleserverstorage")]
         [Summary("Legacy feature. Run for instruction on how to enable.")]
         [HasAdmin]
-        public async Task ToggleServerIDUse()
+        public async Task<RuntimeResult> ToggleServerIDUse()
         {
-            await ReplyAsync("This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
+            return CommandResult.FromSuccess(
+                "This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
         }
 
         [Command("allowwarn"), Alias("allowtowarn")]

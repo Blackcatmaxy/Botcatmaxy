@@ -96,7 +96,7 @@ namespace Tests.Mocks
 
         public Task<IUser> GetUserAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            return Task.FromResult<IUser>(null);
         }
 
         public Task<IUser> GetUserAsync(string username, string discriminator, RequestOptions options = null)
