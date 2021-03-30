@@ -17,12 +17,11 @@ using Interactivity.Confirmation;
 namespace BotCatMaxy
 {
     [Name("Moderation")]
-    public class ModerationCommands : ModuleBase<ICommandContext>
+    public class ModerationCommands : InteractiveModule
     {
-#if !TEST
-        [DontInject]
-#endif
-        public InteractivityService Interactivity { get; set; }
+        public ModerationCommands(IServiceProvider service) : base(service)
+        {
+        }
 
         [Command("warn")]
         [Summary("Warn a user with an option reason.")]

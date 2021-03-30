@@ -14,7 +14,7 @@ namespace BotCatMaxy.Components.Settings
     [Name("Slowmode")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
     [RequireBotPermission(ChannelPermission.ManageChannels)]
-    public class SlowmodeCommands : ModuleBase
+    public class SlowmodeCommands : ModuleBase<ICommandContext>
     {
         [Command("setslowmode"), Alias("setcooldown", "slowmodeset")]
         [Summary("Sets this channel's slowmode.")]

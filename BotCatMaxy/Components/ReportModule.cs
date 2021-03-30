@@ -11,12 +11,11 @@ using System.Linq;
 using System.Threading.Tasks;
 
 [Name("Report")]
-public class ReportModule : ModuleBase<SocketCommandContext>
+public class ReportModule : InteractiveModule
 {
-#if !TEST
-    [DontInject]
-#endif
-    public InteractivityService Interactivity { get; set; }
+    public ReportModule(IServiceProvider service) : base(service)
+    {
+    }
 
     [Command("report", RunMode = RunMode.Async)]
     [Summary("Create a new report.")]
@@ -25,10 +24,11 @@ public class ReportModule : ModuleBase<SocketCommandContext>
     {
         try
         {
+            var socketContext = Context as SocketCommandContext;
             var guildsEmbed = new EmbedBuilder();
             guildsEmbed.WithTitle("Reply with the the number next to the guild you want to make the report in");
-            var mutualGuilds = Context.User.MutualGuilds.ToArray();
-            for (int i = 0; i < Context.User.MutualGuilds.Count; i++)
+            var mutualGuilds = socketContext.User.MutualGuilds.ToArray();
+            for (int i = 0; i < mutualGuilds.Length; i++)
             {
                 guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
             }
