@@ -26,7 +26,7 @@ public class ReportModule : InteractiveModule
         {
             var socketContext = Context as SocketCommandContext;
             var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the the number next to the guild you want to make the report in");
+            guildsEmbed.WithTitle("Reply with the number next to the guild you want to make the report in");
             var mutualGuilds = socketContext.User.MutualGuilds.ToArray();
             for (int i = 0; i < mutualGuilds.Length; i++)
             {
@@ -168,7 +168,7 @@ public class ReportModule : InteractiveModule
             TimeSpan? cooldown = time.ToTime();
             if (cooldown == null)
             {
-                ReplyAsync("Time is invalid, if you intend to remove cooldon instead use ``none``");
+                ReplyAsync("Time is invalid, if you intend to remove cooldown instead use ``none``");
                 return;
             }
             if (settings.cooldown == cooldown) ReplyAsync("Cooldown is already set to value");
