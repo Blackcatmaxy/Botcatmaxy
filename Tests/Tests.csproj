@@ -1,14 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
-    <DefineConstants>TEST;</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;TESTING;</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;</DefineConstants>
     <WarningLevel>2</WarningLevel>
   </PropertyGroup>
 
@@ -29,5 +26,4 @@
   <ItemGroup>
     <ProjectReference Include="..\BotCatMaxy\BotCatMaxy.csproj" />
   </ItemGroup>
-
 </Project>
