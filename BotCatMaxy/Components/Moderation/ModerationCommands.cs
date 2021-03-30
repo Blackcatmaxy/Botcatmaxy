@@ -24,7 +24,7 @@ namespace BotCatMaxy
         }
 
         [Command("warn")]
-        [Summary("Warn a user with an option reason.")]
+        [Summary("Warn a user with a reason.")]
         [CanWarn()]
         public async Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
@@ -48,7 +48,7 @@ namespace BotCatMaxy
         }
 
         [Command("warn")]
-        [Summary("Warn a user with a specific size, along with an option reason.")]
+        [Summary("Warn a user with a specific size, along with a reason.")]
         [CanWarn()]
         public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
         {
@@ -167,7 +167,7 @@ namespace BotCatMaxy
         }
 
         [Command("kickwarn")]
-        [Summary("Kicks a user, and warns them with an option reason.")]
+        [Summary("Kicks a user, and warns them with an optional reason.")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -178,11 +178,11 @@ namespace BotCatMaxy
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
-            Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason} ", Context.Guild);
+            Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason}", Context.Guild);
         }
 
         [Command("kickwarn")]
-        [Summary("Kicks a user, and warns them with a specific size along with an option reason.")]
+        [Summary("Kicks a user, and warns them with a specific size along with an optional reason.")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -193,7 +193,7 @@ namespace BotCatMaxy
 
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
-            Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason} ", Context.Guild);
+            Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason}", Context.Guild);
         }
 
         [Command("tempban")]
@@ -248,7 +248,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempbanwarn")]
-        [Summary("Temporarily bans a user, and warns them with an option reason.")]
+        [Summary("Temporarily bans a user, and warns them with a reason.")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn", "tbw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
@@ -282,7 +282,7 @@ namespace BotCatMaxy
 
         [Command("tempbanwarn")]
         [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban", "tbw")]
-        [Summary("Temporarily bans a user, and warns them with a specific size along with an option reason.")]
+        [Summary("Temporarily bans a user, and warns them with a specific size along with a reason.")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
@@ -371,7 +371,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempmutewarn")]
-        [Summary("Temporarily mutes a user in text channels, and warns them with an option reason.")]
+        [Summary("Temporarily assigns a muted role to a user, and warns them with a reason.")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -410,7 +410,7 @@ namespace BotCatMaxy
         }
 
         [Command("tempmutewarn")]
-        [Summary("Temporarily mutes a user in text channels, and warns them with a specific size along with an option reason.")]
+        [Summary("Temporarily assigns a muted role to a user, and warns them with a specific size along with a reason.")]
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -449,7 +449,7 @@ namespace BotCatMaxy
         }
 
         [Command("ban", RunMode = RunMode.Async)]
-        [Summary("Bans a user with an option reason.")]
+        [Summary("Bans a user with a reason.")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
@@ -566,7 +566,7 @@ namespace BotCatMaxy
             }
             string extra = "";
             if (searchedMessages != messages.Count) extra = $" out of {searchedMessages} searched messages";
-            if (timeRanOut) extra = " (note, due to ratelimits and discord limitations, only messages in the last two weeks can be mass deleted)";
+            if (timeRanOut) extra += " (reached limit due to ratelimits and Discord limitations, because only messages in the last two weeks can be mass deleted)";
             Context.Message.DeleteOrRespond($"{Context.User.Mention} deleted {messages.Count} messages{extra}", Context.Guild);
         }
     }

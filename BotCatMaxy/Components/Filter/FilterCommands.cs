@@ -31,7 +31,7 @@ namespace BotCatMaxy.Components.Filter
             var mutualGuilds = (Context.Message.Author as SocketUser).MutualGuilds.ToArray();
 
             var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the the number next to the guild you want to check the filter info from");
+            guildsEmbed.WithTitle("Reply with the number next to the guild you want to check the filter info from");
 
             for (int i = 0; i < mutualGuilds.Length; i++)
             {
