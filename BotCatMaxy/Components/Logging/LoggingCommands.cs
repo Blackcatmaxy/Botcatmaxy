@@ -3,6 +3,7 @@ using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy.Components.Logging
@@ -11,8 +12,12 @@ namespace BotCatMaxy.Components.Logging
     [Group("logs"), Alias("logs")]
     [Summary("Manages logging.")]
     [RequireContext(ContextType.Guild)]
-    public class LoggingCommands : ModuleBase<SocketCommandContext>
+    public class LoggingCommands : InteractiveModule
     {
+        public LoggingCommands(IServiceProvider service) : base(service)
+        {
+        }
+
         [Command("setchannel"), Alias("sethere")]
         [Summary("Sets the logging channel to the current channel.")]
         [HasAdmin]
@@ -27,7 +32,7 @@ namespace BotCatMaxy.Components.Logging
                 return;
             }
 
-            if (Context.Client.GetChannel(settings.logChannel ?? 0) == Context.Channel)
+            if (Context.Client.GetChannelAsync(settings.logChannel ?? 0) == Context.Channel)
             {
                 await message.ModifyAsync(msg => msg.Content = "This channel already is the logging channel");
                 return;
@@ -56,7 +61,7 @@ namespace BotCatMaxy.Components.Logging
                 await message.ModifyAsync(msg => msg.Content = "Set public log channel to null");
                 return;
             }
-            if (Context.Client.GetChannel(settings.pubLogChannel ?? 0) == Context.Channel)
+            if (Context.Client.GetChannelAsync(settings.pubLogChannel ?? 0) == Context.Channel)
             {
                 await message.ModifyAsync(msg => msg.Content = "This channel already is the logging channel");
                 return;
@@ -74,6 +79,7 @@ namespace BotCatMaxy.Components.Logging
         [Summary("Views logging settings.")]
         public async Task DebugLogSettings()
         {
+            var socketContext = Context as SocketCommandContext; //Not ready for testing yet
             LogSettings settings = Context.Guild.LoadFromFile<LogSettings>();
 
             if (settings == null)
@@ -84,7 +90,7 @@ namespace BotCatMaxy.Components.Logging
 
             var embed = new EmbedBuilder();
 
-            SocketTextChannel logChannel = Context.Guild.GetTextChannel(settings.logChannel ?? 0);
+            SocketTextChannel logChannel = socketContext.Guild.GetTextChannel(settings.logChannel ?? 0);
             if (logChannel == null)
             {
                 _ = ReplyAsync("Logging channel is null");
@@ -95,7 +101,7 @@ namespace BotCatMaxy.Components.Logging
             embed.AddField("Log deleted messages", settings.logDeletes, true);
             if (settings.pubLogChannel != null)
             {
-                var pubLogChannel = Context.Guild.GetTextChannel(settings.pubLogChannel.Value);
+                var pubLogChannel = socketContext.Guild.GetTextChannel(settings.pubLogChannel.Value);
                 if (pubLogChannel == null) embed.AddField("Public Log Channel", "Improper value set", true);
                 else embed.AddField("Public Log Channel", pubLogChannel.Mention, true);
             }
@@ -162,7 +168,7 @@ namespace BotCatMaxy.Components.Logging
                 await ReplyAsync("Set backup channel to null");
                 return;
             }
-            if (Context.Client.GetChannel(settings.backupChannel ?? 0) == Context.Channel)
+            if (await Context.Client.GetChannelAsync(settings.backupChannel ?? 0) == Context.Channel)
             {
                 await ReplyAsync("This channel already is the backup channel");
                 return;

@@ -16,12 +16,11 @@ namespace BotCatMaxy.Components.Filter
     [Group("automod")]
     [Summary("Manages the automoderator.")]
     [Alias("automod", "auto -mod", "filter")]
-    public class FilterCommands : ModuleBase<SocketCommandContext>
+    public class FilterCommands : InteractiveModule
     {
-#if !TEST
-    [DontInject]
-#endif
-        public InteractivityService Interactivity { get; set; }
+        public FilterCommands(IServiceProvider service) : base(service)
+        {
+        }
 
         [Command("list")]
         [Summary("View filter information.")]
@@ -29,7 +28,7 @@ namespace BotCatMaxy.Components.Filter
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         public async Task ListAutoMod(string extension = "")
         {
-            var mutualGuilds = Context.Message.Author.MutualGuilds.ToArray();
+            var mutualGuilds = (Context.Message.Author as SocketUser).MutualGuilds.ToArray();
 
             var guildsEmbed = new EmbedBuilder();
             guildsEmbed.WithTitle("Reply with the the number next to the guild you want to check the filter info from");
