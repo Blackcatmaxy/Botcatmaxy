@@ -11,7 +11,7 @@ namespace BotCatMaxy.Components.Logging
 {
     public static class DiscordLogging
     {
-        public static FixedSizedQueue<ulong> deletedMessagesCache = new FixedSizedQueue<ulong>(10);
+        public static volatile FixedSizedQueue<ulong> deletedMessagesCache = new(10);
 
         public static async Task<string> LogMessage(string reason, IMessage message, IGuild guild = null, bool addJumpLink = false, Color? color = null, IUser authorOveride = null)
         {
