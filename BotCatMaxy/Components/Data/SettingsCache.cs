@@ -1,6 +1,7 @@
 ﻿using BotCatMaxy.Models;
 using Discord;
 using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -8,12 +9,12 @@ namespace BotCatMaxy.Cache
 {
     public class SettingsCache
     {
-        public static HashSet<GuildSettings> guildSettings = new HashSet<GuildSettings>();
-        public SettingsCache(IDiscordClient client) { 
+        public static volatile HashSet<GuildSettings> guildSettings = new();
+
+        public SettingsCache(IDiscordClient client) {
             if (client is BaseSocketClient socketClient)
                 socketClient.LeftGuild += RemoveGuild;
         }
-
 
         public Task RemoveGuild(SocketGuild guild)
         {
@@ -22,7 +23,7 @@ namespace BotCatMaxy.Cache
         }
     }
 
-    public class GuildSettings
+    public class GuildSettings : IEquatable<GuildSettings>
     {
         private readonly IGuild guild;
         public ulong ID => guild.Id;
@@ -36,5 +37,14 @@ namespace BotCatMaxy.Cache
         {
             this.guild = guild;
         }
+
+        public override bool Equals(object obj)
+            => Equals(obj as GuildSettings);
+
+        public bool Equals(GuildSettings other)
+            => other?.ID == ID;
+
+        public override int GetHashCode()
+            => HashCode.Combine(ID);
     }
 }
