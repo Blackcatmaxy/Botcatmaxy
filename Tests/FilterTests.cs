@@ -12,6 +12,7 @@ using BotCatMaxy.Startup;
 using Tests.Mocks.Guild;
 using Discord;
 using BotCatMaxy.Data;
+using System.Text.RegularExpressions;
 
 namespace Tests
 {
@@ -75,6 +76,18 @@ namespace Tests
                 Assert.NotNull(infractons);
                 Assert.NotEmpty(infractons);
             }
+        }
+
+        [Theory]
+        [InlineData("discord.gg/test", true)]
+        [InlineData("http://discord.gg/test", true)]
+        [InlineData("https://discord.gg/test", true)]
+        [InlineData("https://discord.com/invite/test", true)]
+        [InlineData("https://discord.com/test", false)]
+        [InlineData("https://discord.com/security", false)]
+        public void InviteRegexTheory(string input, bool expected)
+        {
+            Assert.True(Regex.IsMatch(input, FilterHandler.inviteRegex) == expected);
         }
     }
 }
