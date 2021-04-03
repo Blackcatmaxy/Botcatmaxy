@@ -16,7 +16,7 @@ namespace BotCatMaxy.Startup
 {
     public class FilterHandler
     {
-        private const string inviteRegex = @"(?:http|https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li|com)|discord(?:app)?\.com\/invite)\/(\S+)";
+        public const string inviteRegex = @"(?:https?:\/\/)?(?:\w+\.)?discord(?:(?:app)?\.com\/invite|\.gg)\/([A-Za-z0-9-]+)";
         private const RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
 
         private readonly IDiscordClient client;
