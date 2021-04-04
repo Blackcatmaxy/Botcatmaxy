@@ -154,7 +154,7 @@ namespace BotCatMaxy
                                             if (user != null)
                                             { // if possible to message, message and log
                                                 DiscordLogging.LogEndTempAct(sockGuild, user, "mut", tempMute.Reason, tempMute.Length);
-                                                _ = user.Notify($"untemp-muted", tempMute.Reason, sockGuild);
+                                                _ = user.Notify("auto untempmuted", tempMute.Reason, sockGuild, client.CurrentUser);
                                             }
                                             editedMutes.Remove(tempMute);
                                         }

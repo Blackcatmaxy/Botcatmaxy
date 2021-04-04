@@ -122,7 +122,7 @@ namespace BotCatMaxy
             }
             userRef = userRef with { GuildUser = await guild.GetUserAsync(userRef.ID) };
             await ReplyAsync($"Here are {userRef.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
-                embed: infractions.GetEmbed(userRef, amount: amount));
+                embed: infractions.GetEmbed(userRef, guild, amount: amount));
         }
 
 
@@ -139,7 +139,7 @@ namespace BotCatMaxy
                 await ReplyAsync($"{userRef.Name()} has no infractions");
                 return;
             }
-            await ReplyAsync(embed: infractions.GetEmbed(userRef, amount: amount, showLinks: true));
+            await ReplyAsync(embed: infractions.GetEmbed(userRef, Context.Guild, amount: amount, showLinks: true));
         }
 
         [Command("removewarn")]

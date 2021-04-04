@@ -195,9 +195,9 @@ namespace BotCatMaxy.Moderation
             }
         }
 
-        public static Embed GetEmbed(this List<Infraction> infractions, UserRef userRef, int amount = 5, bool showLinks = false)
+        public static Embed GetEmbed(this List<Infraction> infractions, UserRef userRef, IGuild guild, int amount = 5, bool showLinks = false)
         {
-            InfractionInfo data = new InfractionInfo(infractions, amount, showLinks);
+            InfractionInfo data = new(infractions, amount, showLinks);
 
             //Builds infraction embed
             var embed = new EmbedBuilder();
@@ -211,13 +211,11 @@ namespace BotCatMaxy.Moderation
                 data.infractionStrings[0]);
             data.infractionStrings.RemoveAt(0);
             foreach (string s in data.infractionStrings)
-            {
                 embed.AddField("------------------------------------------------------------", s);
-            }
-            embed.WithAuthor(userRef);
-            embed.WithFooter("ID: " + userRef.ID)
-            .WithColor(Color.Blue)
-            .WithCurrentTimestamp();
+            embed.WithAuthor(userRef)
+                .WithGuildAsFooter(guild, "ID: " + userRef.ID)
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp();
 
             return embed.Build();
         }
@@ -264,19 +262,6 @@ namespace BotCatMaxy.Moderation
                 }
             }
             userRef.ID.RecordAct(context.Guild, tempMute, "tempmute", context.Message.GetJumpUrl());
-        }
-
-        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, IUser author = null, string article = "from", Color color = default)
-        {
-            if (color == default) color = Color.LightGrey;
-            var embed = new EmbedBuilder();
-            embed.WithTitle($"You have been {action} {article} a discord guild");
-            embed.AddField("Reason", reason, true);
-            embed.AddField("Guild name", guild.Name, true);
-            embed.WithCurrentTimestamp();
-            embed.WithColor(color);
-            if (author != null) embed.WithAuthor(author);
-            await user.TryNotify(embed.Build());
         }
     }
 }

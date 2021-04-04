@@ -62,8 +62,8 @@ namespace BotCatMaxy.Components.Filter
             ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
             BadWords badWords = new BadWords(guild);
 
-            var embed = new EmbedBuilder();
-            embed.Author = new EmbedAuthorBuilder().WithName("Automod information for " + guild.Name + " discord");
+            var embed = new EmbedBuilder()
+                .WithGuildAsAuthor(guild);
             string message = "";
 
             bool useExplicit = false;
