@@ -19,9 +19,9 @@ namespace BotCatMaxy.Components.Filter
     {
         readonly static char[] splitters = @"#.,/\|=_- ".ToCharArray();
 
-        public static BadWord CheckForBadWords(this string message, BadWord[] badWords)
+        public static (BadWord word, int? index) CheckForBadWords(this string message, BadWord[] badWords)
         {
-            if (badWords?.Length is null or 0) return null;
+            if (badWords?.Length is null or 0) return (null, null);
 
             //Checks for bad words
             StringBuilder sb = new StringBuilder();
@@ -63,34 +63,26 @@ namespace BotCatMaxy.Components.Filter
             string[] messageParts = message.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (BadWord badWord in badWords)
-            {
                 if (badWord.PartOfWord)
                 {
-                    if (strippedMessage.Contains(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        return badWord;
-                    }
+                    int index = strippedMessage.IndexOf(badWord.Word, StringComparison.InvariantCultureIgnoreCase);
+                    if (index > -1)
+                        return (badWord, index);
                 }
                 else
-                { //If bad word is ignored inside of words
+                    //If bad word is ignored inside of words
                     foreach (string word in messageParts)
-                    {
                         if (word.Equals(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            return badWord;
-                        }
-                    }
-                }
-            }
-            return null;
+                            return (badWord, null);
+            return (null, null);
         }
 
-        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings settings, string badText, float warnSize = 0.5f)
+        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings settings, string badText, int? index = null, float warnSize = 0.5f)
         {
-            await context.FilterPunish(context.User as IGuildUser, reason, settings, badText, delete: true, warnSize: warnSize);
+            await context.FilterPunish(context.User as IGuildUser, reason, settings, badText, index: index, delete: true, warnSize: warnSize);
         }
 
-        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, string badText, bool delete = true, float warnSize = 0.5f)
+        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, string badText, int? index = null, bool delete = true, float warnSize = 0.5f)
         {
             string content = context.Message.Content;
             if (badText != null) //will be null in case of reaction warn where reason speaks for itself
@@ -101,7 +93,7 @@ namespace BotCatMaxy.Components.Filter
                 }
                 else
                 {
-                    int badTextStart = content.IndexOf(badText);
+                    int badTextStart = index ?? content.IndexOf(badText);
                     int badTextEnd = badTextStart + badText.Length;
                     content = content.Insert(badTextStart, "**[");
                     content = content.Insert(badTextEnd + 3, "]**");
@@ -157,7 +149,8 @@ namespace BotCatMaxy.Components.Filter
                 int oldInfraction = int.Parse(match.Groups[2].Value);
                 await (message as IUserMessage).ModifyAsync(msg => msg.Content = $"{user.Mention} has been given their {oldInfraction.Suffix()}-{infractionAmount} infraction because of {reason}");
                 return null;
-            } else
+            }
+            else
             {
                 //Public channel nonsense if someone want a public log (don't think this has been used since the old Vesteria Discord but backward compat)
                 string toSay = $"{user.Mention} has been given their {infractionAmount} infraction because of {reason}";
