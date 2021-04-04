@@ -47,9 +47,9 @@ namespace Tests
             var channel = (MockTextChannel)await channelTask;
             var users = await guild.GetUsersAsync();
             var testee = users.First(user => user.Username == "Testee");
-            var message = channel.SendMessageAsOther("", testee);
+            var message = channel.SendMessageAsOther("calzone", testee);
             var context = new MockCommandContext(client, message);
-            await context.FilterPunish("Testing Punish", settings);
+            await context.FilterPunish("Testing Punish", settings, "calzone");
             var infractons = testee.LoadInfractions(true);
             Assert.NotNull(infractons);
             Assert.NotEmpty(infractons);
@@ -61,7 +61,7 @@ namespace Tests
         [InlineData("$ubst1tuti0n", "Substitution")]
         public async Task BadWordTheory(string input, string expected)
         {
-            var result = input.CheckForBadWords(badWords);
+            var result = input.CheckForBadWords(badWords).word;
             Assert.Equal(expected, result?.Word, ignoreCase: true);
 
             var channel = (MockTextChannel)await channelTask;

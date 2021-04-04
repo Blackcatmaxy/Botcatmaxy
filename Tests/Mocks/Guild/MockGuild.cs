@@ -40,7 +40,7 @@ namespace Tests.Mocks.Guild
 
         public string IconId => throw new NotImplementedException();
 
-        public string IconUrl => throw new NotImplementedException();
+        public string IconUrl => null;
 
         public string SplashId => throw new NotImplementedException();
 

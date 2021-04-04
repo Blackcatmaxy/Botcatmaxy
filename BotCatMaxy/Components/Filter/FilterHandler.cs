@@ -80,7 +80,7 @@ namespace BotCatMaxy.Startup
                 if (gUser.CantBeWarned() || !gUser.CanActOn(currentUser))
                     return;
 
-                BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
+                BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray()).word;
                 if (detectedBadWord == null) return;
 
                 LogSettings logSettings = guild.LoadFromFile<LogSettings>(false);
@@ -182,7 +182,7 @@ namespace BotCatMaxy.Startup
                         int newLines = context.Message.Content.Count(c => c == '\n');
                         if (newLines > modSettings.maxNewLines.Value)
                         {
-                            await context.FilterPunish("too many newlines", modSettings, null, (newLines - modSettings.maxNewLines.Value) * 0.5f);
+                            await context.FilterPunish("too many newlines", modSettings, null, warnSize: (newLines - modSettings.maxNewLines.Value) * 0.5f);
                             return;
                         }
                     }
@@ -196,7 +196,7 @@ namespace BotCatMaxy.Startup
                             var invite = await client.GetInviteAsync(match.Value);
                             if (invite?.GuildId != null && !modSettings.whitelistedForInvite.Contains(invite.GuildId.Value))
                             {
-                                await context.FilterPunish("Posted Invite", modSettings, match.Value);
+                                await context.FilterPunish("Posted Invite", modSettings, match.Value, match.Index);
                                 return;
                             }
                         }
@@ -227,7 +227,7 @@ namespace BotCatMaxy.Startup
                         {
                             if (!modSettings.allowedLinks.Any(s => match.Value.Contains(s, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                await context.FilterPunish("Using unauthorized links", modSettings, match.Value, 1);
+                                await context.FilterPunish("Using unauthorized links", modSettings, match.Value, match.Index, warnSize: 1);
                                 return;
                             }
                         }
@@ -236,7 +236,7 @@ namespace BotCatMaxy.Startup
                     //Check for emojis
                     if (modSettings.badUEmojis?.Count is not null or 0 && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
                     {
-                        await context.FilterPunish("Bad emoji used", modSettings, null, 0.8f);
+                        await context.FilterPunish("Bad emoji used", modSettings, null, warnSize: 0.8f);
                         return;
                     }
 
@@ -252,23 +252,24 @@ namespace BotCatMaxy.Startup
                         }
                         if (((amountCaps / (float)message.Content.Length) * 100) >= modSettings.allowedCaps)
                         {
-                            await context.FilterPunish("Excessive caps", modSettings, null, 0.3f);
+                            await context.FilterPunish("Excessive caps", modSettings, null, warnSize: 0.3f);
                             return;
                         }
                     }
                 } //End of stuff from mod settings
 
-                BadWord detectedBadWord = msgContent.CheckForBadWords(badWords?.ToArray());
+                var badWordResult = msgContent.CheckForBadWords(badWords?.ToArray());
+                var detectedBadWord = badWordResult.word;
                 if (detectedBadWord != null)
                 {
                     if (!string.IsNullOrEmpty(detectedBadWord.Euphemism))
                     {
-                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, detectedBadWord.Word, detectedBadWord.Size);
+                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, detectedBadWord.Word, badWordResult.index, detectedBadWord.Size);
                         return;
                     }
                     else
                     {
-                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.Word, detectedBadWord.Size);
+                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.Word, badWordResult.index, detectedBadWord.Size);
                         return;
                     }
                 }
@@ -276,7 +277,11 @@ namespace BotCatMaxy.Startup
             }
             catch (Exception e)
             {
+#if DEBUG
+                throw;
+#else
                 await e.LogFilterError("message", guild);
+#endif
             }
         }
     }
