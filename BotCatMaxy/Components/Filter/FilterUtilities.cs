@@ -85,20 +85,38 @@ namespace BotCatMaxy.Components.Filter
             return null;
         }
 
-        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings settings, float warnSize = 0.5f)
+        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings settings, string badText, float warnSize = 0.5f)
         {
-            await context.FilterPunish(context.User as IGuildUser, reason, settings, delete: true, warnSize: warnSize);
+            await context.FilterPunish(context.User as IGuildUser, reason, settings, badText, delete: true, warnSize: warnSize);
         }
 
-        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, bool delete = true, float warnSize = 0.5f, string explicitInfo = "")
+        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, string badText, bool delete = true, float warnSize = 0.5f)
         {
-            string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user);
+            string content = context.Message.Content;
+            if (badText != null) //will be null in case of reaction warn where reason speaks for itself
+            {
+                if (badText == content)
+                {
+                    content = $"**[{badText}]**";
+                }
+                else
+                {
+                    int badTextStart = content.IndexOf(badText);
+                    int badTextEnd = badTextStart + badText.Length;
+                    content = content.Insert(badTextStart, "**[");
+                    content = content.Insert(badTextEnd + 3, "]**");
+                }
+            }
+            else
+                content = null;
+
+            string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user, textOverride: content);
             await user.Warn(warnSize, reason, context.Channel as ITextChannel, logLink: jumpLink);
 
             if (settings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
                 return;
 
-            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, settings);
+            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, settings, content);
 
             if (delete)
             {
@@ -117,12 +135,19 @@ namespace BotCatMaxy.Components.Filter
 
         public const string notifyInfoRegex = @"<@!?(\d+)> has been given their (\d+)\w+-?(?:\d+\w+)? infraction because of (.+)";
 
-        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, IGuildUser user, string reason, ModerationSettings settings)
+        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, string highlight)
         {
             Task<IUserMessage> warnMessage = null;
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
 
             string infractionAmount = user.LoadInfractions().Count.Suffix();
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"Filter warning in {context.Guild.Name} for {reason.ToLower()}")
+                .WithColor(Color.Gold)
+                .WithCurrentTimestamp();
+            if (highlight != null) embed.WithDescription(highlight);
+            await user.TryNotify(embed.Build());
 
             var messages = (await context.Channel.GetMessagesAsync(5).FlattenAsync()).Where(msg => msg.Author.Id == context.Client.CurrentUser.Id);
             //If need to go from "@person has been given their 3rd infractions because of fdsfd" to "@person has been given their 3rd-4th infractions because of fdsfd"

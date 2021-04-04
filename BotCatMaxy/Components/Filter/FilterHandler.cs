@@ -144,7 +144,7 @@ namespace BotCatMaxy.Startup
                 if (settings.badUEmojis.Contains(reaction.Emote.Name))
                 {
                     await message.RemoveAllReactionsForEmoteAsync(reaction.Emote);
-                    await context.FilterPunish(gUser, $"bad reaction used ({reaction.Emote.Name})", settings, delete: false, warnSize: 1);
+                    await context.FilterPunish(gUser, $"bad reaction used ({reaction.Emote.Name})", settings, null, delete: false, warnSize: 1);
                 }
             }
             catch (Exception e)
@@ -182,7 +182,7 @@ namespace BotCatMaxy.Startup
                         int newLines = context.Message.Content.Count(c => c == '\n');
                         if (newLines > modSettings.maxNewLines.Value)
                         {
-                            await context.FilterPunish("too many newlines", modSettings, (newLines - modSettings.maxNewLines.Value) * 0.5f);
+                            await context.FilterPunish("too many newlines", modSettings, null, (newLines - modSettings.maxNewLines.Value) * 0.5f);
                             return;
                         }
                     }
@@ -191,14 +191,15 @@ namespace BotCatMaxy.Startup
                     if (!modSettings.invitesAllowed)
                     {
                         MatchCollection matches = Regex.Matches(message.Content, inviteRegex, regexOptions);
-                        var invites = matches.Select(async match => await client.GetInviteAsync(match.Value)).Select(match => match.Result);
-                        if (invites.Any())
-                            foreach (RestInviteMetadata invite in invites)
-                                if (invite?.GuildId != null && !modSettings.whitelistedForInvite.Contains(invite.GuildId.Value))
-                                {
-                                    await context.FilterPunish("Posted Invite", modSettings);
-                                    return;
-                                }
+                        foreach (Match match in matches)
+                        {
+                            var invite = await client.GetInviteAsync(match.Value);
+                            if (invite?.GuildId != null && !modSettings.whitelistedForInvite.Contains(invite.GuildId.Value))
+                            {
+                                await context.FilterPunish("Posted Invite", modSettings, match.Value);
+                                return;
+                            }
+                        }
                     }
 
                     //Checks if a message contains ugly, unwanted text t̨̠̱̭͓̠ͪ̈́͌ͪͮ̐͒h̲̱̯̀͂̔̆̌͊ͅà̸̻͌̍̍ͅt͕̖̦͂̎͂̂ͮ͜ ̲͈̥͒ͣ͗̚l̬͚̺͚͎̆͜ͅo͔̯̖͙ͩõ̲̗̎͆͜k̦̭̮̺ͮ͆̀ ͙̍̂͘l̡̮̱̤͍̜̲͙̓̌̐͐͂̓i͙̬ͫ̀̒͑̔͐k̯͇̀ͭe̎͋̓́ ̥͖̼̬ͪ̆ṫ͏͕̳̞̯h̛̼͔ͩ̑̿͑i͍̲̽ͮͪsͦ͋ͦ̌͗ͭ̋
@@ -209,7 +210,7 @@ namespace BotCatMaxy.Startup
                         MatchCollection matches = Regex.Matches(message.Content, zalgoRegex, regexOptions);
                         if (matches.Any())
                         {
-                            await context.FilterPunish("zalgo usage", modSettings);
+                            await context.FilterPunish("zalgo usage", modSettings, null);
                             return;
                         }
                     }
@@ -224,9 +225,9 @@ namespace BotCatMaxy.Startup
                         //Checks for links
                         if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIds.Intersect(modSettings.allowedToLink).Any()))
                         {
-                            if (!modSettings.allowedLinks.Any(s => match.ToString().ToLower().Contains(s.ToLower())))
+                            if (!modSettings.allowedLinks.Any(s => match.Value.Contains(s, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                await context.FilterPunish("Using unauthorized links", modSettings, 1);
+                                await context.FilterPunish("Using unauthorized links", modSettings, match.Value, 1);
                                 return;
                             }
                         }
@@ -235,7 +236,7 @@ namespace BotCatMaxy.Startup
                     //Check for emojis
                     if (modSettings.badUEmojis?.Count is not null or 0 && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
                     {
-                        await context.FilterPunish("Bad emoji used", modSettings, 0.8f);
+                        await context.FilterPunish("Bad emoji used", modSettings, null, 0.8f);
                         return;
                     }
 
@@ -251,7 +252,7 @@ namespace BotCatMaxy.Startup
                         }
                         if (((amountCaps / (float)message.Content.Length) * 100) >= modSettings.allowedCaps)
                         {
-                            await context.FilterPunish("Excessive caps", modSettings, 0.3f);
+                            await context.FilterPunish("Excessive caps", modSettings, null, 0.3f);
                             return;
                         }
                     }
@@ -262,12 +263,12 @@ namespace BotCatMaxy.Startup
                 {
                     if (!string.IsNullOrEmpty(detectedBadWord.Euphemism))
                     {
-                        await context.FilterPunish("Bad word used (" + detectedBadWord.Euphemism + ")", modSettings, detectedBadWord.Size);
+                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, detectedBadWord.Word, detectedBadWord.Size);
                         return;
                     }
                     else
                     {
-                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.Size);
+                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.Word, detectedBadWord.Size);
                         return;
                     }
                 }
