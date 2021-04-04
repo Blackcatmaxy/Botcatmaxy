@@ -13,7 +13,7 @@ namespace BotCatMaxy.Components.Logging
     {
         public static volatile FixedSizedQueue<ulong> deletedMessagesCache = new(10);
 
-        public static async Task<string> LogMessage(string reason, IMessage message, IGuild guild = null, bool addJumpLink = false, Color? color = null, IUser authorOveride = null)
+        public static async Task<string> LogMessage(string reason, IMessage message, IGuild guild = null, bool addJumpLink = false, Color? color = null, IUser authorOveride = null, string textOverride = null)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace BotCatMaxy.Components.Logging
                         "`This message had no text`", true);
                 else
                     embed.AddField(reason + " in #" + message.Channel.Name,
-                        message.Content.Truncate(1020), true);
+                        textOverride ?? message.Content.Truncate(1020), true);
 
                 if (addJumpLink)
                 {
