@@ -145,6 +145,7 @@ namespace BotCatMaxy.Components.Filter
             var embed = new EmbedBuilder()
                 .WithTitle($"Filter warning in {context.Guild.Name} for {reason.ToLower()}")
                 .WithColor(Color.Gold)
+                .WithGuildAsAuthor(context.Guild)
                 .WithCurrentTimestamp();
             if (highlight != null) embed.WithDescription(highlight);
             await user.TryNotify(embed.Build());
