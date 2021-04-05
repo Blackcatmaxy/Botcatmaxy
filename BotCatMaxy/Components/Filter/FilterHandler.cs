@@ -31,40 +31,46 @@ namespace BotCatMaxy.Startup
                 socketClient.ReactionAdded += HandleReaction;
                 socketClient.UserJoined += HandleUserJoin;
                 socketClient.UserUpdated += HandleUserChange;
-                socketClient.GuildMemberUpdated += HandleUserChange;
             }
 
             new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
         }
 
-        private async Task HandleEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
-            => await Task.Run(() => CheckMessage(editedMessage)).ConfigureAwait(false);
-
-        public async Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
-            => await Task.Run(() => CheckReaction(cachedMessage, channel, reaction)).ConfigureAwait(false);
-
-        public async Task HandleUserJoin(SocketGuildUser user)
-            => await Task.Run(async () => CheckNameInGuild(user, user.Username, user.Guild));
-
-        public async Task HandleGuildUserChange(SocketGuildUser old, SocketGuildUser updated)
+        private Task HandleEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
         {
-            if (updated.Nickname != old.Nickname)
-                await Task.Run(async () => CheckNameInGuild(updated, updated.Nickname, updated.Guild));
+            Task.Run(() => CheckMessage(editedMessage));
+            return Task.CompletedTask;
         }
 
-        public async Task HandleUserChange(SocketUser old, SocketUser updated)
+        public Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            Task.Run(() => CheckReaction(cachedMessage, channel, reaction));
+            return Task.CompletedTask;
+        }
+
+        public Task HandleUserJoin(SocketGuildUser user)
+        {
+            Task.Run(() => CheckNameInGuild(user, user.Username, user.Guild));
+            return Task.CompletedTask;
+        }
+
+        public Task HandleUserChange(SocketUser old, SocketUser updated)
         {
             if (updated.Username != old.Username)
             {
                 foreach (SocketGuild guild in updated.MutualGuilds)
                 {
-                    await Task.Run(async () => CheckNameInGuild(updated, updated.Username, guild));
+                    Task.Run(() => CheckNameInGuild(updated, updated.Username, guild));
                 }
             }
+            return Task.CompletedTask;
         }
 
-        public async Task HandleMessage(SocketMessage message)
-            => await Task.Run(() => CheckMessage(message));
+        public Task HandleMessage(SocketMessage message)
+        {
+            Task.Run(() => CheckMessage(message));
+            return Task.CompletedTask;
+        }
 
         public async Task CheckNameInGuild(IUser user, string name, IGuild guild)
         {

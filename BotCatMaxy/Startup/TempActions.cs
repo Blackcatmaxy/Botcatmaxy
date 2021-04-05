@@ -49,7 +49,8 @@ namespace BotCatMaxy
             TempActionList actions = user.Guild?.LoadFromFile<TempActionList>();
             //Can be done better and cleaner
             if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0)) return;
-            if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id)) await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
+            if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id))
+                await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
         public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false, CancellationToken? ct = null)

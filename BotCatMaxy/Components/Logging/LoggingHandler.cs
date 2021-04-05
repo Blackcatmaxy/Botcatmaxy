@@ -29,25 +29,35 @@ namespace BotCatMaxy.Startup
             await new LogMessage(LogSeverity.Info, "Logs", "Logging set up").Log();
         }
 
-        public async Task HandleNew(IMessage message)
-            => await Task.Run(() => LogNew(message)).ConfigureAwait(false);
+        public Task HandleNew(IMessage message)
+        {
+            Task.Run(() => LogNew(message));
+            return Task.CompletedTask;
+        }
 
-        private async Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
-            => await Task.Run(() => LogDelete(message, channel));
+        private Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        {
+            Task.Run(() => LogDelete(message, channel));
+            return Task.CompletedTask;
+        }
 
-        private async Task HandleEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
-            => await Task.Run(() => LogEdit(cachedMessage, newMessage, channel));
+        private Task HandleEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        {
+            Task.Run(() => LogEdit(cachedMessage, newMessage, channel));
+            return Task.CompletedTask;
+        }
 
-        public async Task LogNew(IMessage message)
+        public Task LogNew(IMessage message)
         {
             if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
             {
                 SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
-                await DiscordLogging.LogMessage("Role ping", message, guild, true);
+                Task.Run(() => DiscordLogging.LogMessage("Role ping", message, guild, true));
             }
+            return Task.CompletedTask;
         }
 
-        async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        public async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
             try
             {
