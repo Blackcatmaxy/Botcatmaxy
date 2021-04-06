@@ -105,7 +105,7 @@ namespace BotCatMaxy.Components.Filter
             string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user, textOverride: content);
             await user.Warn(warnSize, reason, context.Channel as ITextChannel, logLink: jumpLink);
 
-            if (filterSettings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
+            if (filterSettings?.announcementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
                 return;
 
             Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, modSettings, content);

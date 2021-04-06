@@ -11,7 +11,7 @@ namespace BotCatMaxy.Models
     {
         public HashSet<ulong> channelsWithoutAutoMod = new();
         public HashSet<ulong> whitelistedForInvite = new();
-        public HashSet<ulong> anouncementChannels = new();
+        public HashSet<ulong> announcementChannels = new();
         public HashSet<ulong> allowedToLink = new();
         public HashSet<ulong> filterIgnored = new();
         public HashSet<string> allowedLinks = new();

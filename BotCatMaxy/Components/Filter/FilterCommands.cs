@@ -466,7 +466,7 @@ namespace BotCatMaxy.Components.Filter
             settings.invitesAllowed = !settings.invitesAllowed;
             settings.SaveToFile();
 
-            await message.ModifyAsync(msg => msg.Content = "set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
+            await message.ModifyAsync(msg => msg.Content = "Set invites allowed to " + settings.invitesAllowed.ToString().ToLower());
         }
 
         [Command("togglezalgowarn"), Alias("togglezalgoallowed")]
@@ -523,35 +523,37 @@ namespace BotCatMaxy.Components.Filter
             await ReplyAsync($"Added {badWord.Word}{((badWord.Euphemism != null) ? $", also known as {badWord.Euphemism}" : "")} to bad word list");
         }
 
-        [Command("addanouncementchannel"), HasAdmin]
-        [Summary("Sets this channel as an announcement channel.")]
-        public async Task AddAnouncementChannel()
+        [Command("addannouncementchannel"), HasAdmin]
+        [Alias("addanouncementchannel")] //Such a common misspelling this was the name for a long time with no reports
+        [Summary("Sets this channel as an 'announcement' channel.")]
+        public async Task AddAnnouncementChannel()
         {
             var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
-            if (settings.anouncementChannels.Contains(Context.Channel.Id))
+            if (settings.announcementChannels.Contains(Context.Channel.Id))
             {
-                await ReplyAsync("This is already an 'anouncement' channel");
+                await ReplyAsync("This is already an 'announcement' channel");
                 return;
             }
-            settings.anouncementChannels.Add(Context.Channel.Id);
+            settings.announcementChannels.Add(Context.Channel.Id);
             settings.SaveToFile();
-            await ReplyAsync("This channel is now an 'anouncement' channel");
+            await ReplyAsync("This channel is now an 'announcement' channel");
         }
 
-        [Command("removeanouncementchannel"), HasAdmin]
+        [Command("removeannouncementchannel"), HasAdmin]
+        [Alias("removeanouncementchannel")] //Such a common misspelling this was the name for a long time with no reports
         [Summary("Sets this channel as a regular channel.")]
-        public async Task RemoveAnouncementChannel()
+        public async Task RemoveAnnouncementChannel()
         {
             var settings = Context.Guild.LoadFromFile<FilterSettings>(false);
-            if (!settings?.anouncementChannels?.Contains(Context.Channel.Id) ?? true)
+            if (!settings?.announcementChannels?.Contains(Context.Channel.Id) ?? true)
             {
-                //Goes through various steps to check if 1. settings (for anouncement channels) exist 2. Current channel is in those settings
-                await ReplyAsync("This already not an 'anouncement' channel");
+                //Goes through various steps to check if 1. settings (for announcement channels) exist 2. Current channel is in those settings
+                await ReplyAsync("This already not an 'announcement' channel");
                 return;
             }
-            settings.anouncementChannels.Remove(Context.Channel.Id);
+            settings.announcementChannels.Remove(Context.Channel.Id);
             settings.SaveToFile();
-            await ReplyAsync("This channel is now not an 'anouncement' channel");
+            await ReplyAsync("This channel is now not an 'announcement' channel");
         }
 
         [Command("togglenamefilter")]
