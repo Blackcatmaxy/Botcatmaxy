@@ -60,10 +60,6 @@ namespace BotCatMaxy
         {
             if (user == null) return false;
             if (user.HasAdmin()) return true;
-
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>(false);
-            if (settings != null && user.RoleIds.Intersect(settings.cantBeWarned).Any())
-                return true;
             return false;
         }
 

@@ -59,7 +59,7 @@ namespace BotCatMaxy.Components.Filter
                 }
             }
 
-            ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
+            var settings = guild.LoadFromFile<FilterSettings>(false);
             BadWords badWords = new BadWords(guild);
 
             var embed = new EmbedBuilder()
@@ -166,7 +166,7 @@ namespace BotCatMaxy.Components.Filter
         [Summary("Set a number of max emojis a user may send in a single message.")]
         public async Task AllowEmojis(uint amount)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             if (amount == settings.maxEmojis)
             {
                 await ReplyAsync("The selected value is already set");
@@ -185,13 +185,13 @@ namespace BotCatMaxy.Components.Filter
         [Summary("Set a number of max emojis a user may send in a single message.")]
         public async Task SetMaxEmojis(string amount)
         {
-            ModerationSettings settings;
+            FilterSettings settings;
             switch (amount.ToLower())
             {
                 case "null":
                 case "none":
                 case "disable":
-                    settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+                    settings = Context.Guild.LoadFromFile<FilterSettings>(false);
                     if (settings?.maxEmojis == null)
                         await ReplyAsync("Emoji moderation is already disabled");
                     else
@@ -202,7 +202,7 @@ namespace BotCatMaxy.Components.Filter
                     }
                     break;
                 case "all":
-                    settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+                    settings = Context.Guild.LoadFromFile<FilterSettings>(true);
                     settings.maxEmojis = 0;
                     settings.SaveToFile();
                     string extraInfo = "";
@@ -221,7 +221,7 @@ namespace BotCatMaxy.Components.Filter
         [RequireBotPermission(ChannelPermission.AddReactions)]
         public async Task BanEmoji(Emoji emoji)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             if (settings.badUEmojis.Contains(emoji.Name))
             {
                 await ReplyAsync($"Emoji {emoji.Name} is already banned");
@@ -238,7 +238,7 @@ namespace BotCatMaxy.Components.Filter
         [RequireBotPermission(ChannelPermission.AddReactions)]
         public async Task RemoveBannedEmoji(Emoji emoji)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(false);
             if (settings == null || !settings.badUEmojis.Contains(emoji.Name))
             {
                 await ReplyAsync($"Emoji {emoji.Name} is not banned");
@@ -254,7 +254,7 @@ namespace BotCatMaxy.Components.Filter
         [Summary("Sets the maximum percentage of capital letters a user may send.")]
         public async Task SetCapFilter(ushort percent)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
 
             if (percent == settings.allowedCaps)
             {
@@ -283,9 +283,9 @@ namespace BotCatMaxy.Components.Filter
         [Alias("addroleallowedtolink")]
         public async Task AddAllowedLinkRole(SocketRole role)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
 
-            if (settings.allowedToLink == null) settings.allowedToLink = new List<ulong>();
+            if (settings.allowedToLink == null) settings.allowedToLink = new HashSet<ulong>();
             if (settings.allowedToLink.Contains(role.Id))
             {
                 await ReplyAsync($"Role '{role.Name}' was already exempt from link filtering");
@@ -303,7 +303,7 @@ namespace BotCatMaxy.Components.Filter
         [Alias("removeroleallowedtolink")]
         public async Task RemoveAllowedLinkRole(SocketRole role)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
+            var settings = Context.Guild.LoadFromFile<FilterSettings>();
 
             if (settings == null || settings.allowedToLink == null)
             {
@@ -363,7 +363,7 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task ToggleAutoMod()
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
 
             if (settings.channelsWithoutAutoMod.Contains(Context.Channel.Id))
             {
@@ -384,14 +384,14 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task AddWarnIgnoredRole(SocketRole role)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
-            if (settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
-            else if (settings.cantBeWarned.Contains(role.Id))
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
+            if (settings.filterIgnored == null) settings.filterIgnored = new HashSet<ulong>();
+            else if (settings.filterIgnored.Contains(role.Id))
             {
                 await ReplyAsync($"Role '{role.Name}' is already not able to be warned");
                 return;
             }
-            settings.cantBeWarned.Add(role.Id);
+            settings.filterIgnored.Add(role.Id);
             settings.SaveToFile();
             await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
         }
@@ -401,15 +401,15 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task RemovedWarnIgnoredRole(SocketRole role)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (settings == null || settings.cantBeWarned == null) settings.cantBeWarned = new List<ulong>();
-            else if (settings.cantBeWarned.Contains(role.Id))
+            var settings = Context.Guild.LoadFromFile<FilterSettings>();
+            if (settings == null || settings.filterIgnored == null) settings.filterIgnored = new HashSet<ulong>();
+            else if (settings.filterIgnored.Contains(role.Id))
             {
                 await ReplyAsync($"Role '{role.Name}' is already able to be warned");
             }
             else
             {
-                settings.cantBeWarned.Add(role.Id);
+                settings.filterIgnored.Add(role.Id);
                 settings.SaveToFile();
                 await ReplyAsync($"Role '{role.Name}' will not be able to be warned now");
             }
@@ -427,7 +427,7 @@ namespace BotCatMaxy.Components.Filter
                 await ReplyAsync("Link is not valid");
                 return;
             }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             if (settings.allowedLinks == null) settings.allowedLinks = new HashSet<string>();
             else if (settings.allowedLinks.Contains(link))
             {
@@ -444,7 +444,7 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task RemoveAllowedLink(string link)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             if (settings.allowedLinks == null || !settings.allowedLinks.Contains(link))
             {
                 await ReplyAsync("Link is already not allowed");
@@ -462,7 +462,7 @@ namespace BotCatMaxy.Components.Filter
         public async Task ToggleInviteWarn()
         {
             IUserMessage message = await ReplyAsync("Trying to toggle");
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             settings.invitesAllowed = !settings.invitesAllowed;
             settings.SaveToFile();
 
@@ -475,7 +475,7 @@ namespace BotCatMaxy.Components.Filter
         public async Task ToggleZalgoWarn()
         {
             IUserMessage message = await ReplyAsync("Trying to toggle");
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             settings.zalgoAllowed = !settings.zalgoAllowed;
             settings.SaveToFile();
 
@@ -527,7 +527,7 @@ namespace BotCatMaxy.Components.Filter
         [Summary("Sets this channel as an announcement channel.")]
         public async Task AddAnouncementChannel()
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             if (settings.anouncementChannels.Contains(Context.Channel.Id))
             {
                 await ReplyAsync("This is already an 'anouncement' channel");
@@ -542,7 +542,7 @@ namespace BotCatMaxy.Components.Filter
         [Summary("Sets this channel as a regular channel.")]
         public async Task RemoveAnouncementChannel()
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(false);
             if (!settings?.anouncementChannels?.Contains(Context.Channel.Id) ?? true)
             {
                 //Goes through various steps to check if 1. settings (for anouncement channels) exist 2. Current channel is in those settings
@@ -559,7 +559,7 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task ToggleNameFilter()
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             settings.moderateNames = !settings.moderateNames;
             settings.SaveToFile();
             await ReplyAsync("Set user name and nickname filtering to " + settings.moderateNames.ToString().ToLowerInvariant());
@@ -571,7 +571,7 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task SetMaximumNewLines(byte? amount)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
             string reply;
             if (amount == null || amount < 0)
             {
@@ -593,8 +593,8 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task AddInviteWhitelist(ulong guildID)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
-            if (settings?.whitelistedForInvite == null) settings.whitelistedForInvite = new List<ulong>();
+            var settings = Context.Guild.LoadFromFile<FilterSettings>(true);
+            if (settings?.whitelistedForInvite == null) settings.whitelistedForInvite = new HashSet<ulong>();
             else if (settings.whitelistedForInvite.Contains(guildID))
             {
                 await ReplyAsync("Selected guild is already whitelisted");
@@ -611,8 +611,8 @@ namespace BotCatMaxy.Components.Filter
         [HasAdmin]
         public async Task RemoveInviteWhitelist(ulong guildID)
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (settings?.whitelistedForInvite == null) settings.whitelistedForInvite = new List<ulong>();
+            var settings = Context.Guild.LoadFromFile<FilterSettings>();
+            if (settings?.whitelistedForInvite == null) settings.whitelistedForInvite = new HashSet<ulong>();
             else if (settings.whitelistedForInvite.Contains(guildID))
             {
                 await ReplyAsync("Invites leading to selected server will already result in warns");
