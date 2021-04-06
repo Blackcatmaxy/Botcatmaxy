@@ -22,7 +22,7 @@ namespace Tests
         private readonly MockDiscordClient client = new();
         private readonly MockGuild guild = new();
         private readonly FilterHandler filter;
-        private ModerationSettings settings;
+        private FilterSettings settings;
         private Task<ITextChannel> channelTask;
 
         public FilterTests()
@@ -30,7 +30,7 @@ namespace Tests
             filter = new(client);
             client.guilds.Add(guild);
             channelTask = guild.CreateTextChannelAsync("TestChannel");
-            ModerationSettings settings = new()
+            FilterSettings settings = new()
             {
                 guild = guild,
                 moderateNames = true,
@@ -49,7 +49,7 @@ namespace Tests
             var testee = users.First(user => user.Username == "Testee");
             var message = channel.SendMessageAsOther("calzone", testee);
             var context = new MockCommandContext(client, message);
-            await context.FilterPunish("Testing Punish", settings, "calzone");
+            await context.FilterPunish("Testing Punish", null, settings, "calzone");
             var infractons = testee.LoadInfractions(true);
             Assert.NotNull(infractons);
             Assert.NotEmpty(infractons);

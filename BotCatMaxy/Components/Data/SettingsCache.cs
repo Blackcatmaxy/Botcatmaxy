@@ -28,10 +28,11 @@ namespace BotCatMaxy.Cache
         private readonly IGuild guild;
         public ulong ID => guild.Id;
         public ModerationSettings moderationSettings;
-        public LogSettings logSettings;
         public TempActionList tempActionList;
-        public BadWordList badWordList;
         public ReportSettings reportSettings;
+        public FilterSettings filterSettings;
+        public BadWordList badWordList;
+        public LogSettings logSettings;
 
         public GuildSettings(IGuild guild)
         {
