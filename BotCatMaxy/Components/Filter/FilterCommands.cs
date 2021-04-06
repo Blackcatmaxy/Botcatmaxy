@@ -39,9 +39,10 @@ namespace BotCatMaxy.Components.Filter
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
+            Predicate<SocketMessage> filter = message => message.Channel == Context.Channel;
             while (true)
             {
-                var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var result = await Interactivity.NextMessageAsync(filter, timeout: TimeSpan.FromMinutes(1));
                 if (result.Value?.Content is null or "cancel")
                 {
                     await ReplyAsync("You have timed out or canceled");
@@ -54,7 +55,7 @@ namespace BotCatMaxy.Components.Filter
                 }
                 catch
                 {
-                    await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
+                    await ReplyAsync("Invalid number, please reply again with a valid number or `cancel`");
                 }
             }
 
@@ -76,7 +77,7 @@ namespace BotCatMaxy.Components.Filter
                 else
                 {
                     await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
-                    var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                    var result = await Interactivity.NextMessageAsync(filter, timeout: TimeSpan.FromMinutes(1));
                     if (result.Value?.Content.Equals("!confirm", StringComparison.InvariantCultureIgnoreCase) ?? false)
                     {
                         useExplicit = true;

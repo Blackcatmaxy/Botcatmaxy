@@ -92,9 +92,10 @@ namespace BotCatMaxy
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             IGuild guild;
+            Predicate<SocketMessage> filter = message => message.Channel == Context.Channel;
             while (true)
             {
-                var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                var result = await Interactivity.NextMessageAsync(filter, timeout: TimeSpan.FromMinutes(1)); ;
                 var message = result.Value;
                 if (message == null || message.Content == "cancel")
                 {
