@@ -77,12 +77,12 @@ namespace BotCatMaxy.Components.Filter
             return (null, null);
         }
 
-        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings settings, string badText, int? index = null, float warnSize = 0.5f)
+        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null, float warnSize = 0.5f)
         {
-            await context.FilterPunish(context.User as IGuildUser, reason, settings, badText, index: index, delete: true, warnSize: warnSize);
+            await context.FilterPunish(context.User as IGuildUser, reason, modSettings, filterSettings, badText, index: index, delete: true, warnSize: warnSize);
         }
 
-        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, string badText, int? index = null, bool delete = true, float warnSize = 0.5f)
+        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null, bool delete = true, float warnSize = 0.5f)
         {
             string content = context.Message.Content;
             if (badText != null) //will be null in case of reaction warn where reason speaks for itself
@@ -105,10 +105,10 @@ namespace BotCatMaxy.Components.Filter
             string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user, textOverride: content);
             await user.Warn(warnSize, reason, context.Channel as ITextChannel, logLink: jumpLink);
 
-            if (settings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
+            if (filterSettings?.anouncementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
                 return;
 
-            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, settings, content);
+            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, modSettings, content);
 
             if (delete)
             {

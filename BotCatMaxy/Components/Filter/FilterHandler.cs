@@ -78,7 +78,7 @@ namespace BotCatMaxy.Startup
             {
                 var currentUser = await guild.GetCurrentUserAsync();
                 if (!currentUser.GuildPermissions.KickMembers) return;
-                ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
+                var settings = guild.LoadFromFile<FilterSettings>(false);
                 //Has to check if not equal to true since it's nullable
                 if (settings?.moderateNames != true) return;
 
@@ -140,7 +140,7 @@ namespace BotCatMaxy.Startup
                 //Needed to do our own get instead of cachedMessage.GetOrDownloadAsync() because this can be ISystenMessage and not just IUserMessage
                 IMessage message = await channel.GetMessageAsync(cachedMessage.Id);
                 ReactionContext context = new ReactionContext(client, message);
-                ModerationSettings settings = guild.LoadFromFile<ModerationSettings>(false);
+                var settings = guild.LoadFromFile<FilterSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
                 var Guild = chnl.Guild;
                 if (settings?.badUEmojis?.Count == null || settings.badUEmojis.Count == 0 || (reaction.User.Value as SocketGuildUser).CantBeWarned() || reaction.User.Value.IsBot)
@@ -150,7 +150,7 @@ namespace BotCatMaxy.Startup
                 if (settings.badUEmojis.Contains(reaction.Emote.Name))
                 {
                     await message.RemoveAllReactionsForEmoteAsync(reaction.Emote);
-                    await context.FilterPunish(gUser, $"bad reaction used ({reaction.Emote.Name})", settings, null, delete: false, warnSize: 1);
+                    await context.FilterPunish(gUser, $"bad reaction used ({reaction.Emote.Name})", guild.LoadFromFile<ModerationSettings>(), settings, null, delete: false, warnSize: 1);
                 }
             }
             catch (Exception e)
@@ -173,36 +173,37 @@ namespace BotCatMaxy.Startup
             try
             {
                 ModerationSettings modSettings = guild.LoadFromFile<ModerationSettings>();
+                var filterSettings = guild.LoadFromFile<FilterSettings>();
                 List<BadWord> badWords = guild.LoadFromFile<BadWordList>()?.badWords;
 
                 string msgContent = message.Content;
-                if (modSettings != null)
+                if (modSettings != null && filterSettings != null)
                 {
-                    if (modSettings.channelsWithoutAutoMod != null && modSettings.channelsWithoutAutoMod.Contains(chnl.Id))
+                    if (filterSettings.channelsWithoutAutoMod != null && filterSettings.channelsWithoutAutoMod.Contains(chnl.Id))
                         return; //Returns if channel is set as not using automod
 
                     //Checks if a message contains too many "newlines"
-                    if (modSettings.maxNewLines != null)
+                    if (filterSettings.maxNewLines != null)
                     {
                         //Gets number of "newlines"
                         int newLines = context.Message.Content.Count(c => c == '\n');
-                        if (newLines > modSettings.maxNewLines.Value)
+                        if (newLines > filterSettings.maxNewLines.Value)
                         {
-                            await context.FilterPunish("too many newlines", modSettings, null, warnSize: (newLines - modSettings.maxNewLines.Value) * 0.5f);
+                            await context.FilterPunish("too many newlines", modSettings, filterSettings, null, warnSize: (newLines - filterSettings.maxNewLines.Value) * 0.5f);
                             return;
                         }
                     }
 
                     //Checks if a message contains an invite
-                    if (!modSettings.invitesAllowed)
+                    if (!filterSettings.invitesAllowed)
                     {
                         MatchCollection matches = Regex.Matches(message.Content, inviteRegex, regexOptions);
                         foreach (Match match in matches)
                         {
                             var invite = await client.GetInviteAsync(match.Value);
-                            if (invite?.GuildId != null && !modSettings.whitelistedForInvite.Contains(invite.GuildId.Value))
+                            if (invite?.GuildId != null && !filterSettings.whitelistedForInvite.Contains(invite.GuildId.Value))
                             {
-                                await context.FilterPunish("Posted Invite", modSettings, match.Value, match.Index);
+                                await context.FilterPunish("Posted Invite", modSettings, filterSettings, match.Value, match.Index);
                                 return;
                             }
                         }
@@ -211,42 +212,44 @@ namespace BotCatMaxy.Startup
                     //Checks if a message contains ugly, unwanted text t̨̠̱̭͓̠ͪ̈́͌ͪͮ̐͒h̲̱̯̀͂̔̆̌͊ͅà̸̻͌̍̍ͅt͕̖̦͂̎͂̂ͮ͜ ̲͈̥͒ͣ͗̚l̬͚̺͚͎̆͜ͅo͔̯̖͙ͩõ̲̗̎͆͜k̦̭̮̺ͮ͆̀ ͙̍̂͘l̡̮̱̤͍̜̲͙̓̌̐͐͂̓i͙̬ͫ̀̒͑̔͐k̯͇̀ͭe̎͋̓́ ̥͖̼̬ͪ̆ṫ͏͕̳̞̯h̛̼͔ͩ̑̿͑i͍̲̽ͮͪsͦ͋ͦ̌͗ͭ̋
                     //Props to Mathias Bynens for the regex string
                     const string zalgoRegex = @"([\0-\u02FF\u0370-\u1AAF\u1B00-\u1DBF\u1E00-\u20CF\u2100-\uD7FF\uE000-\uFE1F\uFE30-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])([\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F]+)";
-                    if (modSettings.zalgoAllowed == false)
+                    if (filterSettings.zalgoAllowed == false)
                     {
                         MatchCollection matches = Regex.Matches(message.Content, zalgoRegex, regexOptions);
                         if (matches.Any())
                         {
-                            await context.FilterPunish("zalgo usage", modSettings, null);
+                            await context.FilterPunish("zalgo usage", modSettings, filterSettings, null);
                             return;
                         }
                     }
 
-                    const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
-                    MatchCollection linkMatches = Regex.Matches(message.Content, linkRegex, regexOptions);
-                    //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
-                    foreach (Match match in linkMatches)
+                    //Check for links if setting enabled and user is not allowed to link
+                    if (filterSettings.allowedLinks?.Count is not null or 0 && (filterSettings.allowedToLink == null || !gUser.RoleIds.Intersect(filterSettings.allowedToLink).Any()))
                     {
-                        if (msgContent.Equals(match.Value, StringComparison.InvariantCultureIgnoreCase)) return;
-                        msgContent = msgContent.Replace(match.Value, "", StringComparison.InvariantCultureIgnoreCase);
-                        //Checks for links
-                        if ((modSettings.allowedLinks != null && modSettings.allowedLinks.Count > 0) && (modSettings.allowedToLink == null || !gUser.RoleIds.Intersect(modSettings.allowedToLink).Any()))
+                        const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
+                        MatchCollection linkMatches = Regex.Matches(message.Content, linkRegex, regexOptions);
+                        //if (matches != null && matches.Count > 0) await new LogMessage(LogSeverity.Info, "Filter", "Link detected").Log();
+                        foreach (Match match in linkMatches)
                         {
-                            if (!modSettings.allowedLinks.Any(s => match.Value.Contains(s, StringComparison.InvariantCultureIgnoreCase)))
+                            if (msgContent.Equals(match.Value, StringComparison.InvariantCultureIgnoreCase)) return;
+                            msgContent = msgContent.Replace(match.Value, "", StringComparison.InvariantCultureIgnoreCase);
+                            //Checks for links
+
+                            if (!filterSettings.allowedLinks.Any(s => match.Value.Contains(s, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                await context.FilterPunish("Using unauthorized links", modSettings, match.Value, match.Index, warnSize: 1);
+                                await context.FilterPunish("Using unauthorized links", modSettings, filterSettings, match.Value, match.Index, warnSize: 1);
                                 return;
                             }
                         }
                     }
 
                     //Check for emojis
-                    if (modSettings.badUEmojis?.Count is not null or 0 && modSettings.badUEmojis.Any(s => message.Content.Contains(s)))
+                    if (filterSettings.badUEmojis?.Count is not null or 0 && filterSettings.badUEmojis.Any(s => message.Content.Contains(s)))
                     {
-                        await context.FilterPunish("Bad emoji used", modSettings, null, warnSize: 0.8f);
+                        await context.FilterPunish("Bad emoji used", modSettings, filterSettings, null, warnSize: 0.8f);
                         return;
                     }
 
-                    if (modSettings.allowedCaps > 0 && message.Content.Length > 5)
+                    if (filterSettings.allowedCaps > 0 && message.Content.Length > 5)
                     {
                         uint amountCaps = 0;
                         foreach (char c in message.Content)
@@ -256,9 +259,9 @@ namespace BotCatMaxy.Startup
                                 amountCaps++;
                             }
                         }
-                        if (((amountCaps / (float)message.Content.Length) * 100) >= modSettings.allowedCaps)
+                        if (((amountCaps / (float)message.Content.Length) * 100) >= filterSettings.allowedCaps)
                         {
-                            await context.FilterPunish("Excessive caps", modSettings, null, warnSize: 0.3f);
+                            await context.FilterPunish("Excessive caps", modSettings, filterSettings, null, warnSize: 0.3f);
                             return;
                         }
                     }
@@ -270,12 +273,12 @@ namespace BotCatMaxy.Startup
                 {
                     if (!string.IsNullOrEmpty(detectedBadWord.Euphemism))
                     {
-                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, detectedBadWord.Word, badWordResult.index, detectedBadWord.Size);
+                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, filterSettings, detectedBadWord.Word, badWordResult.index, detectedBadWord.Size);
                         return;
                     }
                     else
                     {
-                        await context.FilterPunish("Bad word used", modSettings, detectedBadWord.Word, badWordResult.index, detectedBadWord.Size);
+                        await context.FilterPunish("Bad word used", modSettings, filterSettings, detectedBadWord.Word, badWordResult.index, detectedBadWord.Size);
                         return;
                     }
                 }
