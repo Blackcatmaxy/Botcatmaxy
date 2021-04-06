@@ -19,6 +19,7 @@ namespace BotCatMaxy.Data
     public static class DataManipulator
     {
         static readonly Type cacheType = typeof(GuildSettings);
+        static readonly ReplaceOptions replaceOptions = new() { IsUpsert = true };
 
         public static async Task MapTypes()
         {
@@ -43,9 +44,6 @@ namespace BotCatMaxy.Data
         //checks and gets from cache if it's there
         public static T GetFromCache<T>(this IGuild guild, out FieldInfo field, out GuildSettings gCache) where T : DataObject
         {
-            if (guild == null)
-                throw new ArgumentNullException("Guild is null");
-
             string tName = typeof(T).Name;
             tName = char.ToLower(tName[0], CultureInfo.InvariantCulture) + tName.Substring(1);
             field = cacheType.GetField(tName);
@@ -88,9 +86,6 @@ namespace BotCatMaxy.Data
 
         public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T : DataObject
         {
-            if (guild == null)
-                throw new ArgumentNullException(nameof(guild));
-
             T file = guild.GetFromCache<T>(out FieldInfo field, out GuildSettings gCache);
             if (file != null) return file;
 
@@ -103,11 +98,11 @@ namespace BotCatMaxy.Data
                     var doc = cursor?.FirstOrDefault();
                     if (doc != null) file = BsonSerializer.Deserialize<T>(doc);
                 }
+
                 if (createFile && file == null)
                 {
                     file = (T)Activator.CreateInstance(typeof(T));
                     file.guild = guild;
-                    return file;
                 }
             }
 
@@ -126,10 +121,10 @@ namespace BotCatMaxy.Data
             file.AddToCache();
             var collection = file.guild.GetCollection(true);
             var name = typeof(T).Name;
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", name));
-            var doc = file.ToBsonDocument();
-            doc.Set("_id", name);
-            collection.InsertOne(doc);
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", name);
+            var document = file.ToBsonDocument()
+                .Set("_id", name);
+            collection.ReplaceOne(filter, document, replaceOptions);
         }
 
         public static IMongoCollection<BsonDocument> GetInfractionsCollection(this IGuild guild, bool createDir = true)
@@ -153,7 +148,7 @@ namespace BotCatMaxy.Data
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             if (guildCollection.CountDocuments(new BsonDocument()) > 0 || createDir)
             {
-                return guildCollection;
+                return guildCollection as MongoCollectionBase<BsonDocument>;
             }
 
             return null;
@@ -161,7 +156,6 @@ namespace BotCatMaxy.Data
 
         public static List<Infraction> LoadInfractions(this IGuildUser user, bool createDir = false) =>
             user?.Id.LoadInfractions(user.Guild, createDir);
-
 
         public static List<Infraction> LoadInfractions(this UserRef userRef, IGuild guild, bool createDir = false) =>
             userRef?.ID.LoadInfractions(guild, createDir);
@@ -198,8 +192,9 @@ namespace BotCatMaxy.Data
         public static void SaveActRecord(this ulong userID, IGuild guild, List<ActRecord> acts)
         {
             var collection = guild.GetActHistoryCollection(true);
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", userID));
-            collection.InsertOne(new UserActs { ID = userID, acts = acts }.ToBsonDocument());
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", userID);
+            var document = new UserActs { ID = userID, acts = acts }.ToBsonDocument();
+            collection.ReplaceOne(filter, document, replaceOptions);
         }
 
         public static void SaveInfractions(this SocketGuildUser user, List<Infraction> infractions) =>
@@ -210,8 +205,9 @@ namespace BotCatMaxy.Data
         public static void SaveInfractions(this ulong userID, IGuild guild, List<Infraction> infractions)
         {
             var collection = guild.GetInfractionsCollection(true);
-            collection.FindOneAndDelete(Builders<BsonDocument>.Filter.Eq("_id", userID));
-            collection.InsertOne(new UserInfractions { ID = userID, infractions = infractions }.ToBsonDocument());
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", userID);
+            var document = new UserInfractions { ID = userID, infractions = infractions }.ToBsonDocument();
+            collection.ReplaceOne(filter, document, replaceOptions);
         }
     }
 

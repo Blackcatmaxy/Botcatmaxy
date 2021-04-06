@@ -77,6 +77,7 @@ namespace Tests
             collection = guild.GetCollection(false);
             Assert.NotNull(collection);
             Assert.Equal(guild.OwnerId.ToString(), collection.CollectionNamespace.CollectionName);
+            Assert.True(ownerCollection is MongoCollectionBase<BsonDocument>);
         }
 
         [Fact]
