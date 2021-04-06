@@ -223,7 +223,7 @@ namespace BotCatMaxy.Startup
                     }
 
                     //Check for links if setting enabled and user is not allowed to link
-                    if (filterSettings.allowedLinks?.Count is not null or 0 && (filterSettings.allowedToLink == null || !gUser.RoleIds.Intersect(filterSettings.allowedToLink).Any()))
+                    if (filterSettings.allowedLinks?.Count is not null and not 0 && (filterSettings.allowedToLink == null || !gUser.RoleIds.Intersect(filterSettings.allowedToLink).Any()))
                     {
                         const string linkRegex = @"((?:https?|steam):\/\/[^\s<]+[^<.,:;" + "\"\'\\]\\s])";
                         MatchCollection linkMatches = Regex.Matches(message.Content, linkRegex, regexOptions);
@@ -243,7 +243,7 @@ namespace BotCatMaxy.Startup
                     }
 
                     //Check for emojis
-                    if (filterSettings.badUEmojis?.Count is not null or 0 && filterSettings.badUEmojis.Any(s => message.Content.Contains(s)))
+                    if (filterSettings.badUEmojis?.Count is not null and not 0 && filterSettings.badUEmojis.Any(s => message.Content.Contains(s)))
                     {
                         await context.FilterPunish("Bad emoji used", modSettings, filterSettings, null, warnSize: 0.8f);
                         return;
