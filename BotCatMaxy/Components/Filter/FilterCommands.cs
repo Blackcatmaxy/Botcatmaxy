@@ -31,26 +31,25 @@ namespace BotCatMaxy.Components.Filter
             var mutualGuilds = (Context.Message.Author as SocketUser).MutualGuilds.ToArray();
 
             var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the number next to the guild you want to check the filter info from");
+            guildsEmbed.WithTitle("Reply with the number corresponding to the guild you want to check the filter info from");
 
             for (int i = 0; i < mutualGuilds.Length; i++)
             {
-                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", mutualGuilds[i].Id);
+                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", $"ID: {mutualGuilds[i].Id}");
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
             while (true)
             {
                 var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
-                var reply = result.Value;
-                if (reply == null || reply.Content == "cancel")
+                if (result.Value?.Content is null or "cancel")
                 {
                     await ReplyAsync("You have timed out or canceled");
                     return;
                 }
                 try
                 {
-                    guild = mutualGuilds[ushort.Parse(reply.Content) - 1];
+                    guild = mutualGuilds[ushort.Parse(result.Value.Content) - 1];
                     break;
                 }
                 catch
@@ -67,7 +66,8 @@ namespace BotCatMaxy.Components.Filter
             string message = "";
 
             bool useExplicit = false;
-            if (extension != null && extension.ToLower() == "explicit" || extension.ToLower() == "e")
+            extension = extension?.ToLowerInvariant();
+            if (extension == "explicit" || extension == "e")
             {
                 if (guild.GetUser(Context.Message.Author.Id).CanWarn())
                 {
@@ -75,14 +75,22 @@ namespace BotCatMaxy.Components.Filter
                 }
                 else
                 {
-                    await ReplyAsync("You lack the permissions for viewing explicit bad words");
-                    return;
+                    await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
+                    var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+                    if (result.Value?.Content.Equals("!confirm", StringComparison.InvariantCultureIgnoreCase) ?? false)
+                    {
+                        useExplicit = true;
+                    }
+                    else
+                    {
+                        useExplicit = false;
+                    }
                 }
             }
 
             if (settings == null)
             {
-                embed.AddField("Moderation settings", "Are null", true);
+                embed.AddField("Filter settings", "Are null", true);
             }
             else
             {
@@ -155,7 +163,10 @@ namespace BotCatMaxy.Components.Filter
                     }
                 }
                 message = words.ListItems("\n");
-                embed.AddField("Badword euphemisms (not an exhaustive list)", message, false);
+                string listName;
+                if (useExplicit) listName = "Bad words with euphemisms";
+                else listName = "Bad word euphemisms (not an exhaustive list)";
+                embed.AddField(listName, message, false);
             }
 
             await ReplyAsync("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
