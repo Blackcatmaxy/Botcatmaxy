@@ -473,7 +473,7 @@ namespace BotCatMaxy
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.User == userRef.ID) ?? false)
             {
-                var query = "User is already tempbanned, are you use you want to ban?";
+                var query = "User is already tempbanned, are you sure you want to ban?";
                 var request = new ConfirmationBuilder()
                     .WithContent(new PageBuilder().WithText(query))
                     .Build();
@@ -490,7 +490,7 @@ namespace BotCatMaxy
                 await ReplyAsync("User has already been banned permanently");
                 return;
             }
-            await userRef.User?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
+            userRef.User?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
             Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);

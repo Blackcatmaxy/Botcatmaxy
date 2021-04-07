@@ -20,13 +20,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.x'
-        source-url: https://www.myget.org/F/discord-net/api/v3/index.json
-      env:
-          NUGET_AUTH_TOKEN: ${{secrets.NUGET_TOKEN}}
     - name: Restore dependencies
       run: dotnet restore
     - name: Setup token file
-      run: mv /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/BotCatMaxy/Properties/Tokens.targets
+      run: mv /home/runner/work/Botcatmaxy/Botcatmaxy/src/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/src/BotCatMaxy/Properties/Tokens.targets
     - name: Build
       run: dotnet build --no-restore
     - name: Test

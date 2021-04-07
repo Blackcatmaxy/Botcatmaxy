@@ -24,6 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BotCatMaxy\BotCatMaxy.csproj" />
+    <ProjectReference Include="..\src\BotCatMaxy\BotCatMaxy.csproj" />
   </ItemGroup>
 </Project>

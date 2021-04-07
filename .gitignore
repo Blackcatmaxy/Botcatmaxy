@@ -340,4 +340,4 @@ ASALocalRun/
 healthchecksdb
 
 # Tokens file
-/BotCatMaxy/Properties/Tokens.targets
+src/BotCatMaxy/Properties/Tokens.targets
