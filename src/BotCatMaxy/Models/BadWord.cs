@@ -7,6 +7,9 @@ using System.Linq;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// A single banned word
+    /// </summary>
     [BsonIgnoreExtraElements]
     public record BadWord(
         string Word = null,
@@ -14,11 +17,17 @@ namespace BotCatMaxy.Models
         float Size = 0.5f,
         bool PartOfWord = true);
 
+    /// <summary>
+    /// A collection of <seealso cref="BadWord"/> to store and load from the database
+    /// </summary>
     public class BadWordList : DataObject
     {
         public List<BadWord> badWords = new();
     }
 
+    /// <summary>
+    /// A class to load the groups of <seealso cref="BadWord"/>s for display
+    /// </summary>
     public class BadWords
     {
         public List<BadWord> all;

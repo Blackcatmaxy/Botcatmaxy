@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// Settings for the auto filter of individual Discord servers
+    /// </summary>
     public class FilterSettings : DataObject
     {
         public HashSet<ulong> channelsWithoutAutoMod = new();

@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// A single temporary action against a user
+    /// </summary>
     public record TempAct
     {
         public TempAct(ulong userID, TimeSpan length, string reason)
@@ -37,12 +40,19 @@ namespace BotCatMaxy.Models
         TempBan
     }
 
+    /// <summary>
+    /// A collection of <seealso cref="TempAct"/>s to store and load from the database,
+    /// entries removed at end of actions by <seealso cref="TempActions"/>
+    /// </summary>
     public class TempActionList : DataObject
     {
         public List<TempAct> tempBans = new();
         public List<TempAct> tempMutes = new();
     }
 
+    /// <summary>
+    /// A single <seealso cref="TempAct"/> labeled by its <seealso cref="TempActType"/>
+    /// </summary>
     public record TypedTempAct : TempAct
     {
         public TempActType Type { get; }

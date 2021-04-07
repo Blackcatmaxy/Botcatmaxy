@@ -4,6 +4,9 @@ using System.Collections.Generic    ;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// A single warning given to someone
+    /// </summary>
     public record Infraction
     {
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
@@ -13,6 +16,9 @@ namespace BotCatMaxy.Models
         public float Size { get; init; }
     }
 
+    /// <summary>
+    /// A collection of <seealso cref="Infraction"/>s to store and load from the database
+    /// </summary>
     [BsonIgnoreExtraElements]
     public class UserInfractions
     {

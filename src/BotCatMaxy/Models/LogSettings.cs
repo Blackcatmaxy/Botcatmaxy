@@ -3,6 +3,9 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// Settings for logging of messages inside of individual Discord servers
+    /// </summary>
     public class LogSettings : DataObject
     {
         [BsonId]

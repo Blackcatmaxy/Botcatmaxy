@@ -211,6 +211,9 @@ namespace BotCatMaxy.Data
         }
     }
 
+    /// <summary>
+    /// A class most of our DB objects wrap for easy load and saving
+    /// </summary>
     [BsonIgnoreExtraElements(Inherited = true)]
     public class DataObject
     {

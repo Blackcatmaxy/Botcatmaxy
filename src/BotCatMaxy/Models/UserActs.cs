@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// A single recorded act
+    /// </summary>
     public class ActRecord
     {
         public string type;
@@ -14,6 +17,9 @@ namespace BotCatMaxy.Models
         public TimeSpan length;
     }
 
+    /// <summary>
+    /// A collection of <seealso cref="ActRecord"/>s to store and load from the database,
+    /// </summary>
     public class UserActs
     {
         [BsonId]

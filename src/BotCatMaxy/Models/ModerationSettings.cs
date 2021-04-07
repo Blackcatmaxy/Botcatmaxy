@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace BotCatMaxy.Models
 {
+    /// <summary>
+    /// Settings for moderation of individual Discord servers
+    /// </summary>
     public class ModerationSettings : DataObject
     {
         public List<ulong> ableToWarn = new();
