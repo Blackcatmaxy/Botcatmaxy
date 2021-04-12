@@ -179,8 +179,9 @@ namespace BotCatMaxy.Startup
                 string msgContent = message.Content;
                 if (modSettings != null && filterSettings != null)
                 {
-                    if (filterSettings.channelsWithoutAutoMod != null && filterSettings.channelsWithoutAutoMod.Contains(chnl.Id))
-                        return; //Returns if channel is set as not using automod
+                    if (filterSettings.channelsWithoutAutoMod != null && filterSettings.channelsWithoutAutoMod.Contains(chnl.Id) //If channel has filter disabled
+                     || filterSettings.filterIgnored != null && filterSettings.filterIgnored.Intersect(gUser.RoleIds).Any()) //If user has filter ignored role
+                        return;
 
                     //Checks if a message contains too many "newlines"
                     if (filterSettings.maxNewLines != null)
