@@ -19,12 +19,12 @@ namespace BotCatMaxy.Components.Filter
     {
         readonly static char[] splitters = @"#.,/\|=_- ".ToCharArray();
 
-        public static (BadWord word, int? index) CheckForBadWords(this string message, BadWord[] badWords)
+        public static BadWord CheckForBadWords(this string message, BadWord[] badWords)
         {
-            if (badWords?.Length is null or 0) return (null, null);
+            if (badWords?.Length is null or 0) return null;
 
             //Checks for bad words
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder(message.Length);
             foreach (char c in message)
             {
                 switch (c)
@@ -59,22 +59,18 @@ namespace BotCatMaxy.Components.Filter
             }
 
             string strippedMessage = sb.ToString();
-            //splits string into words separated by space, '-' or '_'
+            //splits string into words separated the splitter characters
             string[] messageParts = message.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (BadWord badWord in badWords)
                 if (badWord.PartOfWord)
-                {
-                    int index = strippedMessage.IndexOf(badWord.Word, StringComparison.InvariantCultureIgnoreCase);
-                    if (index > -1)
-                        return (badWord, index);
-                }
-                else
-                    //If bad word is ignored inside of words
-                    foreach (string word in messageParts)
+                    if (strippedMessage.Contains(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
+                        return badWord;
+                else //When bad word is ignored inside of words
+                    foreach (string word in messageParts) //Then we go through and check if each word equals the bad word
                         if (word.Equals(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
-                            return (badWord, null);
-            return (null, null);
+                            return badWord;
+            return null;
         }
 
         public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null, float warnSize = 0.5f)
