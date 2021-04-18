@@ -108,17 +108,27 @@ namespace BotCatMaxy
             }
         }
 
+        /// <summary>
+        /// Humanizes a <see cref="TimeSpan"/> with a max unit of a day and a minimum of a second
+        /// </summary>
         public static string LimitedHumanize(this TimeSpan timeSpan, int precision = 2)
         {
             return timeSpan.Humanize(precision, maxUnit: Humanizer.Localisation.TimeUnit.Day, minUnit: Humanizer.Localisation.TimeUnit.Second);
         }
 
+        /// <summary>
+        /// Gets the <see cref="TimeSpan"/> of how long ago an <see cref="IMessage"/> was sent
+        /// </summary>
         public static TimeSpan GetTimeAgo(this IMessage message)
         {
             Contract.Requires(message != null);
             return DateTime.UtcNow - message.Timestamp;
         }
 
+        /// <summary>
+        /// Tries to get an <see cref="IGuildChannel"/>
+        /// </summary>
+        /// <returns>If the channel could be found</returns>
         public static bool TryGetChannel(this IGuild guild, ulong id, out IGuildChannel channel)
         {
             Contract.Requires(guild != null);
@@ -126,6 +136,10 @@ namespace BotCatMaxy
             return channel != null;
         }
 
+        /// <summary>
+        /// Tries to get an <see cref="ITextChannel"/>
+        /// </summary>
+        /// <returns>If the channel could be found</returns>
         public static bool TryGetTextChannel(this IGuild guild, ulong? id, out ITextChannel channel)
         {
             channel = null;
@@ -134,6 +148,9 @@ namespace BotCatMaxy
             return channel != null;
         }
 
+        /// <summary>
+        /// Formats <see cref="UserRef"/> to a string depending on options set
+        /// </summary>
         public static string Name(this UserRef userRef, bool showIDWithUser = false, bool showRealName = false)
         {
             if (userRef == null) return "``ERROR``";
@@ -141,7 +158,7 @@ namespace BotCatMaxy
             if (userRef.GuildUser?.Nickname != null)
             {
                 name = userRef.GuildUser.Nickname.StrippedOfPing();
-                if (showRealName) //done since people with nicknames might have an innapropriate name under the nickname
+                if (showRealName) //done since people with nicknames might have an inappropriate name under the nickname
                     name += $" aka {userRef.GuildUser.Username.StrippedOfPing()}";
             }
             if (name == null && userRef.User != null) name = userRef.User.Username.StrippedOfPing();
@@ -153,6 +170,9 @@ namespace BotCatMaxy
             return $"User with ID:{userRef.ID}";
         }
 
+        /// <summary>
+        /// Tries to mention a <see cref="UserRef"/>, otherwise returns their ID
+        /// </summary>
         public static string Mention(this UserRef userRef)
         {
             if (userRef == null) return "``ERROR``";
@@ -160,6 +180,9 @@ namespace BotCatMaxy
             return $"User with ID:{userRef.ID}";
         }
 
+        /// <summary>
+        /// Sets the author of an <see cref="EmbedBuilder"/> using a <see cref="UserRef"/>
+        /// </summary>
         public static EmbedBuilder WithAuthor(this EmbedBuilder embed, UserRef userRef)
         {
             Contract.Requires(embed != null);
@@ -168,6 +191,9 @@ namespace BotCatMaxy
             return embed;
         }
 
+        /// <summary>
+        /// Saves a <see cref="TempAct"/> to a users record
+        /// </summary>
         public static void RecordAct(this ulong userID, IGuild guild, TempAct tempAct, string type, string loglink = null)
         {
             var acts = userID.LoadActRecord(guild, true);
@@ -182,6 +208,9 @@ namespace BotCatMaxy
             userID.SaveActRecord(guild, acts);
         }
 
+        /// <summary>
+        /// Tries repeatedly to get an <see cref="IUser"/> even if there's a common 5XX error
+        /// </summary>
         public static async Task<IUser> SuperGetUser(this DiscordSocketClient client, ulong ID)
         {
             IUser user = client.GetUser(ID);
@@ -195,6 +224,10 @@ namespace BotCatMaxy
         }
 
         public static readonly int[] ignoredHTTPErrors = { 500, 503, 530 };
+        
+        /// <summary>
+        /// Tries repeatedly to get T even if there's a common 5XX error
+        /// </summary>
         public static async Task<T> SuperGet<T>(this Func<Task<T>> action)
         {
             var result = await Policy
@@ -204,6 +237,9 @@ namespace BotCatMaxy
             return result.FinalHandledResult;
         }
 
+        /// <summary>
+        /// Tries repeatedly to get an <see cref="IGuildUser"/> even if there's a common 5XX error
+        /// </summary>
         public static async Task<IGuildUser> SuperGetUser(this RestGuild guild, ulong ID)
         {
             var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
@@ -227,6 +263,9 @@ namespace BotCatMaxy
             throw new Exception("SuperGetUser ran out of tries without throwing proper exception?");
         }
 
+        /// <summary>
+        /// Tries repeatedly to get a <see cref="RestGuild"/> even if there's a common 5XX error
+        /// </summary>
         public static async Task<RestGuild> SuperGetRestGuild(this DiscordRestClient client, ulong ID)
         {
             var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
@@ -237,6 +276,9 @@ namespace BotCatMaxy
             return await func.SuperGet();
         }
 
+        /// <summary>
+        /// Tries repeatedly to get a <see cref="RestInviteMetadata"/> even if there's a common 5XX error
+        /// </summary>
         public static async Task<RestInviteMetadata> SuperGetInviteDataAsync(this DiscordSocketClient client, string invite)
         {
             var requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };

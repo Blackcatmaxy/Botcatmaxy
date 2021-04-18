@@ -10,6 +10,9 @@ namespace BotCatMaxy
 {
     public static class NotifyUtilities
     {
+        /// <summary>
+        /// Embeds a DM to a user about an action with a reason
+        /// </summary>
         public static async Task Notify(this IUser user, string action, string reason, IGuild guild, IUser author = null, Color color = default)
         {
             if (color == default) color = Color.LightGrey;
@@ -22,6 +25,10 @@ namespace BotCatMaxy
             await user.TryNotify(embed.Build());
         }
 
+        /// <summary>
+        /// Sends a simple message to a user's DMs
+        /// </summary>
+        /// <returns>if the message succeeded or not</returns>
         public static async Task<bool> TryNotify(this IUser user, string message)
         {
             try
@@ -36,6 +43,10 @@ namespace BotCatMaxy
             }
         }
 
+        /// <summary>
+        /// Embeds a message to a user's DMs
+        /// </summary>
+        /// <returns>if the message succeeded or not</returns>
         public static async Task<bool> TryNotify(this IUser user, Embed embed)
         {
             try

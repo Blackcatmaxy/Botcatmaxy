@@ -13,7 +13,9 @@ namespace BotCatMaxy
 {
     public static class PermissionUtilities
     {
-        /// <returns>If a guild user has administrator permission or is owner</returns>
+        /// <summary>
+        /// If an <see cref="IGuildUser"/> has administrator permission or is owner
+        /// </summary>
         public static bool HasAdmin(this IGuildUser user)
         {
             if (user == null) return false;
@@ -21,7 +23,9 @@ namespace BotCatMaxy
             return user.GuildPermissions.Administrator;
         }
 
-        /// <returns>If a guild user has kick permission or a role in warn ability list</returns>
+        /// <summary>
+        /// If an <see cref="IGuildUser"/> has kick permission or a role in warn ability list
+        /// </summary>
         public static bool CanWarn(this IGuildUser user)
         {
             if (user == null) return false;
@@ -42,7 +46,12 @@ namespace BotCatMaxy
 
             return false;
         }
-
+        
+        /// <summary>
+        /// If the focus has the role position to act on the comparer
+        /// </summary>
+        /// <param name="focus">If true, has the higher role</param>
+        /// <param name="comparer">If true, has the lower role</param>
         public static bool CanActOn(this IGuildUser focus, IGuildUser comparer)
         {
             var focusPositions = focus.GetRoles()
@@ -53,6 +62,9 @@ namespace BotCatMaxy
             return focusPositions.Max() > comparerPositions.Max();
         }
 
+        /// <summary>
+        /// Returns all the roles of a <see cref="IGuildUser"/>
+        /// </summary>
         public static IEnumerable<IRole> GetRoles(this IGuildUser user)
         {
             if (user is SocketGuildUser gUser)
@@ -61,7 +73,10 @@ namespace BotCatMaxy
             return user.RoleIds.Select(id =>
                 user.Guild.Roles.First(role => role.Id == id));
         }
-
+        
+        /// <summary>
+        /// Returns the role position of an <see cref="IGuildUser"/>
+        /// </summary>
         public static int GetHierarchy(this IGuildUser user)
         {
             if (user is SocketGuildUser socketUser)
@@ -74,6 +89,9 @@ namespace BotCatMaxy
             return user.RoleIds.Max(role => user.Guild.GetRole(role).Position);
         }
 
+        /// <summary>
+        /// Returns the mutual guilds of a <see cref="IGuildUser"/>
+        /// </summary>
         public static async Task<IReadOnlyCollection<IGuild>> GetMutualGuildsAsync(this IUser user,
             IDiscordClient client)
         {
