@@ -13,45 +13,33 @@ namespace BotCatMaxy
 {
     public static class PermissionUtilities
     {
+        /// <returns>If a guild user has administrator permission or is owner</returns>
         public static bool HasAdmin(this IGuildUser user)
         {
             if (user == null) return false;
-            if (user.Guild.OwnerId == user.Id)
-            {
-                return true;
-            }
-
-            foreach (ulong id in user.RoleIds)
-            {
-                if (user.Guild.Roles.First(role => role.Id == id)
-                    .Permissions.Administrator)
-                    return true;
-            }
-            return false;
+            
+            return user.GuildPermissions.Administrator;
         }
 
+        /// <returns>If a guild user has kick permission or a role in warn ability list</returns>
         public static bool CanWarn(this IGuildUser user)
         {
-            if (HasAdmin(user))
+            if (user == null) return false;
+
+            if (user.GuildPermissions.KickMembers)
             {
                 return true;
             }
 
-            foreach (IRole role in user.GetRoles())
-            {
-                if (role.Permissions.KickMembers)
-                {
-                    return true;
-                }
-            }
-            ModerationSettings settings = user.Guild.LoadFromFile<ModerationSettings>();
-            if (settings != null && settings.ableToWarn != null && settings.ableToWarn.Count > 0)
+            var settings = user.Guild.LoadFromFile<ModerationSettings>();
+            if (settings?.ableToWarn != null && settings.ableToWarn.Count > 0)
             {
                 if (user.RoleIds.Intersect(settings.ableToWarn).Any())
                 {
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -70,9 +58,7 @@ namespace BotCatMaxy
             var comparerPositions = comparer.GetRoles()
                 .Select(role => role.Position);
 
-            if (focusPositions.Max() > comparerPositions.Max())
-                return true;
-            return false;
+            return focusPositions.Max() > comparerPositions.Max();
         }
 
         public static IEnumerable<IRole> GetRoles(this IGuildUser user)
@@ -96,17 +82,18 @@ namespace BotCatMaxy
             return user.RoleIds.Max(role => user.Guild.GetRole(role).Position);
         }
 
-        public static async Task<IReadOnlyCollection<IGuild>> GetMutualGuildsAsync(this IUser user, IDiscordClient client)
+        public static async Task<IReadOnlyCollection<IGuild>> GetMutualGuildsAsync(this IUser user,
+            IDiscordClient client)
         {
             if (user is SocketUser socketUser)
                 return socketUser.MutualGuilds;
 
             var guilds = await client.GetGuildsAsync();
             var result = new List<IGuild>(1);
-            foreach (var guild in guilds)
+            foreach (IGuild guild in guilds)
                 if (await guild.GetUserAsync(user.Id) != null)
                     result.Add(guild);
-            return result.ToImmutableArray();
+            return result.AsReadOnly();
         }
     }
 }
