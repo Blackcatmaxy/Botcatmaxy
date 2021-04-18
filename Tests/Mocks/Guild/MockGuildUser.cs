@@ -22,7 +22,27 @@ namespace Tests.Mocks.Guild
 
         public string Nickname => throw new NotImplementedException();
 
-        public GuildPermissions GuildPermissions => throw new NotImplementedException();
+        public GuildPermissions GuildPermissions
+        {
+            get
+            {
+                ulong resolvedPermissions = 0;
+                if (Id == Guild.OwnerId)
+                    resolvedPermissions = GuildPermissions.All.RawValue;
+                else
+                {
+                    foreach (ulong roleId in RoleIds)
+                    {
+                        resolvedPermissions |= Guild.GetRole(roleId)?.Permissions.RawValue ?? 0;
+                    }
+
+                    const ulong flag = (ulong) GuildPermission.Administrator;
+                    if ((resolvedPermissions & flag) == flag)
+                        resolvedPermissions = GuildPermissions.All.RawValue;
+                }
+                return new GuildPermissions(resolvedPermissions);
+            }
+        }
 
         public IGuild Guild { get; set; }
 
