@@ -86,7 +86,7 @@ namespace BotCatMaxy.Startup
                 if (gUser.CantBeWarned() || !gUser.CanActOn(currentUser))
                     return;
 
-                BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray());
+                BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray()).word;
                 if (detectedBadWord == null) return;
 
                 LogSettings logSettings = guild.LoadFromFile<LogSettings>(false);
@@ -267,18 +267,18 @@ namespace BotCatMaxy.Startup
                         }
                     }
                 } //End of stuff from mod settings
-
-                var detectedBadWord = msgContent.CheckForBadWords(badWords?.ToArray());
+                var result = msgContent.CheckForBadWords(badWords?.ToArray());
+                var detectedBadWord = result.word;
                 if (detectedBadWord != null)
                 {
                     if (!string.IsNullOrEmpty(detectedBadWord.Euphemism))
                     {
-                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, filterSettings, detectedBadWord.Word, null, detectedBadWord.Size);
+                        await context.FilterPunish($"Bad word used ({detectedBadWord.Euphemism})", modSettings, filterSettings, detectedBadWord.Word, result.pos, detectedBadWord.Size);
                         return;
                     }
                     else
                     {
-                        await context.FilterPunish("Bad word used", modSettings, filterSettings, detectedBadWord.Word, null, detectedBadWord.Size);
+                        await context.FilterPunish("Bad word used", modSettings, filterSettings, detectedBadWord.Word, result.pos, detectedBadWord.Size);
                         return;
                     }
                 }

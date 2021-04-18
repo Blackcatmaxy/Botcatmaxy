@@ -19,9 +19,9 @@ namespace BotCatMaxy.Components.Filter
     {
         readonly static char[] splitters = @"#.,/\|=_- ".ToCharArray();
 
-        public static BadWord CheckForBadWords(this string message, BadWord[] badWords)
+        public static (BadWord word, int? pos) CheckForBadWords(this string message, BadWord[] badWords)
         {
-            if (badWords?.Length is null or 0) return null;
+            if (badWords?.Length is null or 0) return (null, null);
 
             //Checks for bad words
             var sb = new StringBuilder(message.Length);
@@ -64,13 +64,23 @@ namespace BotCatMaxy.Components.Filter
 
             foreach (BadWord badWord in badWords)
                 if (badWord.PartOfWord)
-                    if (strippedMessage.Contains(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
-                        return badWord;
+                {
+                    //Need to override index system here since we strip characters
+                    int index = strippedMessage.IndexOf(badWord.Word, StringComparison.InvariantCultureIgnoreCase);
+                    if (index > -1)
+                    {
+                        string filtered = message.Substring(index, badWord.Word.Length); //Filtered text doesn't have to equal explicit word because of substitute characters
+                        index = message.IndexOf(filtered, StringComparison.InvariantCultureIgnoreCase);
+                        return (badWord, index);
+                    }
+                }
                 else //When bad word is ignored inside of words
                     foreach (string word in messageParts) //Then we go through and check if each word equals the bad word
                         if (word.Equals(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
-                            return badWord;
-            return null;
+                        {
+                            return (badWord, null);
+                        }
+            return (null, null);
         }
 
         public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null, float warnSize = 0.5f)
@@ -89,7 +99,7 @@ namespace BotCatMaxy.Components.Filter
                 }
                 else
                 {
-                    int badTextStart = index ?? content.IndexOf(badText);
+                    int badTextStart = index ?? content.IndexOf(badText, StringComparison.InvariantCultureIgnoreCase);
                     int badTextEnd = badTextStart + badText.Length;
                     content = content.Insert(badTextStart, "**[");
                     content = content.Insert(badTextEnd + 3, "]**");

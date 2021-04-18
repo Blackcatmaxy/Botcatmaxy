@@ -59,10 +59,11 @@ namespace Tests
         [InlineData("We like calzones", "calzone")]
         [InlineData("Somethings is here", null)]
         [InlineData("$ubst1tuti0n", "Substitution")]
+        [InlineData("I'm a calz0ne", "calzone")]
         public async Task BadWordTheory(string input, string expected)
         {
-            var result = input.CheckForBadWords(badWords).word;
-            Assert.Equal(expected, result?.Word, ignoreCase: true);
+            var result = input.CheckForBadWords(badWords);
+            Assert.Equal(expected, result.word?.Word, ignoreCase: true);
 
             var channel = (MockTextChannel)await channelTask;
             var users = await guild.GetUsersAsync();
