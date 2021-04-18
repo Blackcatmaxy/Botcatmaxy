@@ -49,7 +49,7 @@ namespace BotCatMaxy.Moderation
         public static async Task<WarnResult> Warn(this IGuildUser user, float size, string reason, ITextChannel channel, string logLink = null)
         {
 
-            if (user.CantBeWarned())
+            if (user.HasAdmin())
             {
                 return new WarnResult("This person can't be warned");
             }

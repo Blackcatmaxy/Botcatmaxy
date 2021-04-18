@@ -43,14 +43,6 @@ namespace BotCatMaxy
             return false;
         }
 
-        //Naming violation, should be WarnImmune
-        public static bool CantBeWarned(this IGuildUser user)
-        {
-            if (user == null) return false;
-            if (user.HasAdmin()) return true;
-            return false;
-        }
-
         public static bool CanActOn(this IGuildUser focus, IGuildUser comparer)
         {
             var focusPositions = focus.GetRoles()

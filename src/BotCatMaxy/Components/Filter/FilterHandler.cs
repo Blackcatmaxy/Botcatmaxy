@@ -83,7 +83,7 @@ namespace BotCatMaxy.Startup
                 if (settings?.moderateNames != true) return;
 
                 IGuildUser gUser = user as IGuildUser ?? await guild.GetUserAsync(user.Id);
-                if (gUser.CantBeWarned() || !gUser.CanActOn(currentUser))
+                if (gUser.HasAdmin() || !currentUser.CanActOn(gUser))
                     return;
 
                 BadWord detectedBadWord = name.CheckForBadWords(guild.LoadFromFile<BadWordList>(false)?.badWords.ToArray()).word;
@@ -142,8 +142,7 @@ namespace BotCatMaxy.Startup
                 ReactionContext context = new ReactionContext(client, message);
                 var settings = guild.LoadFromFile<FilterSettings>(false);
                 SocketGuildUser gUser = guild.GetUser(reaction.UserId);
-                var Guild = chnl.Guild;
-                if (settings?.badUEmojis?.Count == null || settings.badUEmojis.Count == 0 || (reaction.User.Value as SocketGuildUser).CantBeWarned() || reaction.User.Value.IsBot)
+                if (settings?.badUEmojis?.Count == null || settings.badUEmojis.Count == 0 || (reaction.User.Value as SocketGuildUser).HasAdmin() || reaction.User.Value.IsBot)
                 {
                     return;
                 }
@@ -167,7 +166,7 @@ namespace BotCatMaxy.Startup
             }
             context ??= new SocketCommandContext((DiscordSocketClient)client, (SocketUserMessage)message);
             IGuildUser gUser = message.Author as IGuildUser;
-            if (chnl?.Guild == null || gUser.CantBeWarned()) return;
+            if (chnl?.Guild == null || gUser.HasAdmin()) return;
             var guild = chnl.Guild;
 
             try
