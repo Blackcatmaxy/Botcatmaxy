@@ -165,13 +165,13 @@ namespace BotCatMaxy.Startup
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
             context ??= new SocketCommandContext((DiscordSocketClient)client, (SocketUserMessage)message);
-            IGuildUser gUser = message.Author as IGuildUser;
-            if (chnl?.Guild == null || gUser.HasAdmin()) return;
-            var guild = chnl.Guild;
+            var gUser = message.Author as IGuildUser;
+            if (gUser?.Guild == null || gUser.HasAdmin()) return;
+            IGuild guild = chnl.Guild;
 
             try
             {
-                ModerationSettings modSettings = guild.LoadFromFile<ModerationSettings>();
+                var modSettings = guild.LoadFromFile<ModerationSettings>();
                 var filterSettings = guild.LoadFromFile<FilterSettings>();
                 List<BadWord> badWords = guild.LoadFromFile<BadWordList>()?.badWords;
 
