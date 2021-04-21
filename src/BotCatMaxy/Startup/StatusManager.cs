@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System;
+using Discord;
 using Discord.WebSocket;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,26 +30,33 @@ namespace BotCatMaxy
 
         public async Task CheckStatus()
         {
-            string status = null;
-            switch (statusPos)
+            try
             {
-                case 0:
-                    status = $"version {version}";
-                    statusPos++;
-                    break;
-                case 1:
-                    status = "with info at https://bot.blackcatmaxy.com";
-                    statusPos++;
-                    break;
-                case 2:
-                    status = "Donate at https://donate.blackcatmaxy.com to help keep the bot running";
-                    statusPos = 0;
-                    break;
-                default:
-                    await new LogMessage(LogSeverity.Error, "Status", "Reached invalid status").Log();
-                    break;
+                string status = null;
+                switch (statusPos)
+                {
+                    case 0:
+                        status = $"version {version}";
+                        statusPos++;
+                        break;
+                    case 1:
+                        status = "with info at https://bot.blackcatmaxy.com";
+                        statusPos++;
+                        break;
+                    case 2:
+                        status = "Donate at https://donate.blackcatmaxy.com to help keep the bot running";
+                        statusPos = 0;
+                        break;
+                    default:
+                        await new LogMessage(LogSeverity.Error, "Status", "Reached invalid status").Log();
+                        break;
+                }
+                await client.SetGameAsync(status);
             }
-            await client.SetGameAsync(status);
+            catch (Exception e)
+            {
+                await new LogMessage(LogSeverity.Error, "Status", "Something went wrong setting status", e).Log();
+            }
         }
     }
 }
