@@ -69,52 +69,77 @@ namespace BotCatMaxy.Components.Filter
                     int index = strippedMessage.IndexOf(badWord.Word, StringComparison.InvariantCultureIgnoreCase);
                     if (index > -1)
                     {
-                        string filtered = message.Substring(index, badWord.Word.Length); //Filtered text doesn't have to equal explicit word because of substitute characters
-                        index = message.IndexOf(filtered, StringComparison.InvariantCultureIgnoreCase);
-                        return (badWord, index);
+                        try
+                        {
+                            string filtered =
+                                strippedMessage.Substring(index, badWord.Word.Length); //Filtered text doesn't have to equal explicit word because of substitute characters
+                            index = message.IndexOf(filtered, StringComparison.InvariantCultureIgnoreCase);
+                            return (badWord, index);
+                        }
+                        catch (IndexOutOfRangeException e)
+                        {
+#if DEBUG
+                            throw;                   
+#endif
+                            new LogMessage(LogSeverity.Error, "Filter", "Highlight failed in filter", e).Log();
+                            return (badWord, null);
+                        }
                     }
                 }
                 else //When bad word is ignored inside of words
-                    foreach (string word in messageParts) //Then we go through and check if each word equals the bad word
+                    foreach (string word in
+                        messageParts) //Then we go through and check if each word equals the bad word
                         if (word.Equals(badWord.Word, StringComparison.InvariantCultureIgnoreCase))
                         {
                             return (badWord, null);
                         }
+
             return (null, null);
         }
-
-        public static async Task FilterPunish(this ICommandContext context, string reason, ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null, float warnSize = 0.5f)
+        
+public static string HighlightFiltered(string content, string badText, int? index)
         {
-            await context.FilterPunish(context.User as IGuildUser, reason, modSettings, filterSettings, badText, index: index, delete: true, warnSize: warnSize);
-        }
-
-        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason, ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null, bool delete = true, float warnSize = 0.5f)
-        {
-            string content = context.Message.Content;
-            if (badText != null) //will be null in case of reaction warn where reason speaks for itself
+            if (badText == null) return null;
+            try
             {
                 if (badText == content)
                 {
-                    content = $"**[{badText}]**";
+                    return $"**[{badText}]**";
                 }
-                else
-                {
-                    int badTextStart = index ?? content.IndexOf(badText, StringComparison.InvariantCultureIgnoreCase);
-                    int badTextEnd = badTextStart + badText.Length;
-                    content = content.Insert(badTextStart, "**[");
-                    content = content.Insert(badTextEnd + 3, "]**");
-                }
-            }
-            else
-                content = null;
 
-            string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold, authorOveride: user, textOverride: content);
+                int badTextStart = index ?? content.IndexOf(badText, StringComparison.InvariantCultureIgnoreCase);
+                int badTextEnd = badTextStart + badText.Length;
+                content = content.Insert(badTextStart, "**[");
+                return content.Insert(badTextEnd + 3, "]**");
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return null;
+            }
+        }
+
+        public static async Task FilterPunish(this ICommandContext context, string reason,
+            ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null,
+            float warnSize = 0.5f)
+        {
+            await context.FilterPunish(context.User as IGuildUser, reason, modSettings, filterSettings, badText,
+                index: index, delete: true, warnSize: warnSize);
+        }
+        
+        public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason,
+            ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null,
+            bool delete = true, float warnSize = 0.5f)
+        {
+            string highlighted = HighlightFiltered(context.Message.Content, badText, index);
+            string jumpLink = await DiscordLogging.LogMessage(reason, context.Message, context.Guild, color: Color.Gold,
+                authorOveride: user, textOverride: highlighted);
             await user.Warn(warnSize, reason, context.Channel as ITextChannel, logLink: jumpLink);
 
-            if (filterSettings?.announcementChannels?.Contains(context.Channel.Id) ?? false) //If this channel is an anouncement channel
+            if (filterSettings?.announcementChannels?.Contains(context.Channel.Id) ??
+                false) //If this channel is an anouncement channel
                 return;
 
-            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, modSettings, content);
+            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, modSettings, highlighted);
 
             if (delete)
             {
@@ -126,14 +151,17 @@ namespace BotCatMaxy.Components.Filter
                 catch (Exception e)
                 {
                     await new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e).Log();
-                    await warnMessage?.Result?.ModifyAsync(msg => msg.Content += ", something went wrong removing the message.");
+                    await warnMessage?.Result?.ModifyAsync(msg =>
+                        msg.Content += ", something went wrong removing the message.");
                 }
             }
         }
 
-        public const string notifyInfoRegex = @"<@!?(\d+)> has been given their (\d+)\w+-?(?:\d+\w+)? infraction because of (.+)";
+        public const string notifyInfoRegex =
+            @"<@!?(\d+)> has been given their (\d+)\w+-?(?:\d+\w+)? infraction because of (.+)";
 
-        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, IGuildUser user, string reason, ModerationSettings settings, string highlight)
+        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, IGuildUser user,
+            string reason, ModerationSettings settings, string highlight)
         {
             Task<IUserMessage> warnMessage = null;
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
@@ -148,12 +176,16 @@ namespace BotCatMaxy.Components.Filter
             if (highlight != null) embed.WithDescription(highlight);
             await user.TryNotify(embed.Build());
 
-            var messages = (await context.Channel.GetMessagesAsync(5).FlattenAsync()).Where(msg => msg.Author.Id == context.Client.CurrentUser.Id);
+            var messages =
+                (await context.Channel.GetMessagesAsync(5).FlattenAsync()).Where(msg =>
+                    msg.Author.Id == context.Client.CurrentUser.Id);
             //If need to go from "@person has been given their 3rd infractions because of fdsfd" to "@person has been given their 3rd-4th infractions because of fdsfd"
             if (messages.MatchInMessages(user.Id, out Match match, out IMessage message))
             {
                 int oldInfraction = int.Parse(match.Groups[2].Value);
-                await (message as IUserMessage).ModifyAsync(msg => msg.Content = $"{user.Mention} has been given their {oldInfraction.Suffix()}-{infractionAmount} infraction because of {reason}");
+                await (message as IUserMessage).ModifyAsync(msg =>
+                    msg.Content =
+                        $"{user.Mention} has been given their {oldInfraction.Suffix()}-{infractionAmount} infraction because of {reason}");
                 return null;
             }
             else
@@ -169,7 +201,8 @@ namespace BotCatMaxy.Components.Filter
             }
         }
 
-        public static bool MatchInMessages(this IEnumerable<IMessage> messages, ulong userID, out Match match, out IMessage successMessage)
+        public static bool MatchInMessages(this IEnumerable<IMessage> messages, ulong userID, out Match match,
+            out IMessage successMessage)
         {
             match = null;
             successMessage = null;

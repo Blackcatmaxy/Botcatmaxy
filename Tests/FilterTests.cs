@@ -56,14 +56,16 @@ namespace Tests
         }
 
         [Theory]
-        [InlineData("We like calzones", "calzone")]
-        [InlineData("Somethings is here", null)]
-        [InlineData("$ubst1tuti0n", "Substitution")]
-        [InlineData("I'm a calz0ne", "calzone")]
-        public async Task BadWordTheory(string input, string expected)
+        [InlineData("We like calzones", "calzone", "We like **[calzone]**s")]
+        [InlineData("Somethings is here", null, null)]
+        [InlineData("$ubst1tuti0n", "Substitution", null)]
+        [InlineData("I'm a calzone", "calzone", "I'm a **[calzone]**")]
+        [InlineData("This is a calz0ne", "calzone", null)]
+        [InlineData("I'm a calz0ne", "calzone", null)]
+        public async Task BadWordTheory(string input, string detected, string highlighted)
         {
             var result = input.CheckForBadWords(badWords);
-            Assert.Equal(expected, result.word?.Word, ignoreCase: true);
+            Assert.Equal(detected, result.word?.Word, ignoreCase: true);
 
             var channel = (MockTextChannel)await channelTask;
             var users = await guild.GetUsersAsync();
@@ -71,11 +73,12 @@ namespace Tests
             var message = channel.SendMessageAsOther(input, testee);
             var context = new MockCommandContext(client, message);
             await filter.CheckMessage(message, context);
-            if (expected != null)
+            if (detected != null)
             {
-                var infractons = testee.LoadInfractions(false);
-                Assert.NotNull(infractons);
-                Assert.NotEmpty(infractons);
+                var infractions = testee.LoadInfractions(false);
+                Assert.NotNull(infractions);
+                Assert.NotEmpty(infractions);
+                Assert.Equal(FilterUtilities.HighlightFiltered(input, detected, result.pos), highlighted);
             }
         }
 
