@@ -3,12 +3,10 @@ using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using BotCatMaxy.Moderation;
 using Discord;
-using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using Humanizer;
 using Polly;
-using Polly.Retry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,8 +20,6 @@ namespace BotCatMaxy
         readonly DiscordSocketClient client;
         public static CurrentTempActionInfo currentInfo = new CurrentTempActionInfo();
         public static CachedTempActionInfo cachedInfo = new CachedTempActionInfo();
-        private static readonly int[] ignoredHTTPErrors = { 500, 503, 530 };
-        private static AsyncRetryPolicy retryPolicy;
         private Timer timer;
 
         public TempActions(DiscordSocketClient client)
@@ -31,9 +27,6 @@ namespace BotCatMaxy
             this.client = client;
             client.Ready += Ready;
             client.UserJoined += CheckNewUser;
-            retryPolicy = Policy
-                .Handle<HttpException>(e => ignoredHTTPErrors.Contains((int)e.HttpCode))
-                .RetryAsync(3);
         }
 
         private async Task Ready()
@@ -87,11 +80,10 @@ namespace BotCatMaxy
                             {
                                 try
                                 {
-                                    var banResult = await retryPolicy.ExecuteAndCaptureAsync(async () => await sockGuild.GetBanAsync(tempBan.User, requestOptions));
-                                    RestBan ban = banResult.FinalHandledResult;
+                                    RestBan ban = await sockGuild.GetBanAsync(tempBan.User, requestOptions);
                                     if (ban == null)
                                     { //If manual unban
-                                        var user = await client.Rest.GetUserAsync(tempBan.User, requestOptions);
+                                        var user = await client.Rest.GetUserAsync(tempBan.User);
                                         currentInfo.editedBans.Remove(tempBan);
                                         user?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");
                                         //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
@@ -103,7 +95,7 @@ namespace BotCatMaxy
                                     else if (DateTime.UtcNow >= tempBan.DateBanned.Add(tempBan.Length))
                                     {
                                         RestUser rUser = ban.User;
-                                        await retryPolicy.ExecuteAsync(async () => await sockGuild.RemoveBanAsync(tempBan.User, requestOptions));
+                                        await sockGuild.RemoveBanAsync(tempBan.User, requestOptions);
                                         currentInfo.editedBans.Remove(tempBan);
                                         DiscordLogging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.Reason, tempBan.Length);
                                     }
@@ -146,7 +138,7 @@ namespace BotCatMaxy
                                     { //Normal mute end
                                         if (gUser != null)
                                         {
-                                            await retryPolicy.ExecuteAsync(async () => await gUser.RemoveRoleAsync(mutedRole, requestOptions));
+                                            await gUser.RemoveRoleAsync(mutedRole, requestOptions);
                                         } // if user not in guild || if user doesn't contain muted role (successfully removed?
                                         if (gUser == null || !gUser.RoleIds.Contains(settings.mutedRole))
                                         { //Doesn't remove tempmute if unmuting fails
@@ -205,13 +197,11 @@ namespace BotCatMaxy
 
             currentInfo.checking = true;
             DateTime start = DateTime.UtcNow;
-            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) =>
-            {
-                await new LogMessage(LogSeverity.Critical, "TempAct",
-                    $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
-                //Won't continue to below so have to do this?
-                ResetInfo(start);
-            });
+            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) => {
+                    await new LogMessage(LogSeverity.Critical, "TempAct",
+                        $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
+                    //Won't continue to below so have to do this?
+                    ResetInfo(start); });
             await timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(client, ct: ct), CancellationToken.None, false);
             //Won't continue if above times out?
             ResetInfo(start);
