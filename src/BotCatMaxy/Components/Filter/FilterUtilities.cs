@@ -18,10 +18,14 @@ namespace BotCatMaxy.Components.Filter
     public static class FilterUtilities
     {
         readonly static char[] splitters = @"#.,/\|=_- ".ToCharArray();
+        readonly static Regex linkRegularExpression = new(@"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", RegexOptions.IgnoreCase);
 
         public static (BadWord word, int? pos) CheckForBadWords(this string message, BadWord[] badWords)
         {
             if (badWords?.Length is null or 0) return (null, null);
+
+            //Remove links from the message
+            message = linkRegularExpression.Replace(message, "");
 
             //Checks for bad words
             var sb = new StringBuilder(message.Length);
