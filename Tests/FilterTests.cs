@@ -62,6 +62,7 @@ namespace Tests
         [InlineData("I'm a calzone", "calzone", "I'm a **[calzone]**")]
         [InlineData("This is a calz0ne", "calzone", null)]
         [InlineData("I'm a calz0ne", "calzone", null)]
+        [InlineData("https://imgur.com/ac4lz0ne", null, null)]
         public async Task BadWordTheory(string input, string detected, string highlighted)
         {
             var result = input.CheckForBadWords(badWords);
