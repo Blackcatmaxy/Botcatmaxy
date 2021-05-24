@@ -22,8 +22,6 @@ jobs:
         dotnet-version: '5.0.x'
     - name: Restore dependencies
       run: dotnet restore
-    - name: Setup token file
-      run: mv /home/runner/work/Botcatmaxy/Botcatmaxy/src/BotCatMaxy/Properties/Tokens.targets.template /home/runner/work/Botcatmaxy/Botcatmaxy/src/BotCatMaxy/Properties/Tokens.targets
     - name: Build
       run: dotnet build --no-restore
     - name: Test
