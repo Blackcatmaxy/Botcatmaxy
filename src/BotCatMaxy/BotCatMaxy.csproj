@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish" InitialTargets="WriteLaunchers">
+﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish">
   <PropertyGroup>
     <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</SourceRevisionId>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <StartupObject>BotCatMaxy.MainClass</StartupObject>
+    <StartupObject>BotCatMaxy.Program</StartupObject>
     <AssemblyName>BotCatMaxy</AssemblyName>
     <RepositoryUrl>https://github.com/Blackcatmaxy/Botcatmaxy/</RepositoryUrl>
     <Authors>https://github.com/Blackcatmaxy/Botcatmaxy/graphs/contributors</Authors>
@@ -12,15 +12,22 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
+    <None Update="Properties\BotCatMaxy*.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Properties\BotCatMaxy.DEBUG.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Discord.Addons.Hosting" Version="3.1.1" />
     <PackageReference Include="Discord.Addons.Preconditions" Version="2.2.0-dev3" />
     <PackageReference Include="Discord.InteractivityAddon" Version="2.1.1" />
     <PackageReference Include="Discord.Net" Version="2.3.1" />
@@ -28,18 +35,14 @@
     <PackageReference Include="Discord.Net.WebSocket" Version="2.3.1" />
     <PackageReference Include="DotNetEnv" Version="2.1.1" />
     <PackageReference Include="Humanizer.Core" Version="2.8.26" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.12.2" />
     <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="4.1.2" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
     <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
   </ItemGroup>
-
-  <Import Condition="$(IsBuildAction)==''" Project="Properties\Tokens.targets" />
-
-  <Target Condition="$(IsBuildAction)==''" Name="WriteLaunchers" AfterTargets="CopyFilesToOutputDirectory">
-    <Message Importance="High" Text="$(FileLines)" />
-    <WriteLinesToFile File="$(OutputPath)$(AssemblyName).env" Overwrite="true" Lines="$(FileLines)" />
-  </Target>
 </Project>

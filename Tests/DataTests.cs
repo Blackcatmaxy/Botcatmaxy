@@ -30,7 +30,7 @@ namespace Tests
         {
             runner = MongoDbRunner.Start();
             MongoClient client = new MongoClient(runner.ConnectionString);
-            MainClass.dbClient = client;
+            DataManipulator.dbClient = client;
             settingsDB = client.GetDatabase("Settings");
             var database = client.GetDatabase("IntegrationTest");
             collection = (MongoCollectionBase<BsonDocument>)database.GetCollection<BsonDocument>("TestCollection");

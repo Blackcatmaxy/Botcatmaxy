@@ -341,3 +341,4 @@ healthchecksdb
 
 # Tokens file
 src/BotCatMaxy/Properties/Tokens.targets
+src/BotCatMaxy/Properties/BotCatMaxy*.ini

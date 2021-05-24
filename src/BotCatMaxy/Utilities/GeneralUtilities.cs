@@ -28,7 +28,7 @@ namespace BotCatMaxy
         {
             if (guild == null)
                 throw new ArgumentNullException(nameof(guild));
-            var db = MainClass.dbClient.GetDatabase("Settings");
+            var db = DataManipulator.dbClient.GetDatabase("Settings");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
             if (guildCollection.CountDocuments(new BsonDocument()) > 0)

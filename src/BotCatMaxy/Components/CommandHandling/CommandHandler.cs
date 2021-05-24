@@ -12,11 +12,14 @@ using System;
 using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using Discord.Addons.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace BotCatMaxy.Startup
 {
-    public class CommandHandler
+    public class CommandHandler : InitializedService
     {
         /*public readonly HashSet<string> ignoredCMDErrors = new HashSet<string>() { "User not found.",
                             "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.",
@@ -26,21 +29,16 @@ namespace BotCatMaxy.Startup
                             "User requires channel permission ManageMessages.", "Failed to parse UInt32." };*/
         private readonly IDiscordClient _client;
         private readonly CommandService _commands;
-        public readonly IServiceProvider services;
+        public readonly IServiceProvider _services;
 
-        public CommandHandler(IDiscordClient client, CommandService commands)
+        public CommandHandler(IServiceProvider services, IDiscordClient client, CommandService commandService, IConfiguration config)
         {
-            _commands = commands;
+            _commands = commandService;
             _client = client;
-            var serviceBuilder = new ServiceCollection()
-                .AddSingleton(_client);
-            if (client is DiscordSocketClient socketClient)
-                serviceBuilder.AddSingleton(new InteractivityService(socketClient, TimeSpan.FromMinutes(3)));
-            services = serviceBuilder.BuildServiceProvider();
-            _ = InstallCommandsAsync();
+            _services = services;
         }
 
-        private async Task InstallCommandsAsync()
+        public override async Task InitializeAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -59,9 +57,9 @@ namespace BotCatMaxy.Startup
                 _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
 
                 // See Dependency Injection guide for more information.
-                await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(MainClass)),
-                                                services: services);
-                //await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
+                await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
+                                                services: _services);
+                await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
             }
             catch (Exception e)
             {
@@ -100,7 +98,7 @@ namespace BotCatMaxy.Startup
             await _commands.ExecuteAsync(
                 context: context,
                 argPos: argPos,
-                services: services);
+                services: _services);
         }
 
         const string permissionRegex = @"(.+) requires (.+) permission (.+)\.";

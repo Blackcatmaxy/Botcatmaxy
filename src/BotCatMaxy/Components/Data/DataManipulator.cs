@@ -18,9 +18,10 @@ namespace BotCatMaxy.Data
 {
     public static class DataManipulator
     {
+        public static MongoClient dbClient;
         static readonly Type cacheType = typeof(GuildSettings);
         static readonly ReplaceOptions replaceOptions = new() { IsUpsert = true };
-
+            
         public static async Task MapTypes()
         {
             try
@@ -129,7 +130,7 @@ namespace BotCatMaxy.Data
 
         public static IMongoCollection<BsonDocument> GetInfractionsCollection(this IGuild guild, bool createDir = true)
         {
-            var db = MainClass.dbClient.GetDatabase("Infractions");
+            var db = dbClient.GetDatabase("Infractions");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             var ownerCollection = db.GetCollection<BsonDocument>(guild.OwnerId.ToString());
             if (guildCollection.CountDocuments(new BsonDocument()) > 0)
@@ -144,7 +145,7 @@ namespace BotCatMaxy.Data
 
         public static IMongoCollection<BsonDocument> GetActHistoryCollection(this IGuild guild, bool createDir = true)
         {
-            var db = MainClass.dbClient.GetDatabase("ActHistory");
+            var db = dbClient.GetDatabase("ActHistory");
             var guildCollection = db.GetCollection<BsonDocument>(guild.Id.ToString());
             if (guildCollection.CountDocuments(new BsonDocument()) > 0 || createDir)
             {

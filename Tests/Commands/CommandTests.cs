@@ -10,13 +10,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
 using Xunit;
 
 namespace Tests
 {
-    public class CommandTests : BaseDataTests
+    public class CommandTests : BaseDataTests, IAsyncLifetime
     {
         protected readonly MockDiscordClient client = new();
         protected readonly MockGuild guild = new();
@@ -29,10 +30,19 @@ namespace Tests
         {
             cache = new SettingsCache(client);
             client.guilds.Add(guild);
+            var services = new ServiceCollection()
+                .AddSingleton(client)
+                .BuildServiceProvider();
             service = new CommandService();
-            handler = new CommandHandler(client, service);
+            handler = new CommandHandler(services, client, service, null);
             service.CommandExecuted += CommandExecuted;
         }
+
+        public async Task InitializeAsync()
+            => await handler.InitializeAsync(default);
+
+        public Task DisposeAsync()
+            => Task.CompletedTask;
 
         public async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
         {
@@ -97,7 +107,7 @@ namespace Tests
             var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
             MockCommandContext context = new(client, message);
             var userRefReader = new UserRefTypeReader();
-            var result = await userRefReader.ReadAsync(context, testee.Id.ToString(), handler.services);
+            var result = await userRefReader.ReadAsync(context, testee.Id.ToString(), handler._services);
             Assert.True(result.IsSuccess);
             var match = result.BestMatch as UserRef;
             Assert.NotNull(match);

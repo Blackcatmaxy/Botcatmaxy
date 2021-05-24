@@ -4,15 +4,15 @@ using MongoDB.Driver;
 using Serilog;
 using System;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy
 {
     public static class ExceptionLogging
     {
-        public static ILogger logger;
-
         public static async Task Log(this LogMessage message)
         {
+            var logger = Serilog.Log.Logger;
             System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
             string finalMessage = message.Source.PadRight(8) + message.Message;
             switch (message.Severity)
@@ -39,21 +39,26 @@ namespace BotCatMaxy
                     logger.Debug(finalMessage);
                     break;
             }
-            if (message.Severity <= LogSeverity.Error || (string.IsNullOrEmpty(message.Source) && string.IsNullOrEmpty(message.Message)))
-            { //If severity is Critical or Error
-                var errorEmbed = new EmbedBuilder();
-                errorEmbed.WithAuthor(BotInfo.user);
-                errorEmbed.WithTitle(message.Source);
-                errorEmbed.AddField(message.Severity.ToString(), message.Message.ToString().Truncate(1020));
-                errorEmbed.WithCurrentTimestamp();
+            
+            if (message.Exception != null || message.Severity <= LogSeverity.Error) 
+                Console.WriteLine($"Stacktrace:\n{trace}");
 
-                if (message.Exception != null)
-                    errorEmbed.AddField("Exception", message.Exception.ToString().Truncate(1020));
-                else
-                    errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
-                await BotInfo.logChannel.SendMessageAsync(embed: errorEmbed.Build());
-            }
-            if (message.Exception != null || message.Severity <= LogSeverity.Error) Console.WriteLine($"Stacktrace:\n{trace}");
+            //"Lower" severity has higher value so this says if the severity is NOT error or critical 
+            if (message.Severity > LogSeverity.Error || string.IsNullOrEmpty(message.Source) 
+                                                     || string.IsNullOrEmpty(message.Message) || BotInfo.User == null) 
+                return;
+            
+            var errorEmbed = new EmbedBuilder();
+            errorEmbed.WithAuthor(BotInfo.User);
+            errorEmbed.WithTitle(message.Source);
+            errorEmbed.AddField(message.Severity.ToString(), message.Message.ToString().Truncate(1020));
+            errorEmbed.WithCurrentTimestamp();
+
+            if (message.Exception != null)
+                errorEmbed.AddField("Exception", message.Exception.ToString().Truncate(1020));
+            else
+                errorEmbed.AddField("Trace", trace.ToString().Truncate(1020));
+            await BotInfo.LogChannel.SendMessageAsync(embed: errorEmbed.Build());
         }
 
         public static async Task AssertAsync(this bool assertion, string message = "Assertion failed")
