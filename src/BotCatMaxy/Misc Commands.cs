@@ -152,26 +152,16 @@ namespace BotCatMaxy
         [Command("describecommand"), Alias("describecmd", "dc", "commanddescribe")]
         [Summary("Find info on a command.")]
         [Priority(10)]
-        public async Task DescribeCMDAsync(string commandName)
+        public async Task DescribeCMDAsync(CommandInfo[] commands)
         {
-            SearchResult res = _service.Search(Context, commandName);
-
-            if (!res.IsSuccess)
-            {
-                await ReplyAsync($"`!{commandName}` isn't a command.");
-                return;
-            }
-
             EmbedBuilder embed = new EmbedBuilder
             {
                 Title = "Commands",
-                Description = $"Viewing search results you can use for `!{commandName}`."
+                Description = $"Viewing search results you can use for `!{commands[0].Name}`."
             };
 
-            foreach (CommandMatch match in res.Commands.Take(25))
+            foreach (CommandInfo command in commands.Take(25))
             {
-                CommandInfo command = match.Command;
-
                 embed.AddField(MakeCommandField(command));
             }
 
@@ -377,7 +367,7 @@ namespace BotCatMaxy
         [Command("resetcache")]
         [Summary("Resets the cache.")]
         [HasAdmin]
-        public async Task ResetCacheCommad()
+        public async Task ResetCacheCommand()
         {
             GuildSettings guild = SettingsCache.guildSettings.FirstOrDefault(g => g.ID == Context.Guild.Id);
             if (guild == null)
@@ -392,7 +382,7 @@ namespace BotCatMaxy
         [Command("globalresetcache")]
         [Summary("Resets the cache from all guilds.")]
         [RequireOwner]
-        public async Task ResetGlobalCacheCommad()
+        public async Task ResetGlobalCacheCommand()
         {
             SettingsCache.guildSettings = new HashSet<GuildSettings>();
             await ReplyAsync("All data cleared from cache");

@@ -55,6 +55,7 @@ namespace BotCatMaxy.Startup
                 _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
                 _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
                 _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
+                _commands.AddTypeReader(typeof(CommandInfo[]), new CommandTypeReader());
 
                 // See Dependency Injection guide for more information.
                 await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
@@ -126,9 +127,9 @@ namespace BotCatMaxy.Startup
                 if (match.Success)
                 {
                     //If Bot, say "I", else say "You"
-                    string user = (match.Groups[1].Value == "Bot") ? "I" : "You";
+                    string user = match.Groups[1].Value == "Bot" ? "I" : "You";
                     //If guild permission, say "server" permission, else say "channel" permission
-                    string area = (match.Groups[2].Value == "guild") ? "server" : "channel";
+                    string area = match.Groups[2].Value == "guild" ? "server" : "channel";
                     message = $"{user} need {area} permission {match.Groups[3].Value.Humanize(LetterCasing.LowerCase)}.";
                 }
             }
@@ -137,7 +138,7 @@ namespace BotCatMaxy.Startup
             await context.Channel.SendMessageAsync(message ?? result.ErrorReason);
 
             //Debug info
-            if (result.Error != null && (result.Error == CommandError.Exception || result.Error == CommandError.Unsuccessful))
+            if (result.Error is CommandError.Exception or CommandError.Unsuccessful)
             {
                 string logMessage = $"Command !{command.Value?.Name} in";
                 if (context.Guild != null)
