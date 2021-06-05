@@ -157,73 +157,6 @@ namespace BotCatMaxy.Startup
 
 namespace Discord.Commands
 {
-    public class CanWarnAttribute : PreconditionAttribute
-    {
-        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
-        {
-            //Makes sure it's in a server
-            if (context.User is IGuildUser gUser)
-            {
-                // If this command was executed by a user with the appropriate role, return a success
-                if (gUser.CanWarn())
-                    return Task.FromResult(PreconditionResult.FromSuccess());
-                else
-                    return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
-            }
-            else
-                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
-        }
-    }
-
-    public class HasAdminAttribute : PreconditionAttribute
-    {
-        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
-        {
-            //Makes sure it's in a server
-            if (context.User is IGuildUser gUser)
-            {
-                // If this command was executed by a user with administrator permission, return a success
-                if (gUser.HasAdmin())
-                    return Task.FromResult(PreconditionResult.FromSuccess());
-                else
-                    return Task.FromResult(PreconditionResult.FromError("You don't have the permissions to use this."));
-            }
-            else
-                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
-        }
-    }
-
-    public class RequireHierarchyAttribute : ParameterPreconditionAttribute
-    {
-        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context,
-            ParameterInfo parameter, object value, IServiceProvider services)
-        {
-            if (context.User is not IGuildUser guildUser)
-                return PreconditionResult.FromError("This command cannot be used outside of a guild");
-            var targetUser = value switch
-            {
-                UserRef userRef => userRef.GuildUser,
-                IGuildUser targetGuildUser => targetGuildUser,
-                ulong userId => await context.Guild.GetUserAsync(userId),
-                _ => throw new ArgumentOutOfRangeException("Unknown Type used in parameter that requires hierarchy"),
-            };
-            if (targetUser == null)
-                if (value is UserRef)
-                    return PreconditionResult.FromSuccess();
-                else
-                    return PreconditionResult.FromError("Target user not found");
-
-            if (guildUser.GetHierarchy() <= targetUser.GetHierarchy())
-                return PreconditionResult.FromError("You cannot target anyone else whose roles are higher than yours");
-
-            var currentUser = await context.Guild.GetCurrentUserAsync();
-            if (currentUser?.GetHierarchy() < targetUser.GetHierarchy())
-                return PreconditionResult.FromError("The bot's role is lower than the targeted user.");
-
-            return PreconditionResult.FromSuccess();
-        }
-    }
-
     public class BetterUserTypeReader : UserTypeReader<IUser>
     {
         public override async Task<TypeReaderResult> ReadAsync(
@@ -262,16 +195,5 @@ namespace Discord.Commands
             }
             return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Game service not found.");*/
         }
-    }
-
-    public class WriteableCommandContext : ICommandContext
-    {
-        public IDiscordClient Client { get; set; }
-        public IGuild Guild { get; set; }
-        public IMessageChannel Channel { get; set; }
-        public IUser User { get; set; }
-        public IUserMessage Message { get; set; }
-
-        public bool IsPrivate => Channel is IPrivateChannel;
     }
 }
