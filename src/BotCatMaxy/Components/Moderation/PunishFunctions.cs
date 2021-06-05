@@ -242,13 +242,25 @@ namespace BotCatMaxy.Moderation
             userRef.ID.RecordAct(context.Guild, tempBan, "tempban", context.Message.GetJumpUrl());
         }
 
-        public static async Task TempMute(this UserRef userRef, TimeSpan time, string reason, ICommandContext context, ModerationSettings settings, TempActionList actions = null)
+        public static async Task<RuntimeResult> TempMute(this UserRef userRef, TimeSpan time, string reason, ICommandContext context)
         {
-            TempAct tempMute = new TempAct(userRef.ID, time, reason);
-            if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
+            if (time.TotalMinutes < 1)
+                return CommandResult.FromError("Can't temp-mute for less than a minute");
+            var settings = context.Guild.LoadFromFile<ModerationSettings>(false);
+            if (!(context.Message.Author as IGuildUser).HasAdmin())
+            {
+                if (settings?.maxTempAction != null && time > settings.maxTempAction)
+                    return CommandResult.FromError("You are not allowed to punish for that long");
+            }
+            var role = context.Guild.GetRole(settings?.mutedRole ?? 0);
+            if (role == null)
+                return CommandResult.FromError("Muted role is null or invalid");
+            var tempMute = new TempAct(userRef.ID, time, reason);
+            var actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile();
-            await userRef.GuildUser?.AddRoleAsync(context.Guild.GetRole(settings.mutedRole));
+            if (userRef.GuildUser != null) 
+                await userRef.GuildUser.AddRoleAsync(role);
             DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "mut", reason, context.Message.GetJumpUrl(), time);
             if (userRef.User != null)
             {
@@ -262,6 +274,7 @@ namespace BotCatMaxy.Moderation
                 }
             }
             userRef.ID.RecordAct(context.Guild, tempMute, "tempmute", context.Message.GetJumpUrl());
+            return null;
         }
     }
 }

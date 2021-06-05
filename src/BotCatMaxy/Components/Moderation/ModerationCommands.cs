@@ -320,55 +320,11 @@ namespace BotCatMaxy
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempMuteUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
+        public async Task<RuntimeResult> TempMuteUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
-            if (time.TotalMinutes < 1)
-            {
-                await ReplyAsync("Can't temp-mute for less than a minute");
-                return;
-            }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (!(Context.Message.Author as IGuildUser).HasAdmin())
-            {
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                {
-                    await ReplyAsync("You are not allowed to punish for that long");
-                    return;
-                }
-            }
-            if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null)
-            {
-                await ReplyAsync("Muted role is null or invalid");
-                return;
-            }
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            TempAct oldAct = actions.tempMutes.FirstOrDefault(tempMute => tempMute.User == userRef.ID);
-            if (oldAct != null)
-            {
-                if (!(Context.Message.Author as IGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= time)
-                {
-                    await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
-                    return;
-                }
-                string text = $"{userRef.Name()} is already temp-muted for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), are you sure you want to change the length?";
-                var request = new ConfirmationBuilder()
-                    .WithContent(new PageBuilder().WithText(text))
-                    .Build();
-                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(2));
-                if (result.Value)
-                {
-                    actions.tempMutes.Remove(oldAct);
-                    actions.SaveToFile();
-                }
-                else
-                {
-                    await ReplyAsync("Command canceled");
-                    return;
-                }
-            }
-
-            await userRef.TempMute(time, reason, Context, settings, actions);
-            Context.Message.DeleteOrRespond($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}", Context.Guild);
+            var result = await userRef.TempMute(time, reason, Context);
+            result ??= CommandResult.FromSuccess($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}");
+            return result;
         }
 
         [Command("tempmutewarn")]
@@ -377,37 +333,20 @@ namespace BotCatMaxy
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempMuteWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
+        public async Task<RuntimeResult> TempMuteWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
-            if (time.TotalMinutes < 1)
+            var muteResult = await userRef.TempMute(time, reason, Context);
+            if (muteResult == null) //Success because no fail message 
             {
-                await ReplyAsync("Can't temp-mute for less than a minute");
-                return;
-            }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (!(Context.Message.Author as IGuildUser).HasAdmin())
-            {
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                {
-                    await ReplyAsync("You are not allowed to punish for that long");
-                    return;
-                }
-            }
-            if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null)
-            {
-                await ReplyAsync("Muted role is null or invalid");
-                return;
-            }
-            await userRef.Warn(1, reason, Context.Channel as ITextChannel, Context.Message.GetJumpUrl());
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
-            {
-                await ReplyAsync($"{userRef.Name()} is already temp-muted, (the warn did go through)");
-                return;
+                var warnResult = await userRef.Warn(1, reason, Context.Channel as ITextChannel, Context.Message.GetJumpUrl());
+                string result =
+                    $"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}";
+                if (!warnResult.success)
+                    result += ", but warn failed";
+                muteResult = CommandResult.FromSuccess(result);
             }
 
-            await userRef.TempMute(time, reason, Context, settings, actions);
-            Context.Message.DeleteOrRespond($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}", Context.Guild);
+            return muteResult;
         }
 
         [Command("tempmutewarn")]
@@ -416,37 +355,25 @@ namespace BotCatMaxy
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
         [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempMuteWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, float size, [Remainder] string reason)
+        public async Task<RuntimeResult> TempMuteWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, float size, [Remainder] string reason)
         {
-            if (time.TotalMinutes < 1)
+            if (size > 999 || size < 0.01)
             {
-                await ReplyAsync("Can't temp-mute for less than a minute");
-                return;
+                return CommandResult.FromError("Why would you need to warn someone with that size? (command canceled)");
             }
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>();
-            if (!(Context.Message.Author as IGuildUser).HasAdmin())
+            
+            var muteResult = await userRef.TempMute(time, reason, Context);
+            if (muteResult == null) //Success because no fail message 
             {
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                {
-                    await ReplyAsync("You are not allowed to punish for that long");
-                    return;
-                }
-            }
-            if (settings == null || settings.mutedRole == 0 || Context.Guild.GetRole(settings.mutedRole) == null)
-            {
-                await ReplyAsync("Muted role is null or invalid");
-                return;
-            }
-            await userRef.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempMutes.Any(tempMute => tempMute.User == userRef.ID))
-            {
-                await ReplyAsync($"{userRef.Name()} is already temp-muted, (the warn did go through)");
-                return;
+                var warnResult = await userRef.Warn(size, reason, Context.Channel as ITextChannel, Context.Message.GetJumpUrl());
+                string result =
+                    $"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}";
+                if (!warnResult.success)
+                    result += ", but warn failed";
+                muteResult = CommandResult.FromSuccess(result);
             }
 
-            await userRef.TempMute(time, reason, Context, settings, actions);
-            Context.Message.DeleteOrRespond($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}", Context.Guild);
+            return muteResult;
         }
 
         [Command("ban", RunMode = RunMode.Async)]
