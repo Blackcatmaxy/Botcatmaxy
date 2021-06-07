@@ -389,7 +389,7 @@ namespace BotCatMaxy
         }
 
         [Command("permissiontest")]
-        [DynamicPermission]
+        [DynamicPermission("Debug.PermissionTest")]
         public async Task PermissionTest()
         {
             await ReplyAsync("Success");

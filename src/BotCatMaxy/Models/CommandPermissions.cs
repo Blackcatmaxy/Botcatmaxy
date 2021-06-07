@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using BotCatMaxy.Data;
 using Discord;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
 
 namespace BotCatMaxy.Models
 {
@@ -9,6 +11,14 @@ namespace BotCatMaxy.Models
     /// </summary>
     public class CommandPermissions : DataObject
     {
-        public Dictionary<string, List<ulong>> map = new();
+        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
+        public Dictionary<ulong, List<string>> Map { get; } = new();
+
+        public bool RoleHasValue(ulong role, string value)
+        {
+            if (!Map.TryGetValue(role, out var values))
+                return false;
+            return values != null && values.Contains(value);
+        }
     }
 }

@@ -170,65 +170,49 @@ namespace BotCatMaxy
         }
 
         [Command("AddPermission")]
-        public Task<RuntimeResult> AddPermission(CommandInfo[] commands, IRole role)
+        public Task<RuntimeResult> AddPermission(IRole role, string node)
         {
             var permissions = Context.Guild.LoadFromFile<CommandPermissions>(true);
-            var commandNames = commands.Select(command => command.Name).ToArray();
-            
-            //Check if any already set
-            foreach (string name in commandNames)
-            {
-                if (permissions.map.TryGetValue(name, out List<ulong> roles) && (roles?.Contains(role.Id) ?? false)) 
-                    return Task.FromResult<RuntimeResult>(CommandResult
-                        .FromError($"`!{name}` already has permissions set to this role."));
-            }
+            if (permissions.RoleHasValue(role.Id, node)) 
+                return Task.FromResult<RuntimeResult>(CommandResult
+                    .FromError($"Role `{role.Name}` already has permissions set to this role."));
 
-            foreach (var name in commandNames)
+            if (permissions.Map.TryGetValue(role.Id, out var nodes) && nodes != null)
             {
-                if (permissions.map.TryGetValue(name, out List<ulong> roles))
-                {
-                    roles.Add(role.Id);
-                    permissions.map[name] = roles;
-                }
-                else
-                    permissions.map[name] = new List<ulong> {role.Id};
+                nodes.Add(node);
+                permissions.Map[role.Id] = nodes;
             }
+            else
+                permissions.Map[role.Id] = new List<string> {node};
             permissions.SaveToFile();
             
-            commandNames = commandNames.Select(name => $"`!{name}`").ToArray();
-            return Task.FromResult<RuntimeResult>(CommandResult
-                .FromSuccess($"Added role requirement of `{role.Name}` to {string.Join(", ", commandNames)}."));
+            return Task.FromResult<RuntimeResult>(CommandResult.FromSuccess($"Added node `{node}` to `{role.Name}`."));
         }
         
         [Command("RemovePermission")]
-        public Task<RuntimeResult> RemovePermission(CommandInfo[] commands, IRole role)
+        public Task<RuntimeResult> RemovePermission(IRole role, string node)
         {
             var permissions = Context.Guild.LoadFromFile<CommandPermissions>(false);
             if (permissions == null) 
-                return  Task.FromResult<RuntimeResult>(CommandResult.FromError("Permissions not set."));
-            
-            var commandNames = commands.Select(command => command.Name).ToArray();
-            
-            //Check if any already set
-            foreach (string name in commandNames)
+                return Task.FromResult<RuntimeResult>(CommandResult.FromError("Permissions not set."));
+
+            //If value is is not in dict or roleID not in list
+            if (!permissions.RoleHasValue(role.Id, node)) 
+                return Task.FromResult<RuntimeResult>(CommandResult.FromError($"Role `{role.Name}` already doesn't have permissions set to node `{node}`."));
+
+            var nodes = permissions.Map[role.Id];
+            if (nodes.Count > 1)
             {
-                //If value is is not in dict or roleID not in list
-                if (!permissions.map.TryGetValue(name, out List<ulong> roles) || (!roles?.Contains(role.Id) ?? false)) 
-                    return Task.FromResult(CommandResult
-                        .FromError($"`!{name}` already doesn't have permissions set to this role.") as RuntimeResult);
+                nodes.Remove(node);
+                permissions.Map[role.Id] = nodes;
+            }
+            else
+            {
+                permissions.Map.Remove(role.Id);
             }
 
-            foreach (var name in commandNames)
-            {
-                var roles = permissions.map[name];
-                roles.Remove(role.Id);
-                permissions.map[name] = roles;
-            }
             permissions.SaveToFile();
-            
-            commandNames = commandNames.Select(name => $"`!{name}`").ToArray();
-            return Task.FromResult(CommandResult
-                .FromSuccess($"Removed role requirement of `{role.Name}` to {string.Join(", ", commandNames)}.") as RuntimeResult);
+            return Task.FromResult<RuntimeResult>(CommandResult.FromSuccess($"Removed node `{node}` from role `{role.Name}`."));
         }
     }
 }
