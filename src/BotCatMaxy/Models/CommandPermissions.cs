@@ -9,6 +9,6 @@ namespace BotCatMaxy.Models
     /// </summary>
     public class CommandPermissions : DataObject
     {
-        public Dictionary<string, GuildPermissions> map = new();
+        public Dictionary<string, List<ulong>> map = new();
     }
 }

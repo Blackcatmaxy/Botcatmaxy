@@ -28,6 +28,7 @@ namespace BotCatMaxy.Cache
         private readonly IGuild guild;
         public ulong ID => guild.Id;
         public ModerationSettings moderationSettings;
+        public CommandPermissions commandPermissions;
         public TempActionList tempActionList;
         public ReportSettings reportSettings;
         public FilterSettings filterSettings;

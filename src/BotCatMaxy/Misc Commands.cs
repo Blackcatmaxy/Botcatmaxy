@@ -387,5 +387,12 @@ namespace BotCatMaxy
             SettingsCache.guildSettings = new HashSet<GuildSettings>();
             await ReplyAsync("All data cleared from cache");
         }
+
+        [Command("permissiontest")]
+        [DynamicPermission]
+        public async Task PermissionTest()
+        {
+            await ReplyAsync("Success");
+        }
     }
 }

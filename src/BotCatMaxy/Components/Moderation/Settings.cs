@@ -4,6 +4,8 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy
@@ -12,7 +14,6 @@ namespace BotCatMaxy
     [Name("Settings")]
     public class SettingsModule : ModuleBase<ICommandContext>
     {
-
         [Command("Settings Info")]
         [Summary("View settings.")]
         [RequireContext(ContextType.Guild)]
@@ -167,7 +168,67 @@ namespace BotCatMaxy
 
             await ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
+
+        [Command("AddPermission")]
+        public Task<RuntimeResult> AddPermission(CommandInfo[] commands, IRole role)
+        {
+            var permissions = Context.Guild.LoadFromFile<CommandPermissions>(true);
+            var commandNames = commands.Select(command => command.Name).ToArray();
+            
+            //Check if any already set
+            foreach (string name in commandNames)
+            {
+                if (permissions.map.TryGetValue(name, out List<ulong> roles) && (roles?.Contains(role.Id) ?? false)) 
+                    return Task.FromResult<RuntimeResult>(CommandResult
+                        .FromError($"`!{name}` already has permissions set to this role."));
+            }
+
+            foreach (var name in commandNames)
+            {
+                if (permissions.map.TryGetValue(name, out List<ulong> roles))
+                {
+                    roles.Add(role.Id);
+                    permissions.map[name] = roles;
+                }
+                else
+                    permissions.map[name] = new List<ulong> {role.Id};
+            }
+            permissions.SaveToFile();
+            
+            commandNames = commandNames.Select(name => $"`!{name}`").ToArray();
+            return Task.FromResult<RuntimeResult>(CommandResult
+                .FromSuccess($"Added role requirement of `{role.Name}` to {string.Join(", ", commandNames)}."));
+        }
+        
+        [Command("RemovePermission")]
+        public Task<RuntimeResult> RemovePermission(CommandInfo[] commands, IRole role)
+        {
+            var permissions = Context.Guild.LoadFromFile<CommandPermissions>(false);
+            if (permissions == null) 
+                return  Task.FromResult<RuntimeResult>(CommandResult.FromError("Permissions not set."));
+            
+            var commandNames = commands.Select(command => command.Name).ToArray();
+            
+            //Check if any already set
+            foreach (string name in commandNames)
+            {
+                //If value is is not in dict or roleID not in list
+                if (!permissions.map.TryGetValue(name, out List<ulong> roles) || (!roles?.Contains(role.Id) ?? false)) 
+                    return Task.FromResult(CommandResult
+                        .FromError($"`!{name}` already doesn't have permissions set to this role.") as RuntimeResult);
+            }
+
+            foreach (var name in commandNames)
+            {
+                var roles = permissions.map[name];
+                roles.Remove(role.Id);
+                permissions.map[name] = roles;
+            }
+            permissions.SaveToFile();
+            
+            commandNames = commandNames.Select(name => $"`!{name}`").ToArray();
+            return Task.FromResult(CommandResult
+                .FromSuccess($"Removed role requirement of `{role.Name}` to {string.Join(", ", commandNames)}.") as RuntimeResult);
+        }
     }
-
-
 }
