@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using Microsoft.Extensions.DependencyInjection;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
@@ -30,11 +31,13 @@ namespace Tests
         {
             cache = new SettingsCache(client);
             client.guilds.Add(guild);
+            var permissions = new PermissionService();
             var services = new ServiceCollection()
                 .AddSingleton(client)
+                .AddSingleton(permissions)
                 .BuildServiceProvider();
             service = new CommandService();
-            handler = new CommandHandler(services, client, service, null);
+            handler = new CommandHandler(services, client, service, permissions, null);
             service.CommandExecuted += CommandExecuted;
         }
 

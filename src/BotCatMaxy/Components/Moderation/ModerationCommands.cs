@@ -26,7 +26,7 @@ namespace BotCatMaxy
         [Command("warn")]
         [Summary("Warn a user with a reason.")]
         [CanWarn()]
-        [DynamicPermission("Moderation.Action.Warn")]
+        //[DynamicPermission("Moderation.Action.Warn")]
         public async Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
