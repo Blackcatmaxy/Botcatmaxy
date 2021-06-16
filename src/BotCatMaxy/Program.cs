@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Startup;
@@ -75,7 +76,9 @@ namespace BotCatMaxy
                     services.AddSingleton(x =>
                         new BotInfo(x.GetRequiredService<DiscordSocketClient>(), args));
                     services.AddHostedService<CommandHandler>();
-                    services.AddSingleton<IDiscordClient, DiscordSocketClient>(x => x.GetRequiredService<DiscordSocketClient>());
+                    services.AddSingleton<IDiscordClient, DiscordSocketClient>(x => 
+                        x.GetRequiredService<DiscordSocketClient>());
+                    services.AddSingleton<PermissionService>();
                 })
                 .UseCommandService((context, config) =>
                 {

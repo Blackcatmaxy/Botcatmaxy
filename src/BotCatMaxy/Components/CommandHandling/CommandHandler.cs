@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Configuration;
 
@@ -30,12 +31,14 @@ namespace BotCatMaxy.Startup
         private readonly IDiscordClient _client;
         private readonly CommandService _commands;
         public readonly IServiceProvider _services;
+        private readonly PermissionService _permissions;
 
-        public CommandHandler(IServiceProvider services, IDiscordClient client, CommandService commandService, IConfiguration config)
+        public CommandHandler(IServiceProvider services, IDiscordClient client, CommandService commandService, PermissionService permissions, IConfiguration config)
         {
             _commands = commandService;
             _client = client;
             _services = services;
+            _permissions = permissions;
         }
 
         public override async Task InitializeAsync(CancellationToken cancellationToken)
@@ -60,6 +63,7 @@ namespace BotCatMaxy.Startup
                 // See Dependency Injection guide for more information.
                 await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
                                                 services: _services);
+                _permissions.SetUp(_commands);
                 await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
             }
             catch (Exception e)

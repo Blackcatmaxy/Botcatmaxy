@@ -10,11 +10,11 @@ namespace Discord.Commands
 {
     public class DynamicPermissionAttribute: PreconditionAttribute
     {
-        private string _node;
+        public string Node { get; }
         
         public DynamicPermissionAttribute(string node)
         {
-            _node = node;
+            Node = node;
         }
         
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command,
@@ -31,10 +31,10 @@ namespace Discord.Commands
             
             foreach (ulong role in gUser.RoleIds)
             {
-                if (permissions.RoleHasValue(role, _node))
+                if (permissions.RoleHasValue(role, Node))
                     return Task.FromResult(PreconditionResult.FromSuccess());
             }
-            return Task.FromResult(PreconditionResult.FromError($"Missing role with permission `{_node}` to use this command."));
+            return Task.FromResult(PreconditionResult.FromError($"Missing role with permission `{Node}` to use this command."));
         }
     }
 }

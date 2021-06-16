@@ -20,15 +20,12 @@ namespace BotCatMaxy
     public class MiscCommands : ModuleBase<SocketCommandContext>
     {
         private const string GITHUB = "https://github.com/Blackcatmaxy/Botcatmaxy";
-        private readonly CommandService _service;
-
-        public MiscCommands(CommandService service)
-        {
-            _service = service;
-        }
+        public CommandService Service { get; set; } 
+        public PermissionService Permissions { get; set; }
 
         [Command("help"), Alias("botinfo", "commands")]
         [Summary("View Botcatmaxy resources.")]
+        [DynamicPermission("Info.Bot.Help")]
         public async Task Help()
         {
             var embed = new EmbedBuilder
@@ -88,6 +85,7 @@ namespace BotCatMaxy
         [Command("dmhelp"), Alias("dmbotinfo", "dmcommands", "commandlist", "listcommands")]
         [Summary("Direct messagess a full list of commands you can use.")]
         [RequireContext(ContextType.DM)]
+        [DynamicPermission("Info.Commands.List")]
         public async Task DMHelp()
         {
             EmbedBuilder extraHelpEmbed = new EmbedBuilder();
@@ -111,7 +109,7 @@ namespace BotCatMaxy
                 });
             }
 
-            foreach (ModuleInfo module in _service.Modules)
+            foreach (ModuleInfo module in Service.Modules)
             {
                 EmbedBuilder embed = new()
                 {
@@ -151,6 +149,7 @@ namespace BotCatMaxy
 
         [Command("describecommand"), Alias("describecmd", "dc", "commanddescribe")]
         [Summary("Find info on a command.")]
+        [DynamicPermission("Info.Commands.Describe")]
         [Priority(10)]
         public async Task DescribeCMDAsync(CommandInfo[] commands)
         {
@@ -389,10 +388,16 @@ namespace BotCatMaxy
         }
 
         [Command("permissiontest")]
-        [DynamicPermission("Debug.PermissionTest")]
         public async Task PermissionTest()
         {
-            await ReplyAsync("Success");
+            var embed = new EmbedBuilder();
+            embed.WithTitle("Nodes");
+            foreach (var node in Permissions.Parents)
+            {
+                var children = node.children.Select(n => $"{node.Name}.{n.Name}");
+                embed.AddField(node.Name, $"Children:\n{string.Join('\n', children)}");
+            }
+            await ReplyAsync("Success", embed: embed.Build());
         }
     }
 }
