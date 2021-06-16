@@ -394,8 +394,9 @@ namespace BotCatMaxy
             embed.WithTitle("Nodes");
             foreach (var node in Permissions.Parents)
             {
-                var children = node.children.Select(n => $"{node.Name}.{n.Name}");
-                embed.AddField(node.Name, $"Children:\n{string.Join('\n', children)}");
+                var children = node.GetAllRoots(); 
+                var names = children.Select(n => n.FullName);
+                embed.AddField(node.Name, $"Children:\n{string.Join('\n', names)}");
             }
             await ReplyAsync("Success", embed: embed.Build());
         }

@@ -24,18 +24,31 @@ namespace BotCatMaxy.Components.CommandHandling
                     .FirstOrDefault(precondition => precondition is DynamicPermissionAttribute) as DynamicPermissionAttribute;
                 if (dynamicPrecondition == null)
                     continue;
+                
                 var node = dynamicPrecondition.Node;
                 var parts = node.Split('.');
-                if (!Parents.Any(treeNode => parts[0].Equals(treeNode?.Name, StringComparison.InvariantCultureIgnoreCase))) 
-                    Parents.Add(new TreeNode(parts[0]));
-                var parent = Parents[0];
-                for (int i = 1; i < parts.Length; i++)
+                var currentList = Parents;
+                TreeNode lastNode = null;
+                foreach (var part in parts)
                 {
-                    parent = parent.AddChild(parts[i]);
+                    lastNode = SearchAndAdd(currentList, part, lastNode);
+                    currentList = lastNode.children;
                 }
             }
         }
-        
+
+        public static TreeNode SearchAndAdd(IList<TreeNode> nodes, string name, TreeNode parent)
+        {
+            var node = nodes.FirstOrDefault(treeNode 
+                => name.Equals(treeNode?.Name, StringComparison.InvariantCultureIgnoreCase));
+            if (node is null)
+            {
+                node = new TreeNode(name, parent);
+                nodes.Add(node);
+            }
+            return node;
+        }
+
         public override Task InitializeAsync(CancellationToken cancellationToken)
         {
             throw new System.NotImplementedException();
