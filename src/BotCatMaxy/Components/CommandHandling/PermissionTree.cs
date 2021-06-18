@@ -8,50 +8,44 @@ namespace BotCatMaxy.Components.CommandHandling
 {
     public class TreeNode : IEnumerable<TreeNode>
     {
-        public readonly string Name;
+        public string Name { get; }
+        public readonly List<TreeNode> children = new();
+        public TreeNode Parent { get; }
 
         /// <summary>
         /// Recursively checks parents name and appends to own name to be formatted as Parent.CurrentName
         /// </summary>
-        public readonly string FullName;
+        public string FullName { get; } = "";
 
-        public readonly TreeNode Parent;
-
-        public List<TreeNode> children { get; } = new();
-
-        public TreeNode(string name, TreeNode parent = null)
+        public TreeNode(string name, TreeNode parent)
         {
             Name = name;
             Parent = parent;
 
-            FullName = "";
-
             //Recurses so that bottom will get full name and bottom will just be name
-            if (Parent is TreeNode)
+            if (parent != null)
                 FullName = Parent.FullName + ".";
-
             FullName += Name;
         }
 
         public TreeNode this[int i]
             => children[i];
 
-        public TreeNode AddChild(string nodeName)
+        public TreeNode AddChild(string name)
         {
-            TreeNode child = new(nodeName, this);
+            var child = new TreeNode(name, this);
             children.Add(child);
             return child;
         }
 
         /// <summary>
-        /// Recursively goes through children of children to get nodes with no children 
+        /// Recursively goes through children of children to add nodes with no children 
         /// </summary>
         /// <returns>All dead ends in the tree including children of children</returns>
         public List<TreeNode> GetAllRoots()
         {
-            List<TreeNode> result = new();
-
-            foreach (TreeNode child in children)
+            var result = new List<TreeNode>();
+            foreach (var child in children)
             {
                 if (child.children.Count == 0)
                     result.Add(child);
