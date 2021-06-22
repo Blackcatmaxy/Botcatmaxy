@@ -4,9 +4,9 @@
       "src": [
         {
           "files": [
-            "**.csproj"
+            "src/BotCatMaxy/**.csproj"
           ],
-          "src": "D:\\Source\\Git\\_1\\Botcatmaxy\\Documentation"
+          "src": "../"
         }
       ],
       "dest": "api",
