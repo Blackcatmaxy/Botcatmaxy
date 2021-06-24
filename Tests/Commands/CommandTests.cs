@@ -47,7 +47,7 @@ namespace Tests
         public Task DisposeAsync()
             => Task.CompletedTask;
 
-        public async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
+        protected async Task<Tuple<CommandResult, MockCommandContext>> ExecuteCommandResult(string text, IUser user, MockTextChannel channel)
         {
             Assert.NotNull(channel);
             Assert.NotNull(user);
@@ -55,8 +55,11 @@ namespace Tests
             var context = new MockCommandContext(client, message);
             completionSource = new TaskCompletionSource<CommandResult>();
             await handler.ExecuteCommand(message, context);
-            return await completionSource.Task;
+            return new Tuple<CommandResult, MockCommandContext>(await completionSource.Task, context);
         }
+
+        protected async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
+            => (await ExecuteCommandResult(text, user, channel)).Item1;
 
         /// <summary>
         /// Executes after command is finished with full info <seealso cref="CommandHandler"/>'s CommandExecuted
