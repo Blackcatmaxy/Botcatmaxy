@@ -14,11 +14,12 @@ namespace Tests.Mocks.Guild
         {
             Guild = guild;
             IsBot = isBot;
+            JoinedAt = DateTimeOffset.Now;
         }
 
-        List<IRole> roles = new();
+        protected List<IRole> roles = new();
 
-        public DateTimeOffset? JoinedAt => throw new NotImplementedException();
+        public DateTimeOffset? JoinedAt { get; }
 
         public string Nickname => throw new NotImplementedException();
 
@@ -44,13 +45,13 @@ namespace Tests.Mocks.Guild
             }
         }
 
-        public IGuild Guild { get; set; }
+        public IGuild Guild { get; }
 
         public ulong GuildId => Guild.Id;
 
         public DateTimeOffset? PremiumSince => throw new NotImplementedException();
 
-        public IReadOnlyCollection<ulong> RoleIds => new ReadOnlyCollection<ulong>(roles.Select(role => role.Id).ToList());
+        public IReadOnlyCollection<ulong> RoleIds => roles.Select(role => role.Id).ToList().AsReadOnly();
 
         public bool? IsPending => throw new NotImplementedException();
 
@@ -72,7 +73,10 @@ namespace Tests.Mocks.Guild
 
         public Task AddRoleAsync(IRole role, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            if (roles.Any(r => r.Id == role.Id))
+                throw new ArgumentException("User already has role");
+            roles.Add(role);
+            return Task.CompletedTask;
         }
 
         public Task AddRolesAsync(IEnumerable<IRole> roles, RequestOptions options = null)
@@ -97,9 +101,18 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
-        public Task RemoveRoleAsync(IRole role, RequestOptions options = null)
+        public Task RemoveRoleAsync(IRole input, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            foreach (var role in roles)
+            {
+                if (input.Id == role.Id)
+                {
+                    roles.Remove(role);
+                    return Task.CompletedTask;
+                }
+            }
+
+            throw new ArgumentException("User doesn't have role");
         }
 
         public Task RemoveRolesAsync(IEnumerable<IRole> roles, RequestOptions options = null)

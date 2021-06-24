@@ -21,6 +21,7 @@ namespace Tests.Mocks.Guild
         protected List<MockGuildUser> userList = new(8);
         protected List<MockTextChannel> channels = new(4);
         protected List<MockBan> bans = new(4);
+        protected List<MockRole> roles = new();
 
         public string Name => "TestName";
 
@@ -80,7 +81,7 @@ namespace Tests.Mocks.Guild
 
         public IReadOnlyCollection<string> Features => throw new NotImplementedException();
 
-        public IReadOnlyCollection<IRole> Roles => throw new NotImplementedException();
+        public IReadOnlyCollection<IRole> Roles => roles.AsReadOnly();
 
         public PremiumTier PremiumTier => throw new NotImplementedException();
 
@@ -151,12 +152,20 @@ namespace Tests.Mocks.Guild
 
         public Task<IRole> CreateRoleAsync(string name, GuildPermissions? permissions = null, Color? color = null, bool isHoisted = false, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            if (isHoisted)
+                throw new NotImplementedException();
+            var result = new MockRole(name, permissions ?? GuildPermissions.None, roles.Count, this);
+            roles.Add(result);
+            return Task.FromResult<IRole>(result);
         }
 
         public Task<IRole> CreateRoleAsync(string name, GuildPermissions? permissions = null, Color? color = null, bool isHoisted = false, bool isMentionable = false, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            if (isHoisted || isMentionable)
+                throw new NotImplementedException();
+            var result = new MockRole(name, permissions ?? GuildPermissions.None, roles.Count, this);
+            roles.Add(result);
+            return Task.FromResult<IRole>(result);
         }
 
         public Task<ITextChannel> CreateTextChannelAsync(string name, Action<TextChannelProperties> func = null, RequestOptions options = null)
@@ -269,7 +278,7 @@ namespace Tests.Mocks.Guild
 
         public IRole GetRole(ulong id)
         {
-            throw new NotImplementedException();
+            return roles.FirstOrDefault(role => role.Id == id);
         }
 
         public Task<ITextChannel> GetRulesChannelAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
@@ -296,7 +305,7 @@ namespace Tests.Mocks.Guild
         public async Task<IReadOnlyCollection<IGuildUser>> GetUsersAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
             if (userList.Count == 0) await DownloadUsersAsync();
-            return new ReadOnlyCollection<IGuildUser>(userList.Select(user => user as IGuildUser).ToList());
+            return userList.Select(user => user as IGuildUser).ToList().AsReadOnly();
         }
 
         public Task<IInviteMetadata> GetVanityInviteAsync(RequestOptions options = null)
