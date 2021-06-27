@@ -12,9 +12,9 @@ namespace Tests.Commands
     {
         [Theory]
         [InlineData("*")]
-        [InlineData("Debug.*")]
-        [InlineData("Debug.Test.*")]
-        [InlineData("Debug.Test.Something")]
+        [InlineData("Permissions.*")]
+        [InlineData("Permissions.Nodes.*")]
+        [InlineData("Permissions.Nodes.Remove")]
         public async Task CheckDynamicPermissionAsync(string node)
         {
             //Set Up
@@ -28,7 +28,7 @@ namespace Tests.Commands
             var cmdResult = await ExecuteCommandResult($"!AddPermission {role.Id} {node}", owner, channel);
             var context = cmdResult.Item2;
             
-            var instance = new DynamicPermissionAttribute("Debug.Test.Something");
+            var instance = new DynamicPermissionAttribute("Permissions.Nodes.Remove");
             var result = await instance.CheckPermissionsAsync(context, null, null);
             Assert.True(result.IsSuccess);
         }        

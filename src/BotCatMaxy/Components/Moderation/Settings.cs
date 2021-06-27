@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 
 namespace BotCatMaxy
 {
@@ -14,6 +15,8 @@ namespace BotCatMaxy
     [Name("Settings")]
     public class SettingsModule : ModuleBase<ICommandContext>
     {
+        public PermissionService PermissionService { get; set; }
+        
         [Command("Settings Info")]
         [Summary("View settings.")]
         [RequireContext(ContextType.Guild)]
@@ -177,6 +180,33 @@ namespace BotCatMaxy
                 return Task.FromResult<RuntimeResult>(CommandResult
                     .FromError($"Role `{role.Name}` already has permissions set to this role."));
 
+            //Validate node
+            if (node[0] == '.')
+                return Task.FromResult<RuntimeResult>(CommandResult.FromError("`.` cannot be the first character."));
+            TreeNode lastNode = null;
+            string[] split = node.Split('.');
+            for (int i = 0; i < split.Length; i++)
+            {
+                string part = split[i];
+                //Verifying valid use of wildcard as only part of substring (for now?) and as last part
+                if (part.Contains('*'))
+                    if (part.Length > 1 || i != split.Length - 1)
+                        return Task.FromResult<RuntimeResult>(CommandResult.FromError("Invalid use of `*` wildcard."));
+                    else  
+                        break;
+                
+                if (i == 0)
+                    lastNode = PermissionService.Parents.FirstOrDefault(p =>
+                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+                else
+                    lastNode = lastNode.children.FirstOrDefault(p =>
+                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+
+                if (lastNode == null)
+                    return Task.FromResult<RuntimeResult>(CommandResult.FromError("Node does not correspond to any valid command."));
+            }
+            
+            //Save node    
             if (permissions.Map.TryGetValue(role.Id, out var nodes) && nodes != null)
             {
                 nodes.Add(node);
@@ -190,6 +220,7 @@ namespace BotCatMaxy
         }
         
         [Command("RemovePermission")]
+        [DynamicPermission("Permissions.Nodes.Remove")]
         public Task<RuntimeResult> RemovePermission(IRole role, string node)
         {
             var permissions = Context.Guild.LoadFromFile<CommandPermissions>(false);
