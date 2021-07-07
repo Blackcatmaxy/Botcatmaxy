@@ -13,9 +13,17 @@ namespace BotCatMaxy.Models
     /// </summary>
     public class CommandPermissions : DataObject
     {
+        /// <summary>
+        /// A Dictionary of roles and their permission strings, do NOT use null or empty state for enabled check
+        /// </summary>
         [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
         public Dictionary<ulong, List<string>> Map { get; } = new();
 
+        /// <summary>
+        /// Bool to check if server has decided to switch to the new permission system
+        /// </summary>
+        public bool enabled = false;
+        
         /// <summary>
         /// Check if role has permission node
         /// </summary>

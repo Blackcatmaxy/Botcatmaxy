@@ -8,14 +8,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.CommandHandling;
+using Interactivity;
+using Interactivity.Confirmation;
 
 namespace BotCatMaxy
 {
     //I want to move away from vague files like settings since conflicts are annoying
     [Name("Settings")]
-    public class SettingsModule : ModuleBase<ICommandContext>
+    public class SettingsModule : InteractiveModule
     {
         public PermissionService PermissionService { get; set; }
+     
+        public SettingsModule(IServiceProvider service) : base(service)
+        {
+        }
         
         [Command("Settings Info")]
         [Summary("View settings.")]
@@ -173,16 +179,36 @@ namespace BotCatMaxy
         }
 
         [Command("AddPermission")]
-        public Task<RuntimeResult> AddPermission(IRole role, string node)
+        public async Task<RuntimeResult> AddPermissionAsync(IRole role, string node)
         {
             var permissions = Context.Guild.LoadFromFile<CommandPermissions>(true);
+            //Prompt user with info about new system before enabling when disabled
+            if (permissions.enabled == false && Interactivity != null)
+            {
+                var pageBuilder = new PageBuilder()
+                    .WithTitle("Are you sure?")
+                    .WithDescription("Adding a new permission would enable the new advanced permission system, " +
+                                     "'restricted' commands will no longer permit users based on Discord permissions. " +
+                                     "Are you sure you're ready for this change to take effect?");
+                var confirmation = new ConfirmationBuilder()
+                    .WithContent(pageBuilder)
+                    .WithConfirmEmote(new Emoji("\U00002705"))
+                    .WithDeclineEmote(new Emoji("\U0000274c"));
+                var result = await Interactivity.SendConfirmationAsync(confirmation.Build(), Context.Channel,
+                    TimeSpan.FromMinutes(3));
+                //if not success
+                if (result.Value == false)
+                    return CommandResult.FromSuccess("Command cancelled");
+                await ReplyAsync("Advanced permission system activated.");
+                permissions.enabled = true;
+            }
+
             if (permissions.RoleHasValue(role.Id, node)) 
-                return Task.FromResult<RuntimeResult>(CommandResult
-                    .FromError($"Role `{role.Name}` already has permissions set to this role."));
+                return CommandResult.FromError($"Role `{role.Name}` already has permissions set to this role.");
 
             //Validate node
             if (node[0] == '.')
-                return Task.FromResult<RuntimeResult>(CommandResult.FromError("`.` cannot be the first character."));
+                return CommandResult.FromError("`.` cannot be the first character.");
             TreeNode lastNode = null;
             string[] split = node.Split('.');
             for (int i = 0; i < split.Length; i++)
@@ -191,7 +217,7 @@ namespace BotCatMaxy
                 //Verifying valid use of wildcard as only part of substring (for now?) and as last part
                 if (part.Contains('*'))
                     if (part.Length > 1 || i != split.Length - 1)
-                        return Task.FromResult<RuntimeResult>(CommandResult.FromError("Invalid use of `*` wildcard."));
+                        return CommandResult.FromError("Invalid use of `*` wildcard.");
                     else  
                         break;
                 
@@ -203,7 +229,7 @@ namespace BotCatMaxy
                         p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
 
                 if (lastNode == null)
-                    return Task.FromResult<RuntimeResult>(CommandResult.FromError("Node does not correspond to any valid command."));
+                    return CommandResult.FromError("Node does not correspond to any valid command.");
             }
             
             //Save node    
@@ -216,7 +242,7 @@ namespace BotCatMaxy
                 permissions.Map[role.Id] = new List<string> {node};
             permissions.SaveToFile();
             
-            return Task.FromResult<RuntimeResult>(CommandResult.FromSuccess($"Added node `{node}` to `{role.Name}`."));
+            return CommandResult.FromSuccess($"Added node `{node}` to `{role.Name}`.");
         }
         
         [Command("RemovePermission")]
