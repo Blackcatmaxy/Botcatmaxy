@@ -17,8 +17,8 @@ namespace Tests.Commands
         [Fact]
         public async Task WarnCommandAndRemoveTest()
         {
-            var channel = await guild.CreateTextChannelAsync("WarnChannel") as MockTextChannel;
-            var users = await guild.GetUsersAsync();
+            var channel = await Guild.CreateTextChannelAsync("WarnChannel") as MockTextChannel;
+            var users = await Guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
             var testee = users.First(user => user.Username == "Testee");
 

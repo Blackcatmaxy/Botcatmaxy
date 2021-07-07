@@ -19,27 +19,28 @@ namespace Tests
 {
     public class CommandTests : BaseDataTests, IAsyncLifetime
     {
-        protected readonly MockDiscordClient client = new();
-        protected readonly MockGuild guild = new();
-        protected readonly CommandService service;
-        protected readonly CommandHandler handler;
-        protected CommandResult commandResult;
-        protected TaskCompletionSource<CommandResult> completionSource;
+        protected MockDiscordClient Client { get; } = new();
+        protected MockGuild Guild { get; } = new();
+        protected CommandService Service { get; }
+        protected CommandHandler Handler { get; }
+        protected ServiceProvider Provider { get; }
+        protected CommandResult CommandResult { get; private set; }
+        protected TaskCompletionSource<CommandResult> CompletionSource { get; private set; }
 
-        public CommandTests() : base()
+        public CommandTests()
         {
-            cache = new SettingsCache(client);
-            client.guilds.Add(guild);
-            var services = new ServiceCollection()
-                .AddSingleton(client)
+            cache = new SettingsCache(Client);
+            Client.guilds.Add(Guild);
+            Provider = new ServiceCollection()
+                .AddSingleton(Client)
                 .BuildServiceProvider();
-            service = new CommandService();
-            handler = new CommandHandler(services, client, service, null);
-            service.CommandExecuted += CommandExecuted;
+            Service = new CommandService();
+            Handler = new CommandHandler(Client, null, Provider, Service);
+            Service.CommandExecuted += CommandExecuted;
         }
 
         public async Task InitializeAsync()
-            => await handler.InitializeAsync(default);
+            => await Handler.InitializeAsync(default);
 
         public Task DisposeAsync()
             => Task.CompletedTask;
@@ -49,10 +50,10 @@ namespace Tests
             Assert.NotNull(channel);
             Assert.NotNull(user);
             var message = channel.SendMessageAsOther(text, user);
-            var context = new MockCommandContext(client, message);
-            completionSource = new TaskCompletionSource<CommandResult>();
-            await handler.ExecuteCommand(message, context);
-            return await completionSource.Task;
+            var context = new MockCommandContext(Client, message);
+            CompletionSource = new TaskCompletionSource<CommandResult>();
+            await Handler.ExecuteCommand(message, context);
+            return await CompletionSource.Task;
         }
 
         /// <summary>
@@ -62,12 +63,12 @@ namespace Tests
         {
             if (result is CommandResult commandResult)
             {
-                this.commandResult = commandResult;
-                completionSource.SetResult(commandResult);
+                CommandResult = commandResult;
+                CompletionSource.SetResult(commandResult);
             }
-            else if (result.Error == CommandError.Exception) completionSource.SetException(((ExecuteResult)result).Exception);
-            else if (!result.IsSuccess) completionSource.SetException(new Exception(result.ErrorReason));
-            else completionSource.SetResult(new CommandResult(null, "Test"));
+            else if (result.Error == CommandError.Exception) CompletionSource.SetException(((ExecuteResult)result).Exception);
+            else if (!result.IsSuccess) CompletionSource.SetException(new Exception(result.ErrorReason));
+            else CompletionSource.SetResult(new CommandResult(null, "Test"));
 
             return Task.CompletedTask;
         }
@@ -83,10 +84,10 @@ namespace Tests
         [Fact]
         public async Task BasicCommandCheck()
         {
-            var channel = await guild.CreateTextChannelAsync("BasicChannel") as MockTextChannel;
+            var channel = await Guild.CreateTextChannelAsync("BasicChannel") as MockTextChannel;
             var messages = await channel.GetMessagesAsync().FlattenAsync();
             Assert.Empty(messages);
-            var users = await guild.GetUsersAsync();
+            var users = await Guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
             var result = await TryExecuteCommand("!toggleserverstorage", owner, channel);
             messages = await channel.GetMessagesAsync().FlattenAsync();
@@ -100,14 +101,14 @@ namespace Tests
         [Fact]
         public async Task TypeReaderTest()
         {
-            var channel = await guild.CreateTextChannelAsync("TypeReaderChannel") as MockTextChannel;
-            var users = await guild.GetUsersAsync();
+            var channel = await Guild.CreateTextChannelAsync("TypeReaderChannel") as MockTextChannel;
+            var users = await Guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
             var testee = users.First(user => user.Username == "Testee");
             var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
-            MockCommandContext context = new(client, message);
+            MockCommandContext context = new(Client, message);
             var userRefReader = new UserRefTypeReader();
-            var result = await userRefReader.ReadAsync(context, testee.Id.ToString(), handler._services);
+            var result = await userRefReader.ReadAsync(context, testee.Id.ToString(), Provider);
             Assert.True(result.IsSuccess);
             var match = result.BestMatch as UserRef;
             Assert.NotNull(match);

@@ -16,10 +16,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BotCatMaxy.Startup
 {
-    public class CommandHandler : InitializedService
+    public class CommandHandler : DiscordClientService
     {
         /*public readonly HashSet<string> ignoredCMDErrors = new HashSet<string>() { "User not found.",
                             "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.",
@@ -29,43 +30,40 @@ namespace BotCatMaxy.Startup
                             "User requires channel permission ManageMessages.", "Failed to parse UInt32." };*/
         private readonly IDiscordClient _client;
         private readonly CommandService _commands;
-        public readonly IServiceProvider _services;
+        private readonly IServiceProvider _services;
 
-        public CommandHandler(IServiceProvider services, IDiscordClient client, CommandService commandService, IConfiguration config)
+        public CommandHandler(IDiscordClient client, ILogger<CommandHandler> logger,  IServiceProvider services, CommandService commandService) 
+            : base(client as DiscordSocketClient, logger)
         {
             _commands = commandService;
             _client = client;
             _services = services;
         }
 
-        public override async Task InitializeAsync(CancellationToken cancellationToken)
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+            => InitializeAsync(cancellationToken);
+
+        public async Task InitializeAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                if (_client is DiscordSocketClient socketClient)
-                    // Hook the MessageReceived event into our command handler
-                    socketClient.MessageReceived += HandleCommandAsync;
+            if (_client is DiscordSocketClient socketClient)
+                // Hook the MessageReceived event into our command handler
+                socketClient.MessageReceived += HandleCommandAsync;
 
-                //Exception and Post Execution handling
-                _commands.Log += ExceptionLogging.Log;
-                _commands.CommandExecuted += CommandExecuted;
+            //Exception and Post Execution handling
+            _commands.Log += ExceptionLogging.Log;
+            _commands.CommandExecuted += CommandExecuted;
 
-                //Adds custom type readers
-                _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
-                _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
-                _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
-                _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
-                _commands.AddTypeReader(typeof(CommandInfo[]), new CommandTypeReader());
+            //Adds custom type readers
+            _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
+            _commands.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
+            _commands.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
+            _commands.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
+            _commands.AddTypeReader(typeof(CommandInfo[]), new CommandTypeReader());
 
-                // See Dependency Injection guide for more information.
-                await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
-                                                services: _services);
-                await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
-            }
-            catch (Exception e)
-            {
-                await new LogMessage(LogSeverity.Critical, "CMDs", "Commands set up failed", e).Log();
-            }
+            // See Dependency Injection guide for more information.
+            await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
+                services: _services);
+            await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -82,7 +80,7 @@ namespace BotCatMaxy.Startup
 
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
             if (!(message.HasCharPrefix('!', ref argPos) ||
-                message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
+                  message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;
 
