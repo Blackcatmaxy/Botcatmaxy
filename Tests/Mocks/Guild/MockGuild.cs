@@ -242,6 +242,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IReadOnlyCollection<GuildEmote>> GetEmotesAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<GuildEmote> GetEmoteAsync(ulong id, RequestOptions options = null)
         {
             throw new NotImplementedException();
