@@ -13,9 +13,11 @@ using Interactivity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
+using Serilog.Core;
 
 namespace BotCatMaxy
 {
@@ -41,7 +43,7 @@ namespace BotCatMaxy
                     Console.WriteLine($"Loading config from {path}.ini");
                     config.AddIniFile($"{path}.ini", optional: true, reloadOnChange: true);
                 })
-                .ConfigureDiscordHost<DiscordSocketClient>((context, config) =>
+                .ConfigureDiscordHost((context, config) =>
                 {
                     config.SocketConfig = new DiscordSocketConfig
                     {
@@ -68,17 +70,19 @@ namespace BotCatMaxy
                 })
                 .ConfigureServices((context, services) =>
                 {
+                    //Tell Dependency Injection that it can put DiscordSocketClient where IDiscordClient is requested 
+                    services.AddSingleton<IDiscordClient, DiscordSocketClient>(x => x.GetRequiredService<DiscordSocketClient>());
+                    //Set up and add Mongo
                     var mongo = new MongoClient(context.Configuration["DataToken"]);
                     DataManipulator.dbClient = mongo;
                     services.AddSingleton(mongo);
+                    
                     services.AddSingleton(x =>
                         new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
-                    services.AddSingleton(x =>
-                        new BotInfo(x.GetRequiredService<DiscordSocketClient>(), args));
+                    
+                    services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
-                    services.AddSingleton<IDiscordClient, DiscordSocketClient>(x => 
-                        x.GetRequiredService<DiscordSocketClient>());
-                    services.AddSingleton<PermissionService>();
+                    services.AddHostedService<PermissionService>();
                 })
                 .UseCommandService((context, config) =>
                 {

@@ -42,6 +42,11 @@ namespace Tests.Mocks
             return Task.CompletedTask;
         }
 
+        public Task<IUserMessage> ModifyMessageAsync(ulong messageId, Action<MessageProperties> func, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public IDisposable EnterTypingState(RequestOptions options = null)
         {
             throw new NotImplementedException();

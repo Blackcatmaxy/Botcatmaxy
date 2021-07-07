@@ -71,6 +71,11 @@ namespace Tests.Mocks.Guild
 
         public bool IsStreaming => throw new NotImplementedException();
 
+        public Task AddRoleAsync(ulong roleId, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task AddRoleAsync(IRole role, RequestOptions options = null)
         {
             if (roles.Any(r => r.Id == role.Id))
@@ -79,7 +84,17 @@ namespace Tests.Mocks.Guild
             return Task.CompletedTask;
         }
 
+        public Task AddRolesAsync(IEnumerable<ulong> roleIds, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task AddRolesAsync(IEnumerable<IRole> roles, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveRoleAsync(ulong roleId, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
@@ -113,6 +128,11 @@ namespace Tests.Mocks.Guild
             }
 
             throw new ArgumentException("User doesn't have role");
+        }
+
+        public Task RemoveRolesAsync(IEnumerable<ulong> roleIds, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
         }
 
         public Task RemoveRolesAsync(IEnumerable<IRole> roles, RequestOptions options = null)
