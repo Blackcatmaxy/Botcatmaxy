@@ -8,7 +8,7 @@ using Discord.Commands;
 
 namespace BotCatMaxy.Components.CommandHandling
 {
-    public class PermissionService : InitializedService
+    public class PermissionService 
     {
         public IList<TreeNode> Parents { get; private set; } = new List<TreeNode>(8);
 
@@ -47,11 +47,6 @@ namespace BotCatMaxy.Components.CommandHandling
                 nodes.Add(node);
             }
             return node;
-        }
-
-        public override Task InitializeAsync(CancellationToken cancellationToken)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

@@ -77,12 +77,12 @@ namespace BotCatMaxy
                     DataManipulator.dbClient = mongo;
                     services.AddSingleton(mongo);
                     
+                    services.AddSingleton<PermissionService>();
                     services.AddSingleton(x =>
                         new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
-                    
+
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
-                    services.AddHostedService<PermissionService>();
                 })
                 .UseCommandService((context, config) =>
                 {

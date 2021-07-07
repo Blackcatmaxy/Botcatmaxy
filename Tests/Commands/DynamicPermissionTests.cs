@@ -19,10 +19,10 @@ namespace Tests.Commands
         {
             //Set Up
             //var permissions = new CommandPermissions() {guild = guild};
-            var channel = await guild.CreateTextChannelAsync("BasicChannel") as MockTextChannel;
-            var users = await guild.GetUsersAsync();
+            var channel = await Guild.CreateTextChannelAsync("BasicChannel") as MockTextChannel;
+            var users = await Guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
-            var role = await guild.CreateRoleAsync("TestRole", GuildPermissions.None, isMentionable: false);
+            var role = await Guild.CreateRoleAsync("TestRole", GuildPermissions.None, isMentionable: false);
             await owner.AddRoleAsync(role);
             
             var cmdResult = await ExecuteCommandResult($"!AddPermission {role.Id} {node}", owner, channel);
