@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using Microsoft.Extensions.DependencyInjection;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
@@ -31,11 +32,13 @@ namespace Tests
         {
             cache = new SettingsCache(Client);
             Client.guilds.Add(Guild);
+            var permissions = new PermissionService();
             Provider = new ServiceCollection()
                 .AddSingleton(Client)
+                .AddSingleton(permissions)
                 .BuildServiceProvider();
             Service = new CommandService();
-            Handler = new CommandHandler(Client, null, Provider, Service);
+            Handler = new CommandHandler(Client, null, Provider, Service, permissions);
             Service.CommandExecuted += CommandExecuted;
         }
 
@@ -45,7 +48,7 @@ namespace Tests
         public Task DisposeAsync()
             => Task.CompletedTask;
 
-        public async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
+        protected async Task<Tuple<CommandResult, MockCommandContext>> ExecuteCommandResult(string text, IUser user, MockTextChannel channel)
         {
             Assert.NotNull(channel);
             Assert.NotNull(user);
@@ -53,8 +56,11 @@ namespace Tests
             var context = new MockCommandContext(Client, message);
             CompletionSource = new TaskCompletionSource<CommandResult>();
             await Handler.ExecuteCommand(message, context);
-            return await CompletionSource.Task;
+            return new Tuple<CommandResult, MockCommandContext>(await CompletionSource.Task, context);
         }
+
+        protected async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
+            => (await ExecuteCommandResult(text, user, channel)).Item1;
 
         /// <summary>
         /// Executes after command is finished with full info <seealso cref="CommandHandler"/>'s CommandExecuted

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Startup;
@@ -66,7 +67,6 @@ namespace BotCatMaxy
                     }
 
                     config.Token = token;
-                    //config.LogFormat = (message, exception) => $"{message.Source}: {message.Message}";
                 })
                 .ConfigureServices((context, services) =>
                 {
@@ -77,9 +77,10 @@ namespace BotCatMaxy
                     DataManipulator.dbClient = mongo;
                     services.AddSingleton(mongo);
                     
+                    services.AddSingleton<PermissionService>();
                     services.AddSingleton(x =>
                         new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
-                    
+
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
                 })

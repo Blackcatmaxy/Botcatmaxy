@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using BotCatMaxy.Data;
 using Discord;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
 
 namespace BotCatMaxy.Models
 {
@@ -9,6 +13,55 @@ namespace BotCatMaxy.Models
     /// </summary>
     public class CommandPermissions : DataObject
     {
-        public Dictionary<string, GuildPermissions> map = new();
+        /// <summary>
+        /// A Dictionary of roles and their permission strings, do NOT use null or empty state for enabled check
+        /// </summary>
+        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
+        public Dictionary<ulong, List<string>> Map { get; } = new();
+
+        /// <summary>
+        /// Bool to check if server has decided to switch to the new permission system
+        /// </summary>
+        public bool enabled = false;
+        
+        /// <summary>
+        /// Check if role has permission node
+        /// </summary>
+        /// <param name="role">Role ID</param>
+        /// <param name="value">Permission node to check</param>
+        public bool RoleHasValue(ulong role, string value)
+        {
+            if (!Map.TryGetValue(role, out var values) || values == null)
+                return false;
+
+            var valueSplit = value.Split('.');
+            foreach (var roleValue in values)
+            {
+                if (roleValue.Equals(value, StringComparison.InvariantCultureIgnoreCase))
+                    return true;
+                var roleValueSplit = roleValue.Split('.').ToList();
+                
+                if (value.Length > roleValueSplit.Count && roleValueSplit[^1] != "*")
+                    continue;
+                
+                if (roleValueSplit[^1] == "*")
+                    roleValueSplit.Remove("*");
+
+                bool result = true;
+                for (int i = 0; i < roleValueSplit.Count; i++)
+                {
+                    if (!roleValueSplit[i].Equals(valueSplit[i], StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        result = false;
+                        break;
+                    }
+                }
+
+                if (result)
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

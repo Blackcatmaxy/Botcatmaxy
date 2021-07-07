@@ -42,6 +42,13 @@ namespace Tests
             guild.AddUser(user as MockGuildUser);
             await guild.AddBanAsync(user, reason: "Test");
             Assert.NotNull(await guild.GetBanAsync(user));
+            
+            //Roles
+            var adminRole = await guild.CreateRoleAsync("Admin", GuildPermissions.All, isMentionable: false);
+            Assert.True(adminRole.Name is "Admin" && adminRole.Permissions.Administrator);
+            Assert.NotNull(guild.GetRole(adminRole.Id));
+            await user.AddRoleAsync(adminRole);
+            Assert.Contains(adminRole.Id, user.RoleIds);
         }
 
         [Fact]

@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -31,13 +32,15 @@ namespace BotCatMaxy.Startup
         private readonly IDiscordClient _client;
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
+        private readonly PermissionService _permissions;
 
-        public CommandHandler(IDiscordClient client, ILogger<CommandHandler> logger,  IServiceProvider services, CommandService commandService) 
+        public CommandHandler(IDiscordClient client, ILogger<CommandHandler> logger,  IServiceProvider services, CommandService commandService, PermissionService permissions) 
             : base(client as DiscordSocketClient, logger)
         {
             _commands = commandService;
             _client = client;
             _services = services;
+            _permissions = permissions;
         }
 
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
@@ -63,6 +66,7 @@ namespace BotCatMaxy.Startup
             // See Dependency Injection guide for more information.
             await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
                 services: _services);
+            _permissions.SetUp(_commands);
             await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
         }
 
@@ -80,7 +84,7 @@ namespace BotCatMaxy.Startup
 
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
             if (!(message.HasCharPrefix('!', ref argPos) ||
-                  message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
+                message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;
 

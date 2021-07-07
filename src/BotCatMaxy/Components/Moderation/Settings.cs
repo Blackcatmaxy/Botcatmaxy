@@ -4,15 +4,25 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
+using Interactivity;
+using Interactivity.Confirmation;
 
 namespace BotCatMaxy
 {
     //I want to move away from vague files like settings since conflicts are annoying
     [Name("Settings")]
-    public class SettingsModule : ModuleBase<ICommandContext>
+    public class SettingsModule : InteractiveModule
     {
-
+        public PermissionService PermissionService { get; set; }
+     
+        public SettingsModule(IServiceProvider service) : base(service)
+        {
+        }
+        
         [Command("Settings Info")]
         [Summary("View settings.")]
         [RequireContext(ContextType.Guild)]
@@ -167,7 +177,99 @@ namespace BotCatMaxy
 
             await ReplyAsync("People with the role \"" + role.Name + "\" can now no longer warn people");
         }
+
+        [Command("AddPermission")]
+        public async Task<RuntimeResult> AddPermissionAsync(IRole role, string node)
+        {
+            var permissions = Context.Guild.LoadFromFile<CommandPermissions>(true);
+            //Prompt user with info about new system before enabling when disabled
+            if (permissions.enabled == false && Interactivity != null)
+            {
+                var pageBuilder = new PageBuilder()
+                    .WithTitle("Are you sure?")
+                    .WithDescription("Adding a new permission would enable the new advanced permission system, " +
+                                     "'restricted' commands will no longer permit users based on Discord permissions. " +
+                                     "Are you sure you're ready for this change to take effect?");
+                var confirmation = new ConfirmationBuilder()
+                    .WithContent(pageBuilder)
+                    .WithConfirmEmote(new Emoji("\U00002705"))
+                    .WithDeclineEmote(new Emoji("\U0000274c"));
+                var result = await Interactivity.SendConfirmationAsync(confirmation.Build(), Context.Channel,
+                    TimeSpan.FromMinutes(3));
+                //if not success
+                if (result.Value == false)
+                    return CommandResult.FromSuccess("Command cancelled");
+                await ReplyAsync("Advanced permission system activated.");
+                permissions.enabled = true;
+            }
+
+            if (permissions.RoleHasValue(role.Id, node)) 
+                return CommandResult.FromError($"Role `{role.Name}` already has permissions set to this role.");
+
+            //Validate node
+            if (node[0] == '.')
+                return CommandResult.FromError("`.` cannot be the first character.");
+            TreeNode lastNode = null;
+            string[] split = node.Split('.');
+            for (int i = 0; i < split.Length; i++)
+            {
+                string part = split[i];
+                //Verifying valid use of wildcard as only part of substring (for now?) and as last part
+                if (part.Contains('*'))
+                    if (part.Length > 1 || i != split.Length - 1)
+                        return CommandResult.FromError("Invalid use of `*` wildcard.");
+                    else  
+                        break;
+                
+                if (i == 0)
+                    lastNode = PermissionService.Parents.FirstOrDefault(p =>
+                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+                else
+                    lastNode = lastNode.children.FirstOrDefault(p =>
+                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+
+                if (lastNode == null)
+                    return CommandResult.FromError("Node does not correspond to any valid command.");
+            }
+            
+            //Save node    
+            if (permissions.Map.TryGetValue(role.Id, out var nodes) && nodes != null)
+            {
+                nodes.Add(node);
+                permissions.Map[role.Id] = nodes;
+            }
+            else
+                permissions.Map[role.Id] = new List<string> {node};
+            permissions.SaveToFile();
+            
+            return CommandResult.FromSuccess($"Added node `{node}` to `{role.Name}`.");
+        }
+        
+        [Command("RemovePermission")]
+        [DynamicPermission("Permissions.Nodes.Remove")]
+        public Task<RuntimeResult> RemovePermission(IRole role, string node)
+        {
+            var permissions = Context.Guild.LoadFromFile<CommandPermissions>(false);
+            if (permissions == null) 
+                return Task.FromResult<RuntimeResult>(CommandResult.FromError("Permissions not set."));
+
+            //If value is is not in dict or roleID not in list
+            if (!permissions.RoleHasValue(role.Id, node)) 
+                return Task.FromResult<RuntimeResult>(CommandResult.FromError($"Role `{role.Name}` already doesn't have permissions set to node `{node}`."));
+
+            var nodes = permissions.Map[role.Id];
+            if (nodes.Count > 1)
+            {
+                nodes.Remove(node);
+                permissions.Map[role.Id] = nodes;
+            }
+            else
+            {
+                permissions.Map.Remove(role.Id);
+            }
+
+            permissions.SaveToFile();
+            return Task.FromResult<RuntimeResult>(CommandResult.FromSuccess($"Removed node `{node}` from role `{role.Name}`."));
+        }
     }
-
-
 }
