@@ -17,6 +17,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
 using Serilog.Core;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace BotCatMaxy
 {
@@ -26,7 +27,9 @@ namespace BotCatMaxy
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.Console()
+                .WriteTo.Async(a => 
+                    a.File("logs/log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .CreateLogger();
             
             var hostBuilder = Host.CreateDefaultBuilder()
@@ -66,7 +69,6 @@ namespace BotCatMaxy
                     }
 
                     config.Token = token;
-                    //config.LogFormat = (message, exception) => $"{message.Source}: {message.Message}";
                 })
                 .ConfigureServices((context, services) =>
                 {
@@ -85,9 +87,10 @@ namespace BotCatMaxy
                 })
                 .UseCommandService((context, config) =>
                 {
-                    config.DefaultRunMode = RunMode.Async;
-                    config.IgnoreExtraArgs = true;
                     config.LogLevel = LogSeverity.Verbose;
+                    config.DefaultRunMode = RunMode.Async;
+                    config.CaseSensitiveCommands = false;
+                    config.IgnoreExtraArgs = true;
                 });
             
             try

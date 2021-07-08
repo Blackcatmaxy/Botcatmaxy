@@ -50,8 +50,8 @@ namespace BotCatMaxy.Startup
                 socketClient.MessageReceived += HandleCommandAsync;
 
             //Exception and Post Execution handling
-            _commands.Log += ExceptionLogging.Log;
             _commands.CommandExecuted += CommandExecuted;
+            //_commands.Log += ExceptionLogging.Log;
 
             //Adds custom type readers
             _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
@@ -141,14 +141,14 @@ namespace BotCatMaxy.Startup
                 string logMessage = $"Command !{command.Value?.Name} in";
                 if (context.Guild != null)
                 {
-                    logMessage += $" {await context.Guild.Describe()} owned by {(await context.Guild.GetOwnerAsync()).Describe()}";
+                    logMessage += $" {await context.Guild.Describe()}";
                 }
                 else
                 {
                     logMessage += $" {context.User.Describe()} DMs";
                 }
                 logMessage += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
-                await new LogMessage(LogSeverity.Error, "CMDs", logMessage, (result as ExecuteResult?)?.Exception).Log();
+                await LogSeverity.Error.LogExceptionAsync("Command", logMessage, (result as ExecuteResult?)?.Exception);
             }
         }
     }

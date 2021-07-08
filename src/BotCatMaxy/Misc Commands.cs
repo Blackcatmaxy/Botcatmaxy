@@ -10,6 +10,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -189,11 +190,21 @@ namespace BotCatMaxy
             await ReplyAsync($"Your message had {Context.Message.Content.Count(c => c == '\n')}");
         }*/
 
-        public void ErrorTest()
+#if DEBUG
+        [Command("throw")]
+        [RequireOwner]
+        public Task ExceptionTestCommandAsync()
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("This is an error test");
+            ExceptionTestMethod();
+            return Task.CompletedTask;
         }
 
+        private static void ExceptionTestMethod()
+        {
+            throw new InvalidEnumArgumentException("This is what shouldn't be reached");
+        }
+#endif
         [RequireOwner]
         [Command("stats")]
         [Summary("View bot statistics.")]
