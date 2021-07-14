@@ -81,16 +81,15 @@ namespace BotCatMaxy
                     
                     services.AddSingleton(x =>
                         new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
+                    services.AddSingleton(new CommandService(new CommandServiceConfig
+                    {
+                        DefaultRunMode = RunMode.Async,
+                        CaseSensitiveCommands = false,
+                        IgnoreExtraArgs = true
+                    }));
                     
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
-                })
-                .UseCommandService((context, config) =>
-                {
-                    config.LogLevel = LogSeverity.Verbose;
-                    config.DefaultRunMode = RunMode.Async;
-                    config.CaseSensitiveCommands = false;
-                    config.IgnoreExtraArgs = true;
                 });
             
             try
