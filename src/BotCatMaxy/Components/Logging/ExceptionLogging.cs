@@ -67,7 +67,6 @@ namespace BotCatMaxy
         /// <param name="message">Main content written</param>
         /// <param name="exception"><b>Required</b>, the exception to be logged</param>
         /// <param name="errorEmbed">Optional override for Discord embed</param>
-        /// <returns></returns>
         public static Task LogExceptionAsync(this LogSeverity severity, string source, string message, Exception exception, EmbedBuilder errorEmbed = null)
         {
             Task task = null;
@@ -90,20 +89,16 @@ namespace BotCatMaxy
             return task ?? Task.CompletedTask;
         }
 
-        public static async Task AssertAsync(this bool assertion, string message = "Assertion failed")
+        public static void AssertAsync(this bool assertion, string message = "Assertion failed")
         {
             if (assertion == false)
-            {
-                await Log(new LogMessage(LogSeverity.Error, "Assert", message));
-            }
+                LogSeverity.Error.Log("Assert", message);
         }
 
-        public static async Task AssertWarnAsync(this bool assertion, string message = "Assertion failed")
+        public static void AssertWarnAsync(this bool assertion, string message = "Assertion failed")
         {
             if (assertion == false)
-            {
-                await Log(new LogMessage(LogSeverity.Warning, "Assert", message));
-            }
+                LogSeverity.Warning.Log("Assert", message);
         }
 
         public static async Task LogFilterError(this Exception exception, string type, IGuild guild)
@@ -111,8 +106,10 @@ namespace BotCatMaxy
             await new LogMessage(LogSeverity.Error, "Filter", $"Something went wrong with the {type} filter in {guild.Name} guild ({guild.Id}) owned by {guild.OwnerId}", exception).Log();
         }
 
-        //just to save code
+        /// <returns>String with display all generic information available from <see cref="IGuild"/></returns>
         public static async Task<string> Describe(this IGuild guild) => $"{guild.Name} ({guild.Id}) owned by {(await guild.GetOwnerAsync()).Describe()}";
+        
+        /// <returns>String with display all generic information available from <see cref="IUser"/></returns>
         public static string Describe(this IUser user) => $"{user.Username}#{user.Discriminator} ({user.Id})";
     }
 }
