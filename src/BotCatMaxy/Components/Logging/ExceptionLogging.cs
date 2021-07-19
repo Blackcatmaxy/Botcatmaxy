@@ -14,6 +14,9 @@ namespace BotCatMaxy
 {
     public static class ExceptionLogging
     {
+        /// <summary>
+        /// Calls <see cref="LogExceptionAsync"/> if there's an exception, otherwise calls <see cref="Log(Discord.LogMessage)"/> 
+        /// </summary>
         [Obsolete("Use LogSeverity.Log or LogExceptionAsync instead")]
         public static Task Log(this LogMessage message)
         {
@@ -27,6 +30,12 @@ namespace BotCatMaxy
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Logs the message with the source and severity to the static Serilog logger
+        /// </summary>
+        /// <param name="severity">The importance of the message</param>
+        /// <param name="source">Where it came from, max 7 chars</param>
+        /// <param name="message">Main content written</param>
         public static void Log(this LogSeverity severity, string source, string message)
         {
             source += ':';
@@ -34,6 +43,10 @@ namespace BotCatMaxy
             Logger.Write(severity.SwitchToEventLevel(), content);
         }
 
+        /// <summary>
+        /// Switches Discord <see cref="LogSeverity"/> to Serilog <see cref="LogEventLevel"/>
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if new definition was added and therefore wouldn't meet any existing case</exception>
         public static LogEventLevel SwitchToEventLevel(this LogSeverity severity)
             => severity switch
             {
@@ -46,6 +59,15 @@ namespace BotCatMaxy
                 _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null)
             };
         
+        /// <summary>
+        /// Formats an embed to be sent in Discord if bot is connected, and then calls <see cref="Log(Discord.LogMessage)"/> to use Serilog
+        /// </summary>
+        /// <param name="severity">The importance of the message</param>
+        /// <param name="source">Where it came from, max 7 chars</param>
+        /// <param name="message">Main content written</param>
+        /// <param name="exception"><b>Required</b>, the exception to be logged</param>
+        /// <param name="errorEmbed">Optional override for Discord embed</param>
+        /// <returns></returns>
         public static Task LogExceptionAsync(this LogSeverity severity, string source, string message, Exception exception, EmbedBuilder errorEmbed = null)
         {
             Task task = null;
