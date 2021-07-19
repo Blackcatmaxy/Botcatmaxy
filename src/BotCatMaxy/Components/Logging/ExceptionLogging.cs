@@ -89,13 +89,13 @@ namespace BotCatMaxy
             return task ?? Task.CompletedTask;
         }
 
-        public static void AssertAsync(this bool assertion, string message = "Assertion failed")
+        public static void Assert(this bool assertion, string message = "Assertion failed")
         {
             if (assertion == false)
                 LogSeverity.Error.Log("Assert", message);
         }
 
-        public static void AssertWarnAsync(this bool assertion, string message = "Assertion failed")
+        public static void AssertWarn(this bool assertion, string message = "Assertion failed")
         {
             if (assertion == false)
                 LogSeverity.Warning.Log("Assert", message);
