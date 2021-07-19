@@ -3,8 +3,11 @@ using Humanizer;
 using MongoDB.Driver;
 using Serilog.Core;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Logging;
+using Microsoft.Extensions.Logging;
+using Serilog.Events;
 using Logger = Serilog.Log;
 
 namespace BotCatMaxy
@@ -28,29 +31,21 @@ namespace BotCatMaxy
         {
             source += ':';
             string content = source.PadRight(9) + message;
-            switch (severity)
-            {
-                case LogSeverity.Critical:
-                    Logger.Fatal(content);
-                    break;
-                case LogSeverity.Error:
-                    Logger.Error(content);
-                    break;
-                case LogSeverity.Warning:
-                    Logger.Warning(content);
-                    break;
-                case LogSeverity.Info:
-                    Logger.Information(content);
-                    break;
-                case LogSeverity.Verbose:
-                    Logger.Verbose(content);
-                    break;
-                case LogSeverity.Debug:
-                    Logger.Debug(content);
-                    break;
-            }
+            Logger.Write(severity.SwitchToEventLevel(), content);
         }
 
+        public static LogEventLevel SwitchToEventLevel(this LogSeverity severity)
+            => severity switch
+            {
+                LogSeverity.Critical => LogEventLevel.Fatal,
+                LogSeverity.Error => LogEventLevel.Error,
+                LogSeverity.Warning => LogEventLevel.Warning,
+                LogSeverity.Info => LogEventLevel.Information,
+                LogSeverity.Verbose => LogEventLevel.Verbose,
+                LogSeverity.Debug => LogEventLevel.Debug,
+                _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null)
+            };
+        
         public static Task LogExceptionAsync(this LogSeverity severity, string source, string message, Exception exception, EmbedBuilder errorEmbed = null)
         {
             Task task = null;
