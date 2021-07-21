@@ -52,7 +52,6 @@ namespace BotCatMaxy.Startup
 
             //Exception and Post Execution handling
             _commands.CommandExecuted += CommandExecuted;
-            //_commands.Log += ExceptionLogging.Log;
 
             //Adds custom type readers
             _commands.AddTypeReader(typeof(Emoji), new EmojiTypeReader());

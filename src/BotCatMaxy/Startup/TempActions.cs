@@ -132,7 +132,7 @@ namespace BotCatMaxy
                                         _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {sockGuild.Name} discord");
                                         editedMutes.Remove(tempMute);
                                         DiscordLogging.LogManualEndTempAct(sockGuild, gUser, "mut", tempMute.DateBanned);
-                                        _ = (!editedMutes.Contains(tempMute)).AssertAsync("Tempmute not removed?!");
+                                        (!editedMutes.Contains(tempMute)).Assert("Tempmute not removed?!");
                                     }
                                     else if (DateTime.UtcNow >= tempMute.DateBanned.Add(tempMute.Length))
                                     { //Normal mute end
@@ -161,7 +161,7 @@ namespace BotCatMaxy
                             }
 
                             //NOTE: Assertions fail if NOT true
-                            _ = (currentInfo.checkedMutes == actions.tempMutes.Count).AssertAsync($"Checked incorrect number tempmutes ({currentInfo.checkedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
+                            (currentInfo.checkedMutes == actions.tempMutes.Count).Assert($"Checked incorrect number tempmutes ({currentInfo.checkedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
 
                             if (editedMutes.Count != actions.tempMutes.Count)
                             {
@@ -177,7 +177,7 @@ namespace BotCatMaxy
                     else if (debug) Console.Write("no actions to check");
                 }
                 if (debug) Console.Write("\n");
-                _ = (currentInfo.checkedGuilds > 0).AssertWarnAsync("Checked 0 guilds for tempacts?");
+                (currentInfo.checkedGuilds > 0).AssertWarn("Checked 0 guilds for tempacts?");
 
             }
             catch (Exception e) when (e is not OperationCanceledException)

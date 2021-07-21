@@ -474,7 +474,8 @@ namespace BotCatMaxy
                     timeRanOut = true;
                     messages.RemoveAll(message => message.GetTimeAgo() > TimeSpan.FromDays(14));
                 }
-                await ExceptionLogging.AssertAsync(messages.Count <= number);
+                
+                ExceptionLogging.Assert(messages.Count <= number);
 
                 //No need to delete messages or log if no actual messages deleted
                 await (Context.Channel as ITextChannel).DeleteMessagesAsync(messages);
