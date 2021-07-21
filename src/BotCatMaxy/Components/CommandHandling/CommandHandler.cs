@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy.Startup
 {
@@ -137,19 +138,40 @@ namespace BotCatMaxy.Startup
 
             //Debug info
             if (result.Error is CommandError.Exception or CommandError.Unsuccessful)
+                await LogCommandException(command, context, (result as ExecuteResult?)?.Exception, result);
+        }
+
+        private async Task LogCommandException(Optional<CommandInfo> command, ICommandContext context, Exception exception, IResult result)
+        {
+            string logMessage = $"Command `!{command.Value?.Name}` in";
+
+            if (context.Guild != null)
+                logMessage += $" {await context.Guild.Describe()}";
+            else
+                logMessage += $" {context.User.Describe()} DMs";
+
+            logMessage += $" encountered: result type `{result.GetType().Name}` with reason: `{result.ErrorReason}`";
+
+            var errorEmbed = new EmbedBuilder()
             {
-                string logMessage = $"Command !{command.Value?.Name} in";
-                if (context.Guild != null)
-                {
-                    logMessage += $" {await context.Guild.Describe()}";
-                }
-                else
-                {
-                    logMessage += $" {context.User.Describe()} DMs";
-                }
-                logMessage += $" used as \"{context.Message}\" encountered: result type \"{result.GetType().Name}\", \"{result.ErrorReason}\"";
-                await LogSeverity.Error.LogExceptionAsync("Command", logMessage, (result as ExecuteResult?)?.Exception);
-            }
+                Title = $"New Command Exception",
+                Timestamp = DateTime.Now,
+                Description = logMessage.Truncate(1500)
+            };
+
+            errorEmbed.AddField("Executor", $"{context.User.Username}#{context.User.Discriminator}\n({context.User.Id})", true);
+            errorEmbed.AddField("Channel", context.Guild is null ? "Direct Messages" : $"{context.Channel.Name}\n({context.Channel.Id})", true);
+
+            if (context.Guild is not null)
+                errorEmbed.AddField("Guild", $"{context.Guild.Name}\n({context.Guild.Id})", true);
+
+            if (context is not null)
+                errorEmbed.AddField("Message Content", $"```{context.Message.Content}```");
+
+            errorEmbed.AddField("Exception", $"```{exception}```");
+
+            await BotInfo.LogChannel.SendMessageAsync(embed: errorEmbed.Build());
+            await LogSeverity.Error.LogExceptionAsync("Command", logMessage, exception, errorEmbed);
         }
     }
 }

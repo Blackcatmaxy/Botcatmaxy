@@ -37,6 +37,10 @@ namespace BotCatMaxy.Moderation
 
     public static class PunishFunctions
     {
+        // To get a string variant of the user
+        public static string GetTag(this IUser user)
+            => $"{user.Username}#{user.Discriminator}";
+
         public static async Task<WarnResult> Warn(this UserRef userRef, float size, string reason, ITextChannel channel, string logLink = null)
         {
             Contract.Requires(userRef != null);
@@ -62,7 +66,7 @@ namespace BotCatMaxy.Moderation
         {
             if (size > 999 || size < 0.01)
             {
-                return new WarnResult("Why would you need to warn someone with that size?");
+                return new WarnResult("The infraction size must be between `0.01` and `999`.");
             }
 
             try
@@ -93,7 +97,7 @@ namespace BotCatMaxy.Moderation
             {
                 List<Infraction> infractions = userID.LoadInfractions(channel.Guild, true);
                 await new LogMessage(LogSeverity.Error, "Warn", $"An exception has happened while warning a user ({userID}) with {infractions.Count} warns in {await channel.Guild.Describe()}", e).Log();
-                return new WarnResult(("Something has gone wrong with trying to warn. Try again in a while, if it's still not working email blackcatmaxy@gmail.com or leave an issue on the GitHub" + e.ToString()).Truncate(1500));
+                return new WarnResult(("Something has gone wrong with trying to warn this user. Please post a bug report at https://bot.blackcatmaxy.com/issues with the text below: ```" + e.ToString()).Truncate(1500) + "```");
             }
         }
 
