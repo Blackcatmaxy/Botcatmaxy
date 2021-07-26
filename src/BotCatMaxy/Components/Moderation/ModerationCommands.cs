@@ -33,7 +33,7 @@ namespace BotCatMaxy
 
             if (result.success)
             {
-                Context.Message.DeleteOrRespond($"{Icons.Warn} **{userRef.User.GetTag()}** has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.", Context.Guild);
+                Context.Message.DeleteOrRespond($"**{userRef.User.GetTag()}** has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.", Context.Guild);
                 return CommandResult.FromSuccess(null);
             }
             else
