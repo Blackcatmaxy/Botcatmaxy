@@ -14,6 +14,8 @@ using Discord.WebSocket;
 using Humanizer;
 using Microsoft.Extensions.Logging;
 using Polly;
+using Serilog;
+using Serilog.Core;
 
 namespace BotCatMaxy.Startup
 {
@@ -21,8 +23,11 @@ namespace BotCatMaxy.Startup
     {
         public static CurrentTempActionInfo CurrentInfo { get; } = new();
         public static CachedTempActionInfo CachedInfo { get; } = new();
+        
         private static DiscordSocketClient _client;
         private static CancellationToken _shutdownToken;
+        private static ILogger<DiscordClientService> _botLogger;
+        private static Logger _serviceLogger;
         private Timer _timer;
 
         public TempActionCheckService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
@@ -59,27 +64,27 @@ namespace BotCatMaxy.Startup
         /// <summary>
         /// Initialize the act check and perform sanity checks
         /// </summary>
-        public async Task ActCheckExecAsync()
+        public Task ActCheckExecAsync()
         {
             if (CurrentInfo.Checking)
             {
-                await new LogMessage(LogSeverity.Critical, "TempAct",
-                    $"Check took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {CurrentInfo?.CheckedGuilds}/{_client.Guilds.Count} guilds").Log();
-                return;
+                return new LogMessage(LogSeverity.Error, "TempAct", $"Check taking longer than normal " +
+                                                                      $"to complete and still haven't canceled.\n" +
+                                                                      $"It has gone through {CurrentInfo?.CheckedGuilds}/" +
+                                                                      $"{_client.Guilds.Count} guilds. Not starting new check.").Log();
             }
 
             CurrentInfo.Checking = true;
-            DateTime start = DateTime.UtcNow;
-            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) => 
+            var start = DateTime.UtcNow;
+            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, async (context, timespan, task) =>
             {
                 await new LogMessage(LogSeverity.Critical, "TempAct",
-                    $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {CurrentInfo?.CheckedGuilds}/{_client.Guilds.Count} guilds").Log();
+                    $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and " +
+                    $"through {CurrentInfo?.CheckedGuilds}/{_client.Guilds.Count} guilds").Log();
                 //Won't continue to below so have to do this?
-                ResetInfo(start); 
+                ResetInfo(start);
             });
-            await timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(_client, ct: ct), _shutdownToken, false);
-            //Won't continue if above times out?
-            ResetInfo(start);
+            return timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(_client, ct: ct), _shutdownToken, false);
         }
         
         public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false, CancellationToken? ct = null)
