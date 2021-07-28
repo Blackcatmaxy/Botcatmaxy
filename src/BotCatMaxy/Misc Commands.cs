@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.CommandHandling;
+using BotCatMaxy.Services.TempActions;
 using BotCatMaxy.Startup;
 
 namespace BotCatMaxy
@@ -256,8 +257,8 @@ namespace BotCatMaxy
         public async Task DisplayTempActionTimes()
         {
             var embed = new EmbedBuilder();
-            embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(TempActionCheckService.CachedInfo.LastCheck).Humanize(2)} ago)");
-            embed.AddField("Times", TempActionCheckService.CachedInfo.CheckExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
+            embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(TempActionService.CachedInfo.LastCheck).Humanize(2)} ago)");
+            embed.AddField("Times", TempActionService.CachedInfo.CheckExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -365,7 +366,7 @@ namespace BotCatMaxy
         [RequireOwner]
         public async Task VerboseActCheck()
         {
-            await TempActionCheckService.CheckTempActs(Context.Client, true);
+            await TempActionService.CheckTempActs(Context.Client, true);
             await ReplyAsync("Checked temp acts. Info is in console");
         }
 

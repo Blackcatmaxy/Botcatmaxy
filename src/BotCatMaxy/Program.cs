@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
+using BotCatMaxy.Services.TempActions;
 using BotCatMaxy.Startup;
 using Discord;
 using Discord.Addons.Hosting;
@@ -90,7 +91,7 @@ namespace BotCatMaxy
                     
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
-                    services.AddHostedService<TempActionCheckService>();
+                    services.AddHostedService<TempActionService>();
                 });
             
             try

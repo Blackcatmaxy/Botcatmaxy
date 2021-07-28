@@ -14,12 +14,11 @@ using Discord.WebSocket;
 using Humanizer;
 using Microsoft.Extensions.Logging;
 using Polly;
-using Serilog;
 using Serilog.Core;
 
-namespace BotCatMaxy.Startup
+namespace BotCatMaxy.Services.TempActions
 {
-    public class TempActionCheckService : DiscordClientService
+    public class TempActionService : DiscordClientService
     {
         public static CurrentTempActionInfo CurrentInfo { get; } = new();
         public static CachedTempActionInfo CachedInfo { get; } = new();
@@ -30,7 +29,7 @@ namespace BotCatMaxy.Startup
         private static Logger _serviceLogger;
         private Timer _timer;
 
-        public TempActionCheckService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
+        public TempActionService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
         {
             _client = client;
             client.UserJoined += CheckNewUserAsync;
