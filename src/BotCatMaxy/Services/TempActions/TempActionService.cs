@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -15,6 +17,7 @@ using Discord.WebSocket;
 using Humanizer;
 using Microsoft.Extensions.Logging;
 using Polly;
+using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -22,12 +25,14 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempActionService : DiscordClientService
     {
+        private const string _logPath = "logs/TempAction.log";
         public TempActionChecker ActiveChecker { get; private set; }
+        private TempActionSink.FlushLogDelegate _flushLogDelegate;
         private readonly System.Timers.Timer _timer;
         private readonly DiscordSocketClient _client;
+        private ITextChannel _logChannel;
         private CancellationToken _shutdownToken;
-        private ILogger<DiscordClientService> _botLogger;
-        private Serilog.ILogger _verboseLogger;
+        private Logger _verboseLogger;
 
         public TempActionService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
         {
@@ -41,6 +46,13 @@ namespace BotCatMaxy.Services.TempActions
             _shutdownToken = shutdownToken;
             
             await _client.WaitForReadyAsync(shutdownToken);
+            _verboseLogger = new LoggerConfiguration()
+                             .MinimumLevel.Verbose()
+                             .WriteTo.Logger(Log.Logger, LogEventLevel.Warning)
+                             //.WriteTo.File(_logPath, LogEventLevel.Verbose, encoding: Encoding.UTF8, shared: true, buffered: true)
+                             .WriteTo.TempActionSink(_client, LogEventLevel.Verbose, out var flushLogDelegate)
+                             .CreateLogger();
+            _flushLogDelegate = flushLogDelegate;
             _timer.Elapsed += async (_, _) => await ActCheckExecAsync();
             _timer.Start();
         }
@@ -66,32 +78,31 @@ namespace BotCatMaxy.Services.TempActions
         public Task ActCheckExecAsync()
         {
             ActiveChecker?.CheckCompletion();
-            ActiveChecker = new TempActionChecker(_client, _verboseLogger);
             
+            ActiveChecker = new TempActionChecker(_client, _verboseLogger);
             CurrentInfo.Checking = true;
             var start = DateTime.UtcNow;
             var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, (context, timespan, task) =>
             {
-                _verboseLogger.Write(LogEventLevel.Error, "TempAct",
+                _verboseLogger.Log(LogEventLevel.Error, "TempAct",
                     $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(2)} and through {CurrentInfo.CheckedGuilds}/{_client.Guilds.Count} guilds");
-                //Won't continue to below so have to do this?
-                ResetInfo(start);
-                return Task.CompletedTask;
+                return ResetInfo(start);
             });
             
             return timeoutPolicy.ExecuteAsync(async ct =>
             {
                 await ActiveChecker.ExecuteAsync(ct);
-                ResetInfo(start);
+                await ResetInfo(start);
             }, _shutdownToken, false);
         }
 
-        public void ResetInfo(DateTime start)
+        public Task ResetInfo(DateTime start)
         {
             TimeSpan execTime = DateTime.UtcNow.Subtract(start);
             CachedInfo.CheckExecutionTimes.Enqueue(execTime);
             CachedInfo.LastCheck = DateTime.UtcNow;
             CurrentInfo.Checking = false;
+            return _flushLogDelegate();
         }
     }
 }
