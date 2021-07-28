@@ -1,16 +1,14 @@
 using System;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Discord;
 using Discord.WebSocket;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Display;
 
-namespace BotCatMaxy.Components.Logging
+namespace BotCatMaxy.Services.TempActions
 {
     public class TempActionSink : ILogEventSink
     {
@@ -42,13 +40,16 @@ namespace BotCatMaxy.Components.Logging
             _textFormatter.Format(logEvent, _streamWriter);
         }
 
+        /// <summary>
+        /// Sends saved logs to Discord channel and resets to be able to save more logs.
+        /// </summary>
         private async Task FlushLog()
         {
             await _streamWriter.FlushAsync();
 
             //Sending file disposes and we want to reuse _memoryStream
             var discordStream = new MemoryStream();
-            //Need to reset position so the whole stream is included 
+            //Need to reset position so the whole stream is included
             _memoryStream.Position = 0;
             await _memoryStream.CopyToAsync(discordStream);
             discordStream.Position = 0;
