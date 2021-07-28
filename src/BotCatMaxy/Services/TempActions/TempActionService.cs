@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;
-using Discord.Rest;
 using Discord.WebSocket;
 using Humanizer;
 using Microsoft.Extensions.Logging;
@@ -25,12 +20,10 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempActionService : DiscordClientService
     {
-        private const string _logPath = "logs/TempAction.log";
         public TempActionChecker ActiveChecker { get; private set; }
         private TempActionSink.FlushLogDelegate _flushLogDelegate;
-        private readonly System.Timers.Timer _timer;
         private readonly DiscordSocketClient _client;
-        private ITextChannel _logChannel;
+        private readonly System.Timers.Timer _timer;
         private CancellationToken _shutdownToken;
         private Logger _verboseLogger;
 
@@ -44,12 +37,10 @@ namespace BotCatMaxy.Services.TempActions
         protected override async Task ExecuteAsync(CancellationToken shutdownToken)
         {
             _shutdownToken = shutdownToken;
-            
             await _client.WaitForReadyAsync(shutdownToken);
             _verboseLogger = new LoggerConfiguration()
                              .MinimumLevel.Verbose()
                              .WriteTo.Logger(Log.Logger, LogEventLevel.Warning)
-                             //.WriteTo.File(_logPath, LogEventLevel.Verbose, encoding: Encoding.UTF8, shared: true, buffered: true)
                              .WriteTo.TempActionSink(_client, LogEventLevel.Verbose, out var flushLogDelegate)
                              .CreateLogger();
             _flushLogDelegate = flushLogDelegate;
@@ -64,7 +55,7 @@ namespace BotCatMaxy.Services.TempActions
         {
             var settings = user.Guild?.LoadFromFile<ModerationSettings>();
             var actions = user.Guild?.LoadFromFile<TempActionList>();
-            
+
             //Can be done better and cleaner
             if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0))
                 return;
@@ -78,7 +69,6 @@ namespace BotCatMaxy.Services.TempActions
         public Task ActCheckExecAsync()
         {
             ActiveChecker?.CheckCompletion();
-            
             ActiveChecker = new TempActionChecker(_client, _verboseLogger);
             CurrentInfo.Checking = true;
             var start = DateTime.UtcNow;
@@ -88,7 +78,7 @@ namespace BotCatMaxy.Services.TempActions
                     $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(2)} and through {CurrentInfo.CheckedGuilds}/{_client.Guilds.Count} guilds");
                 return ResetInfo(start);
             });
-            
+
             return timeoutPolicy.ExecuteAsync(async ct =>
             {
                 await ActiveChecker.ExecuteAsync(ct);
@@ -96,9 +86,9 @@ namespace BotCatMaxy.Services.TempActions
             }, _shutdownToken, false);
         }
 
-        public Task ResetInfo(DateTime start)
+        private Task ResetInfo(DateTime start)
         {
-            TimeSpan execTime = DateTime.UtcNow.Subtract(start);
+            var execTime = DateTime.UtcNow.Subtract(start);
             CachedInfo.CheckExecutionTimes.Enqueue(execTime);
             CachedInfo.LastCheck = DateTime.UtcNow;
             CurrentInfo.Checking = false;
