@@ -42,14 +42,14 @@ namespace BotCatMaxy.Services.TempActions
             _ct = ct;
             try
             {
-                _log.Log(LogEventLevel.Verbose, "TempAct", "Check starting");
+                _log.Verbose("Check starting");
                 await CheckTempActs();
-                _log.Log(LogEventLevel.Verbose, "TempAct", "Check completed");
+                _log.Verbose("Check completed");
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 await LogSeverity.Critical.LogExceptionAsync("TempAct", "Something went wrong checking TempActions", e);
-                _log.Log(LogEventLevel.Verbose, "TempAct", "Something went wrong checking TempActions");
+                _log.Information("Something went wrong checking TempActions");
             }
             finally
             {
@@ -63,17 +63,19 @@ namespace BotCatMaxy.Services.TempActions
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
             
             CurrentInfo.CheckedGuilds = 0;
+            var guildCount = (byte)_client.Guilds.Count;
             foreach (SocketGuild sockGuild in _client.Guilds)
             {
                 _ct?.ThrowIfCancellationRequested();
                 CurrentInfo.CheckedMutes = 0;
                 if (CurrentInfo.CheckedGuilds > _client.Guilds.Count)
                 {
-                    await new LogMessage(LogSeverity.Error, "TempAct", $"Check went past all guilds (at #{CurrentInfo.CheckedGuilds}) but has been stopped. This doesn't seem physically possible.").Log();
+                    _log.Log(LogEventLevel.Error, "TempAct",
+                        $"Check went past all guilds (at #{CurrentInfo.CheckedGuilds.ToString()}) but has been stopped. This doesn't seem physically possible.");
                     return;
                 }
                 RestGuild restGuild = await _client.Rest.SuperGetRestGuild(sockGuild.Id);
-                _log.Log(LogEventLevel.Verbose, "Temp", "Checking {sockGuild.Name} discord");
+                _log.Verbose($"Checking {sockGuild.Name} guild ({CurrentInfo.CheckedGuilds.ToString()}/{guildCount.ToString()}).");
                 TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                 bool needSave = false;
                 CurrentInfo.CheckedGuilds++;
@@ -108,20 +110,22 @@ namespace BotCatMaxy.Services.TempActions
                             }
                             catch (Exception e)
                             {
-                                await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unbanning someone, continuing", e).Log();
+                                await LogSeverity.Error.LogExceptionAsync("TempAct",
+                                    "Something went wrong unbanning someone, continuing.", e);
+                                _log.Information("Something went wrong unbanning someone, continuing.", e);
                             }
                         }
 
-                        //if all tempbans DON'T equal all edited tempbans (basically if there was a change
+                        //If there was a change in the number of TempBans
                         if (CurrentInfo.EditedBans.Count != actions.tempBans.Count)
                         {
-                            _log.Log(LogEventLevel.Verbose, "TempAct", $"{actions.tempBans.Count - CurrentInfo.EditedBans.Count} tempbans are over");
+                            _log.Verbose($"{(actions.tempBans.Count - CurrentInfo.EditedBans.Count).ToString()} TempBans are over.");
                             needSave = true;
                             actions.tempBans = CurrentInfo.EditedBans;
                         }
-                        else _log.Log(LogEventLevel.Verbose, "TempAct", "tempbans checked, none over");
+                        else _log.Verbose($"None of {actions.tempBans.Count.ToString()} TempBans over");
                     }
-                    else _log.Log(LogEventLevel.Verbose, "TempAct", "No tempbans in guild");
+                    else _log.Verbose("No TempBans in guild.");
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
                     if (settings is not null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes?.Count is not null or 0)
                     {
@@ -157,32 +161,33 @@ namespace BotCatMaxy.Services.TempActions
                                         }
                                         editedMutes.Remove(tempMute);
                                     }
-                                    else if (gUser != null) await new LogMessage(LogSeverity.Warning, "TempAct", "User should've had role removed").Log();
+                                    else if (gUser != null)
+                                        _log.Log(LogEventLevel.Warning, "TempAct", "User should've had role removed");
                                 }
                             }
                             catch (Exception e)
                             {
-                                await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong unmuting someone, continuing", e).Log();
+                                await LogSeverity.Error.LogExceptionAsync("TempAct", "Something went wrong unmuting someone, continuing", e);
                             }
                         }
 
                         //NOTE: Assertions fail if NOT true
-                        (CurrentInfo.CheckedMutes == actions.tempMutes.Count).Assert($"Checked incorrect number tempmutes ({CurrentInfo.CheckedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
+                        (CurrentInfo.CheckedMutes == actions.tempMutes.Count).Assert($"Checked incorrect number of TempMutes ({CurrentInfo.CheckedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
 
                         if (editedMutes.Count != actions.tempMutes.Count)
                         {
-                            _log.Log(LogEventLevel.Verbose, "TempAct", $"{actions.tempMutes.Count - editedMutes.Count}/{actions.tempMutes.Count} tempmutes are over");
+                            _log.Verbose($"{(actions.tempMutes.Count - editedMutes.Count).ToString()}/{actions.tempMutes.Count.ToString()} TempMutes are over.");
                             actions.tempMutes = editedMutes;
                             needSave = true;
                         }
-                        else _log.Log(LogEventLevel.Verbose, "TempAct", $"none of {actions.tempMutes.Count} tempmutes over");
+                        else _log.Verbose($"None of {actions.tempMutes.Count.ToString()} TempMutes over");
                     }
-                    else _log.Log(LogEventLevel.Verbose, "TempAct", "no tempmutes to check or no settings");
+                    else _log.Verbose("No TempMutes to check or no settings");
                     if (needSave) actions.SaveToFile();
                 }
-                else _log.Log(LogEventLevel.Verbose, "TempAct", "no actions to check");
+                else _log.Verbose("No actions to check.");
             }
-            (CurrentInfo.CheckedGuilds > 0).AssertWarn("Checked 0 guilds for tempacts?");
+            (CurrentInfo.CheckedGuilds > 0).AssertWarn("Checked 0 guilds for TempActs?");
         }
     }
 }
