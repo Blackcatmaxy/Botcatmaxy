@@ -361,15 +361,6 @@ namespace BotCatMaxy
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("verboseactcheck")]
-        [Summary("Check temp acts.")]
-        [RequireOwner]
-        public async Task VerboseActCheck()
-        {
-            await TempActionService.CheckTempActs(Context.Client, true);
-            await ReplyAsync("Checked temp acts. Info is in console");
-        }
-
         [Command("info")]
         [Summary("Information about the bot.")]
         public async Task InfoCommandAsync()
