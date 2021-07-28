@@ -24,11 +24,33 @@ namespace BotCatMaxy
             var source = message.Source;
             var content = message.Message;
             var exception = message.Exception;
-            if (exception != null) 
+            if (exception != null)
                 return severity.LogExceptionAsync(source, content, exception);
             severity.Log(source, content);
             return Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Formats a source and message into log content
+        /// </summary>
+        /// <param name="severity">The importance of the message</param>
+        /// <param name="source">Where it came from, max 7 chars</param>
+        /// <param name="message">Main content written</param>
+        private static string FormatSourcedMessage(string source, string message)
+        {
+            source += ':';
+            return source.PadRight(9) + message;
+        }
+
+        /// <summary>
+        /// Logs the message with the source and severity to the selected logger
+        /// </summary>
+        /// <param name="logger">The selected logger</param>
+        /// <param name="severity">The importance of the message</param>
+        /// <param name="source">Where it came from, max 7 chars</param>
+        /// <param name="message">Main content written</param>
+        public static void Log(this Serilog.ILogger logger, LogEventLevel severity, string source, string message)
+            => logger.Write(severity, FormatSourcedMessage(source, message));
 
         /// <summary>
         /// Logs the message with the source and severity to the static Serilog logger
@@ -37,11 +59,7 @@ namespace BotCatMaxy
         /// <param name="source">Where it came from, max 7 chars</param>
         /// <param name="message">Main content written</param>
         public static void Log(this LogSeverity severity, string source, string message)
-        {
-            source += ':';
-            string content = source.PadRight(9) + message;
-            Logger.Write(severity.SwitchToEventLevel(), content);
-        }
+            => Logger.Logger.Log(severity.SwitchToEventLevel(), source, message);
 
         /// <summary>
         /// Switches Discord <see cref="LogSeverity"/> to Serilog <see cref="LogEventLevel"/>
@@ -73,11 +91,11 @@ namespace BotCatMaxy
             if (BotInfo.LogChannel != null)
             {
                 errorEmbed ??= new EmbedBuilder()
-                    .WithAuthor(BotInfo.User)
-                    .WithTitle(source)
-                    .AddField(severity.ToString(), message.Truncate(2000))
-                    .AddField("Exception", exception.ToString().Truncate(2000))
-                    .WithCurrentTimestamp();
+                               .WithAuthor(BotInfo.User)
+                               .WithTitle(source)
+                               .AddField(severity.ToString(), message.Truncate(2000))
+                               .AddField("Exception", exception.ToString().Truncate(2000))
+                               .WithCurrentTimestamp();
                 
                 task = BotInfo.LogChannel.SendMessageAsync(embed: errorEmbed.Build());
             }
