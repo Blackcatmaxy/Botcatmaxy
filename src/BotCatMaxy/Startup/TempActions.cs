@@ -1,65 +1,101 @@
-﻿using BotCatMaxy.Components.Logging;
-using BotCatMaxy.Data;
-using BotCatMaxy.Models;
-using BotCatMaxy.Moderation;
-using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using Humanizer;
-using Polly;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Data;
+using BotCatMaxy.Models;
+using Discord;
+using Discord.Addons.Hosting;
+using Discord.Addons.Hosting.Util;
+using Discord.Rest;
+using Discord.WebSocket;
+using Humanizer;
+using Microsoft.Extensions.Logging;
+using Polly;
 
-namespace BotCatMaxy
+namespace BotCatMaxy.Startup
 {
-    public class TempActions
+    public class TempActionCheckService : DiscordClientService
     {
-        readonly DiscordSocketClient client;
-        public static CurrentTempActionInfo currentInfo = new CurrentTempActionInfo();
-        public static CachedTempActionInfo cachedInfo = new CachedTempActionInfo();
-        private Timer timer;
+        public static CurrentTempActionInfo CurrentInfo { get; } = new();
+        public static CachedTempActionInfo CachedInfo { get; } = new();
+        private static DiscordSocketClient _client;
+        private static CancellationToken _shutdownToken;
+        private Timer _timer;
 
-        public TempActions(DiscordSocketClient client)
+        public TempActionCheckService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
         {
-            this.client = client;
-            client.Ready += Ready;
-            client.UserJoined += CheckNewUser;
+            _client = client;
+            client.UserJoined += CheckNewUserAsync;
         }
 
-        private async Task Ready()
+        protected override async Task ExecuteAsync(CancellationToken shutdownToken)
         {
-            client.Ready -= Ready;
-            timer = new Timer((_) => _ = ActCheckExec());
-            timer.Change(0, 45000);
+            _shutdownToken = shutdownToken;
+            
+            await _client.WaitForReadyAsync(shutdownToken);
+            
+            _timer = new Timer(_ => Task.Run(ActCheckExecAsync, shutdownToken));
+            _timer.Change(0, 45000);
         }
 
-        private async Task CheckNewUser(SocketGuildUser user)
+        /// <summary>
+        /// Check user for mute and missing mute role. If satisfied add muted role.
+        /// </summary>
+        public static async Task CheckNewUserAsync(IGuildUser user)
         {
-            ModerationSettings settings = user.Guild?.LoadFromFile<ModerationSettings>();
-            TempActionList actions = user.Guild?.LoadFromFile<TempActionList>();
+            var settings = user.Guild?.LoadFromFile<ModerationSettings>();
+            var actions = user.Guild?.LoadFromFile<TempActionList>();
+            
             //Can be done better and cleaner
-            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0)) return;
+            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0))
+                return;
             if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id))
                 await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
+        /// <summary>
+        /// Initialize the act check and perform sanity checks
+        /// </summary>
+        public async Task ActCheckExecAsync()
+        {
+            if (CurrentInfo.Checking)
+            {
+                await new LogMessage(LogSeverity.Critical, "TempAct",
+                    $"Check took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {CurrentInfo?.CheckedGuilds}/{_client.Guilds.Count} guilds").Log();
+                return;
+            }
+
+            CurrentInfo.Checking = true;
+            DateTime start = DateTime.UtcNow;
+            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) => 
+            {
+                await new LogMessage(LogSeverity.Critical, "TempAct",
+                    $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {CurrentInfo?.CheckedGuilds}/{_client.Guilds.Count} guilds").Log();
+                //Won't continue to below so have to do this?
+                ResetInfo(start); 
+            });
+            await timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(_client, ct: ct), _shutdownToken, false);
+            //Won't continue if above times out?
+            ResetInfo(start);
+        }
+        
         public static async Task CheckTempActs(DiscordSocketClient client, bool debug = false, CancellationToken? ct = null)
         {
             RequestOptions requestOptions = RequestOptions.Default;
             requestOptions.RetryMode = RetryMode.AlwaysRetry;
             try
             {
-                currentInfo.checkedGuilds = 0;
+                CurrentInfo.CheckedGuilds = 0;
                 foreach (SocketGuild sockGuild in client.Guilds)
                 {
                     ct?.ThrowIfCancellationRequested();
-                    currentInfo.checkedMutes = 0;
-                    if (currentInfo.checkedGuilds > client.Guilds.Count)
+                    CurrentInfo.CheckedMutes = 0;
+                    if (CurrentInfo.CheckedGuilds > client.Guilds.Count)
                     {
-                        await new LogMessage(LogSeverity.Error, "TempAct", $"Check went past all guilds (at #{currentInfo.checkedGuilds}) but has been stopped. This doesn't seem physically possible.").Log();
+                        await new LogMessage(LogSeverity.Error, "TempAct", $"Check went past all guilds (at #{CurrentInfo.CheckedGuilds}) but has been stopped. This doesn't seem physically possible.").Log();
                         return;
                     }
                     RestGuild restGuild = await client.Rest.SuperGetRestGuild(sockGuild.Id);
@@ -70,12 +106,12 @@ namespace BotCatMaxy
                     }
                     TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                     bool needSave = false;
-                    currentInfo.checkedGuilds++;
+                    CurrentInfo.CheckedGuilds++;
                     if (actions != null)
                     {
                         if (actions.tempBans?.Count is not null or 0)
                         {
-                            currentInfo.editedBans = new List<TempAct>(actions.tempBans);
+                            CurrentInfo.EditedBans = new List<TempAct>(actions.tempBans);
                             foreach (TempAct tempBan in actions.tempBans)
                             {
                                 try
@@ -84,7 +120,7 @@ namespace BotCatMaxy
                                     if (ban == null)
                                     { //If manual unban
                                         var user = await client.Rest.GetUserAsync(tempBan.User);
-                                        currentInfo.editedBans.Remove(tempBan);
+                                        CurrentInfo.EditedBans.Remove(tempBan);
                                         user?.TryNotify($"As you might know, you have been manually unbanned in {sockGuild.Name} discord");
                                         //_ = new LogMessage(LogSeverity.Warning, "TempAction", "Tempbanned person isn't banned").Log();
                                         if (user == null)
@@ -96,7 +132,7 @@ namespace BotCatMaxy
                                     {
                                         RestUser rUser = ban.User;
                                         await sockGuild.RemoveBanAsync(tempBan.User, requestOptions);
-                                        currentInfo.editedBans.Remove(tempBan);
+                                        CurrentInfo.EditedBans.Remove(tempBan);
                                         DiscordLogging.LogEndTempAct(sockGuild, rUser, "bann", tempBan.Reason, tempBan.Length);
                                     }
                                 }
@@ -107,11 +143,11 @@ namespace BotCatMaxy
                             }
 
                             //if all tempbans DON'T equal all edited tempbans (basically if there was a change
-                            if (currentInfo.editedBans.Count != actions.tempBans.Count)
+                            if (CurrentInfo.EditedBans.Count != actions.tempBans.Count)
                             {
-                                if (debug) Console.Write($"{actions.tempBans.Count - currentInfo.editedBans.Count} tempbans are over, ");
+                                if (debug) Console.Write($"{actions.tempBans.Count - CurrentInfo.EditedBans.Count} tempbans are over, ");
                                 needSave = true;
-                                actions.tempBans = currentInfo.editedBans;
+                                actions.tempBans = CurrentInfo.EditedBans;
                             }
                             else if (debug) Console.Write($"tempbans checked, none over, ");
                         }
@@ -123,7 +159,7 @@ namespace BotCatMaxy
                             List<TempAct> editedMutes = new List<TempAct>(actions.tempMutes);
                             foreach (TempAct tempMute in actions.tempMutes)
                             {
-                                currentInfo.checkedMutes++;
+                                CurrentInfo.CheckedMutes++;
                                 try
                                 {
                                     IGuildUser gUser = sockGuild.GetUser(tempMute.User) ?? await restGuild.SuperGetUser(tempMute.User);
@@ -161,7 +197,7 @@ namespace BotCatMaxy
                             }
 
                             //NOTE: Assertions fail if NOT true
-                            (currentInfo.checkedMutes == actions.tempMutes.Count).Assert($"Checked incorrect number tempmutes ({currentInfo.checkedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
+                            (CurrentInfo.CheckedMutes == actions.tempMutes.Count).Assert($"Checked incorrect number tempmutes ({CurrentInfo.CheckedMutes}/{actions.tempMutes.Count}) in guild {sockGuild} owned by {sockGuild.Owner}");
 
                             if (editedMutes.Count != actions.tempMutes.Count)
                             {
@@ -177,7 +213,7 @@ namespace BotCatMaxy
                     else if (debug) Console.Write("no actions to check");
                 }
                 if (debug) Console.Write("\n");
-                (currentInfo.checkedGuilds > 0).AssertWarn("Checked 0 guilds for tempacts?");
+                (CurrentInfo.CheckedGuilds > 0).AssertWarn("Checked 0 guilds for tempacts?");
 
             }
             catch (Exception e) when (e is not OperationCanceledException)
@@ -186,48 +222,26 @@ namespace BotCatMaxy
             }
         }
 
-        public async Task ActCheckExec()
-        {
-            if (currentInfo.checking)
-            {
-                await new LogMessage(LogSeverity.Critical, "TempAct",
-                    $"Check took longer than 30 seconds to complete and still haven't canceled\nIt has gone through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
-                return;
-            }
-
-            currentInfo.checking = true;
-            DateTime start = DateTime.UtcNow;
-            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, onTimeoutAsync: async (context, timespan, task) => {
-                    await new LogMessage(LogSeverity.Critical, "TempAct",
-                        $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(precision: 2)} and through {currentInfo?.checkedGuilds}/{client.Guilds.Count} guilds").Log();
-                    //Won't continue to below so have to do this?
-                    ResetInfo(start); });
-            await timeoutPolicy.ExecuteAsync(async ct => await CheckTempActs(client, ct: ct), CancellationToken.None, false);
-            //Won't continue if above times out?
-            ResetInfo(start);
-        }
-
         public void ResetInfo(DateTime start)
         {
             TimeSpan execTime = DateTime.UtcNow.Subtract(start);
-            cachedInfo.checkExecutionTimes.Enqueue(execTime);
-            cachedInfo.lastCheck = DateTime.UtcNow;
-            currentInfo.checking = false;
+            CachedInfo.CheckExecutionTimes.Enqueue(execTime);
+            CachedInfo.LastCheck = DateTime.UtcNow;
+            CurrentInfo.Checking = false;
         }
     }
 
     public class CachedTempActionInfo
     {
-        public FixedSizedQueue<TimeSpan> checkExecutionTimes = new FixedSizedQueue<TimeSpan>(8);
-        public DateTime lastCheck;
+        public FixedSizedQueue<TimeSpan> CheckExecutionTimes { get; } = new(8);
+        public DateTime LastCheck { get; set; }
     }
 
     public class CurrentTempActionInfo
     {
-        public bool checking = false;
-        public int checkedGuilds = 0;
-        public uint checkedMutes = 0;
-
-        public List<TempAct> editedBans = null;
+        public bool Checking { get; set; } = false;
+        public int CheckedGuilds { get; set; } = 0;
+        public uint CheckedMutes { get; set; }= 0;
+        public List<TempAct> EditedBans { get; set; } = null;
     }
 }

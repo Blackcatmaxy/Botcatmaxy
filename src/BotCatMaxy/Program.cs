@@ -90,6 +90,7 @@ namespace BotCatMaxy
                     
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
+                    services.AddHostedService<TempActionCheckService>();
                 });
             
             try
