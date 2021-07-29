@@ -12,7 +12,7 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempActionSink : ILogEventSink
     {
-        private const string _format = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+        private const string _format = "[{Timestamp:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}";
         private readonly ITextFormatter _textFormatter;
         private readonly DiscordSocketClient _client;
         private readonly SocketTextChannel _channel;
@@ -64,7 +64,5 @@ namespace BotCatMaxy.Services.TempActions
             _memoryStream.SetLength(0);
             _memoryStream.Capacity = 0;
         }
-        
-        
     }
 }
