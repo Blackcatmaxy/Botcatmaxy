@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BotCatMaxy.Models;
+using Serilog.Events;
 
 namespace BotCatMaxy.Services.TempActions
 {
@@ -12,9 +13,22 @@ namespace BotCatMaxy.Services.TempActions
 
     public static class CurrentInfo
     {
-        public static bool Checking { get; set; } = false;
-        public static int CheckedGuilds { get; set; } = 0;
-        public static uint CheckedMutes { get; set; }= 0;
-        public static List<TempAct> EditedBans { get; set; } = null;
+        public static bool Checking { get; set; }
+        public static int CheckedGuilds { get; set; }
+    }
+
+    public record WrittenLogEvent
+    {
+        public DateTimeOffset TimeOffset { get; }
+        public LogEventLevel EventLevel { get; }
+        public string Content { get; }
+        public Exception Exception { get; }
+        public WrittenLogEvent(LogEventLevel level, string content, Exception exception = null)
+        {
+            EventLevel = level;
+            Content = content;
+            Exception = exception;
+            TimeOffset = DateTimeOffset.UtcNow;
+        }
     }
 }
