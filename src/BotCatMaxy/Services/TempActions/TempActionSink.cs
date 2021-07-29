@@ -30,7 +30,7 @@ namespace BotCatMaxy.Services.TempActions
 
             flush = FlushLog;
             _channel = _client.GetChannel(logChannel) as SocketTextChannel;
-            _streamWriter = new StreamWriter(_memoryStream, Encoding.UTF8);
+            _streamWriter = new StreamWriter(_memoryStream, new UTF8Encoding(false));
             _textFormatter = new MessageTemplateTextFormatter(_format, formatProvider);
         }
 
@@ -64,5 +64,7 @@ namespace BotCatMaxy.Services.TempActions
             _memoryStream.SetLength(0);
             _memoryStream.Capacity = 0;
         }
+        
+        
     }
 }
