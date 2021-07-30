@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
@@ -11,7 +10,6 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Serilog;
 using Serilog.Events;
-using Serilog.Parsing;
 
 namespace BotCatMaxy.Services.TempActions
 {
@@ -26,7 +24,7 @@ namespace BotCatMaxy.Services.TempActions
         private readonly ILogger _log;
         private ushort _checkedMutes;
         private ushort _checkedBans;
-        private bool _needSave = false;
+        private bool _needSave;
 
         public GuildActChecker(DiscordSocketClient client, SocketGuild guild, ILogger logger, CancellationToken ct, int count)
         {
@@ -100,10 +98,8 @@ namespace BotCatMaxy.Services.TempActions
                     var user = await _client.Rest.GetUserAsync(tempBan.User);
                     editedBans.Remove(tempBan);
                     user?.TryNotify($"As you might know, you have been manually unbanned in {_guild.Name} discord");
-                    if (user == null)
-                        DiscordLogging.LogManualEndTempAct(_guild, tempBan.User, "bann", tempBan.DateBanned);
-                    else
-                        DiscordLogging.LogManualEndTempAct(_guild, user, "bann", tempBan.DateBanned);
+                    var userRef = (user != null) ? new UserRef(user) : new UserRef(tempBan.User);
+                    await _guild.LogEndTempAct(userRef, "bann", tempBan.Reason, tempBan.Length, true);
                 }
                 else if (DateTime.UtcNow >= tempBan.DateBanned.Add(tempBan.Length))
                 {
@@ -111,7 +107,7 @@ namespace BotCatMaxy.Services.TempActions
                     var user = ban.User;
                     await _guild.RemoveBanAsync(tempBan.User, _requestOptions);
                     editedBans.Remove(tempBan);
-                    DiscordLogging.LogEndTempAct(_guild, user, "bann", tempBan.Reason, tempBan.Length);
+                    await _guild.LogEndTempAct(new UserRef(user), "bann", tempBan.Reason, tempBan.Length);
                 }
             }
             catch (Exception e)
@@ -159,10 +155,10 @@ namespace BotCatMaxy.Services.TempActions
                 if (gUser != null && !gUser.RoleIds.Contains(settings.mutedRole))
                 {
                     //If user has been manually unmuted by another user (missing role)
-                    _ = gUser.TryNotify($"As you might know, you have been manually unmuted in {_guild.Name} discord");
+                    _ = gUser.TryNotify($"As you might know, you have manually been unmuted in {_guild.Name}");
                     editedMutes.Remove(tempMute);
-                    DiscordLogging.LogManualEndTempAct(_guild, gUser, "mut", tempMute.DateBanned);
-                    (!editedMutes.Contains(tempMute)).Assert("Tempmute not removed?!");
+                    await _guild.LogEndTempAct(new UserRef(gUser), "mut", tempMute.Reason, tempMute.Length, true);
+                    (!editedMutes.Contains(tempMute)).Assert("TempMute not removed?!");
                 }
                 else if (DateTime.UtcNow >= tempMute.DateBanned.Add(tempMute.Length))
                 {
@@ -177,12 +173,18 @@ namespace BotCatMaxy.Services.TempActions
                     // If user not in guild, OR if user properly had role removed
                     if (gUser == null || !gUser.RoleIds.Contains(settings.mutedRole))
                     {
+                        UserRef userRef;
                         if ((gUser ?? await _client.SuperGetUser(tempMute.User)) is not null and var user)
                         {
                             // if possible to message, message and log
-                            DiscordLogging.LogEndTempAct(_guild, user, "mut", tempMute.Reason, tempMute.Length);
+                            userRef = new UserRef(user);
                             _ = user.Notify("auto untempmuted", tempMute.Reason, _guild, _client.CurrentUser);
                         }
+                        else
+                        {
+                            userRef = new UserRef(tempMute.User);
+                        }
+                        await _guild.LogEndTempAct(userRef, "mut", tempMute.Reason, tempMute.Length);
                         editedMutes.Remove(tempMute);
                     }
                 }

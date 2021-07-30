@@ -124,10 +124,16 @@ namespace BotCatMaxy
             await new LogMessage(LogSeverity.Error, "Filter", $"Something went wrong with the {type} filter in {guild.Name} guild ({guild.Id}) owned by {guild.OwnerId}", exception).Log();
         }
 
-        /// <returns>String with display all generic information available from <see cref="IGuild"/></returns>
+        /// <returns>String with all generic information available from <see cref="IGuild"/></returns>
         public static async Task<string> Describe(this IGuild guild) => $"{guild.Name} ({guild.Id}) owned by {(await guild.GetOwnerAsync()).Describe()}";
-        
-        /// <returns>String with display all generic information available from <see cref="IUser"/></returns>
-        public static string Describe(this IUser user) => $"{user.Username}#{user.Discriminator} ({user.Id})";
+
+        /// <returns>String with all generic information available from <see cref="IUser"/></returns>
+        public static string Describe(this IUser user)
+        {
+            var nickname = string.Empty;
+            if (user is IGuildUser guildUser && !string.IsNullOrWhiteSpace(nickname))
+                nickname = $" aka {guildUser.Nickname}";
+            return $"{user.Username}#{user.Discriminator}{nickname} ({user.Id.ToString()})";
+        }
     }
 }

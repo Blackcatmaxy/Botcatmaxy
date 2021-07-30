@@ -28,5 +28,10 @@ namespace BotCatMaxy.Models
         }
 
         public UserRef(ulong ID) => this.ID = ID;
+
+        public override string ToString()
+        {
+            return User?.Describe() ?? $"User with ID: {ID.ToString()}";
+        }
     }
 }
