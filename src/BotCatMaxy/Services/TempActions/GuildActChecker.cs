@@ -66,23 +66,28 @@ namespace BotCatMaxy.Services.TempActions
 
         private async Task CheckTempBansAsync(TempActionList actions)
         {
-            if (actions.tempBans?.Count is not null or 0)
+            if (actions.tempBans?.Count is null or 0)
             {
-                var editedBans = new List<TempAct>(actions.tempBans);
-                foreach (var tempBan in actions.tempBans)
-                {
-                    await CheckTempBanAsync(tempBan, editedBans);
-                }
-                //If there was a change in the number of TempBans
-                if (_checkedBans != actions.tempBans.Count)
-                {
-                    LogToList(LogEventLevel.Verbose, $"{(actions.tempBans.Count - editedBans.Count).ToString()} TempBans are over.");
-                    _needSave = true;
-                    actions.tempBans = editedBans;
-                }
-                else LogToList(LogEventLevel.Verbose, $"None of {actions.tempBans.Count.ToString()} TempBans over.");
+                LogToList(LogEventLevel.Verbose, "No TempBans in guild.");
+                return;
             }
-            else LogToList(LogEventLevel.Verbose, "No TempBans in guild.");
+
+            var editedBans = new List<TempAct>(actions.tempBans);
+            foreach (var tempBan in actions.tempBans)
+            {
+                await CheckTempBanAsync(tempBan, editedBans);
+            }
+
+            //If there was a change in the number of TempBans
+            if (_checkedBans != actions.tempBans.Count)
+            {
+                LogToList(LogEventLevel.Verbose,
+                    $"{(actions.tempBans.Count - editedBans.Count).ToString()} TempBans are over.");
+                _needSave = true;
+                actions.tempBans = editedBans;
+            }
+            else
+                LogToList(LogEventLevel.Verbose, $"None of {actions.tempBans.Count.ToString()} TempBans over.");
         }
 
         public async Task CheckTempBanAsync(TempAct tempBan, List<TempAct> editedBans)
@@ -121,28 +126,32 @@ namespace BotCatMaxy.Services.TempActions
         public async Task CheckTempMutesAsync(TempActionList actions)
         {
             var settings = _guild.LoadFromFile<ModerationSettings>();
-            if (settings is not null && _guild.GetRole(settings.mutedRole) != null && actions.tempMutes?.Count is not null or 0)
+            if (settings is null || _guild.GetRole(settings.mutedRole) == null || actions.tempMutes?.Count is null or 0)
             {
-                var restGuild = await _client.Rest.SuperGetRestGuild(_guild.Id);
-                var editedMutes = new List<TempAct>(actions.tempMutes);
-                foreach (var tempMute in actions.tempMutes)
-                {
-                    await CheckTempMuteAsync(tempMute, editedMutes, restGuild, settings);
-                }
-
-                //NOTE: Assertions fail if NOT true
-                (_checkedMutes == actions.tempMutes.Count).Assert(
-                    $"Checked incorrect number of TempMutes ({_checkedMutes.ToString()}/{actions.tempMutes.Count.ToString()}) in guild {_guild} owned by {_guild.Owner}.");
-
-                if (editedMutes.Count != actions.tempMutes.Count)
-                {
-                    LogToList(LogEventLevel.Verbose, $"{(actions.tempMutes.Count - editedMutes.Count).ToString()}/{actions.tempMutes.Count.ToString()} TempMutes are over.");
-                    actions.tempMutes = editedMutes;
-                    _needSave = true;
-                }
-                else LogToList(LogEventLevel.Verbose, $"None of {actions.tempMutes.Count.ToString()} TempMutes over.");
+                LogToList(LogEventLevel.Verbose, "No TempMutes to check or no settings.");
+                return;
             }
-            else LogToList(LogEventLevel.Verbose, "No TempMutes to check or no settings.");
+
+            var restGuild = await _client.Rest.SuperGetRestGuild(_guild.Id);
+            var editedMutes = new List<TempAct>(actions.tempMutes);
+            foreach (var tempMute in actions.tempMutes)
+            {
+                await CheckTempMuteAsync(tempMute, editedMutes, restGuild, settings);
+            }
+
+            //NOTE: Assertions fail if NOT true
+            (_checkedMutes == actions.tempMutes.Count).Assert(
+                $"Checked incorrect number of TempMutes ({_checkedMutes.ToString()}/{actions.tempMutes.Count.ToString()}) in guild {_guild} owned by {_guild.Owner}.");
+
+            if (editedMutes.Count != actions.tempMutes.Count)
+            {
+                LogToList(LogEventLevel.Verbose,
+                    $"{(actions.tempMutes.Count - editedMutes.Count).ToString()}/{actions.tempMutes.Count.ToString()} TempMutes are over.");
+                actions.tempMutes = editedMutes;
+                _needSave = true;
+            }
+            else
+                LogToList(LogEventLevel.Verbose, $"None of {actions.tempMutes.Count.ToString()} TempMutes over.");
         }
 
         public async Task CheckTempMuteAsync(TempAct tempMute, List<TempAct> editedMutes, RestGuild restGuild, ModerationSettings settings)
