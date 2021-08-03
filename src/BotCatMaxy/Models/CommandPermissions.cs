@@ -63,5 +63,21 @@ namespace BotCatMaxy.Models
 
             return false;
         }
+
+        /// <summary>
+        /// Add permission node to role
+        /// </summary>
+        /// <param name="role">Role to have node added to</param>
+        /// <param name="node">Node to be added</param>
+        public void AddNodeToRole(ulong role, string node)
+        {
+            if (Map.TryGetValue(role, out List<string> nodes) && nodes != null)
+            {
+                nodes.Add(node);
+                Map[role] = nodes;
+            }
+            else
+                Map[role] = new List<string> {node};
+        }
     }
 }

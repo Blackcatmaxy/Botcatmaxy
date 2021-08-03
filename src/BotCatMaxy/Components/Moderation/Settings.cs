@@ -203,22 +203,14 @@ namespace BotCatMaxy
                 permissions.enabled = true;
             }
 
-            if (permissions.RoleHasValue(role.Id, node)) 
+            if (permissions.RoleHasValue(role.Id, node))
                 return CommandResult.FromError($"Role `{role.Name}` already has permissions set to this role.");
 
-            //Validate node
             string verifyResult = PermissionService.TryVerifyNode(node);
             if (verifyResult != null)
                 return CommandResult.FromError(verifyResult);
 
-            //Save node
-            if (permissions.Map.TryGetValue(role.Id, out var nodes) && nodes != null)
-            {
-                nodes.Add(node);
-                permissions.Map[role.Id] = nodes;
-            }
-            else
-                permissions.Map[role.Id] = new List<string> {node};
+            permissions.AddNodeToRole(role.Id, node);
             permissions.SaveToFile();
 
             return CommandResult.FromSuccess($"Added node `{node}` to `{role.Name}`.");
