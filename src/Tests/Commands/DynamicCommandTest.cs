@@ -36,8 +36,7 @@ namespace Tests.Commands
                     if (roleAttribute == null)
                         throw new InvalidOperationException();
 
-                    var role = Guild.GetRole(roleAttribute.Id)
-                               ?? await Guild.CreateRoleAsync(roleAttribute.Id.ToString(), roleAttribute.Permissions, isMentionable: false);
+                    var role = await Guild.CreateRoleAsync(roleAttribute.Name, roleAttribute.Permissions, isMentionable: false);
                     field.SetValue(this, role);
                     if (roleAttribute.CommandNodes == null)
                         continue;
