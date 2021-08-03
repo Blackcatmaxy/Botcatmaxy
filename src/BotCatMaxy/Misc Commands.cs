@@ -10,10 +10,13 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.CommandHandling;
+using BotCatMaxy.Services.TempActions;
+using BotCatMaxy.Startup;
 
 namespace BotCatMaxy
 {
@@ -188,11 +191,21 @@ namespace BotCatMaxy
             await ReplyAsync($"Your message had {Context.Message.Content.Count(c => c == '\n')}");
         }*/
 
-        public void ErrorTest()
+#if DEBUG
+        [Command("throw")]
+        [RequireOwner]
+        public Task ExceptionTestCommandAsync()
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("This is an error test");
+            ExceptionTestMethod();
+            return Task.CompletedTask;
         }
 
+        private static void ExceptionTestMethod()
+        {
+            throw new InvalidEnumArgumentException("This is what shouldn't be reached");
+        }
+#endif
         [RequireOwner]
         [Command("stats")]
         [Summary("View bot statistics.")]
@@ -243,8 +256,8 @@ namespace BotCatMaxy
         public async Task DisplayTempActionTimes()
         {
             var embed = new EmbedBuilder();
-            embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(TempActions.cachedInfo.lastCheck).Humanize(2)} ago)");
-            embed.AddField("Times", TempActions.cachedInfo.checkExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
+            embed.WithTitle($"Temp Action Check Execution Times (last check {DateTime.UtcNow.Subtract(CachedInfo.LastCheck).Humanize(2)} ago)");
+            embed.AddField("Times", CachedInfo.CheckExecutionTimes.Select(timeSpan => timeSpan.Humanize(2)).Reverse().ListItems("\n"));
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -345,15 +358,6 @@ namespace BotCatMaxy
             embed.AddField("Moderation settings", modSettings, true);
             embed.AddField("Logging settings", logSettings, true);
             await ReplyAsync(embed: embed.Build());
-        }
-
-        [Command("verboseactcheck")]
-        [Summary("Check temp acts.")]
-        [RequireOwner]
-        public async Task VerboseActCheck()
-        {
-            await TempActions.CheckTempActs(Context.Client, true);
-            await ReplyAsync("Checked temp acts. Info is in console");
         }
 
         [Command("info")]

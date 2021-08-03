@@ -34,7 +34,7 @@ namespace BotCatMaxy
 
             if (result.success)
             {
-                Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
+                Context.Message.DeleteOrRespond($"**{userRef.User.GetTag()}** has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.", Context.Guild);
                 return CommandResult.FromSuccess(null);
             }
             else
@@ -475,7 +475,8 @@ namespace BotCatMaxy
                     timeRanOut = true;
                     messages.RemoveAll(message => message.GetTimeAgo() > TimeSpan.FromDays(14));
                 }
-                await ExceptionLogging.AssertAsync(messages.Count <= number);
+                
+                ExceptionLogging.Assert(messages.Count <= number);
 
                 //No need to delete messages or log if no actual messages deleted
                 await (Context.Channel as ITextChannel).DeleteMessagesAsync(messages);

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
+using BotCatMaxy.Services.TempActions;
 using BotCatMaxy.Startup;
 using Discord;
 using Discord.Addons.Hosting;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
 using Serilog.Core;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace BotCatMaxy
 {
@@ -27,7 +29,9 @@ namespace BotCatMaxy
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.Console()
+                .WriteTo.Async(a => 
+                    a.File("logs/log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .CreateLogger();
             
             var hostBuilder = Host.CreateDefaultBuilder()
@@ -67,6 +71,7 @@ namespace BotCatMaxy
                     }
 
                     config.Token = token;
+                    //config.LogFormat = (message, exception) => $"{message.Source}: {message.Message}";
                 })
                 .ConfigureServices((context, services) =>
                 {
@@ -80,15 +85,16 @@ namespace BotCatMaxy
                     services.AddSingleton<PermissionService>();
                     services.AddSingleton(x =>
                         new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
+                    services.AddSingleton(new CommandService(new CommandServiceConfig
+                    {
+                        DefaultRunMode = RunMode.Async,
+                        CaseSensitiveCommands = false,
+                        IgnoreExtraArgs = true
+                    }));
 
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
-                })
-                .UseCommandService((context, config) =>
-                {
-                    config.DefaultRunMode = RunMode.Async;
-                    config.IgnoreExtraArgs = true;
-                    config.LogLevel = LogSeverity.Verbose;
+                    services.AddHostedService<TempActionService>();
                 });
             
             try
