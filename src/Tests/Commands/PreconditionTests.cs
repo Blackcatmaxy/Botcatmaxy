@@ -12,8 +12,11 @@ using Xunit;
 
 namespace Tests.Commands
 {
-    public class PreconditionTests : CommandTests
+    public class PreconditionTests : DynamicCommandTest
     {
+        [InsertUser("testee")]
+        private IGuildUser testee;
+
         //TODO: Once roles are properly mocked need to add new cases for "Tester" user with position > 1 acting on "Testee"
         [Fact]
         public async Task CheckHierarchyAttribute()
@@ -24,7 +27,6 @@ namespace Tests.Commands
             var channel = await Guild.CreateTextChannelAsync("HierarchyChannel") as MockTextChannel;
             var users = await Guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
-            var testee = users.First(user => user.Username == "Testee");
             var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
             MockCommandContext context = new(Client, message);
 

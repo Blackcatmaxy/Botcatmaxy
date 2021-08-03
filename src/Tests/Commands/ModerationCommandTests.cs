@@ -12,15 +12,16 @@ using Xunit;
 
 namespace Tests.Commands
 {
-    public class ModerationCommandTests : CommandTests
+    public class ModerationCommandTests : DynamicCommandTest
     {
+        [InsertUser("testee")]
+        private IGuildUser testee;
+
         [Fact]
         public async Task WarnCommandAndRemoveTest()
         {
             var channel = await Guild.CreateTextChannelAsync("WarnChannel") as MockTextChannel;
-            var users = await Guild.GetUsersAsync();
-            var owner = users.First(user => user.Username == "Owner");
-            var testee = users.First(user => user.Username == "Testee");
+            var owner = await Guild.GetOwnerAsync();
 
             var result = await TryExecuteCommand($"!removewarn {testee.Id} 1", owner, channel);
             Assert.False(result.IsSuccess); //No infractions currently

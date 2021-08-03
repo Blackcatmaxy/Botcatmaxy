@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.CommandHandling;
 using Microsoft.Extensions.DependencyInjection;
+using Tests.Commands;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
 using Xunit;
@@ -85,8 +86,11 @@ namespace Tests
         public CommandTestException(IResult result) : base(result.ErrorReason) { }
     }
 
-    public class BasicCommandTests : CommandTests
+    public class BasicCommandTests : DynamicCommandTest
     {
+        [InsertUser("testee")]
+        private IGuildUser testee;
+
         [Fact]
         public async Task BasicCommandCheck()
         {
@@ -110,7 +114,6 @@ namespace Tests
             var channel = await Guild.CreateTextChannelAsync("TypeReaderChannel") as MockTextChannel;
             var users = await Guild.GetUsersAsync();
             var owner = users.First(user => user.Username == "Owner");
-            var testee = users.First(user => user.Username == "Testee");
             var message = channel.SendMessageAsOther($"!warn {testee.Id} test", owner);
             MockCommandContext context = new(Client, message);
             var userRefReader = new UserRefTypeReader();

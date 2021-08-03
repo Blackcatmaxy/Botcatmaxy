@@ -197,8 +197,6 @@ namespace Tests.Mocks.Guild
             var owner = new MockGuildUser("Owner", this);
             OwnerId = owner.Id;
             userList.Add(owner);
-            userList.Add(new MockGuildUser("Tester", this));
-            userList.Add(new MockGuildUser("Testee", this));
             return Task.CompletedTask;
         }
 
@@ -273,7 +271,8 @@ namespace Tests.Mocks.Guild
 
         public Task<IGuildUser> GetOwnerAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            IGuildUser result = userList.First(user => user.Id == OwnerId);
+            return Task.FromResult(result);
         }
 
         public Task<ITextChannel> GetPublicUpdatesChannelAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
