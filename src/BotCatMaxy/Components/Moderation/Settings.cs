@@ -207,32 +207,11 @@ namespace BotCatMaxy
                 return CommandResult.FromError($"Role `{role.Name}` already has permissions set to this role.");
 
             //Validate node
-            if (node[0] == '.')
-                return CommandResult.FromError("`.` cannot be the first character.");
-            TreeNode lastNode = null;
-            string[] split = node.Split('.');
-            for (int i = 0; i < split.Length; i++)
-            {
-                string part = split[i];
-                //Verifying valid use of wildcard as only part of substring (for now?) and as last part
-                if (part.Contains('*'))
-                    if (part.Length > 1 || i != split.Length - 1)
-                        return CommandResult.FromError("Invalid use of `*` wildcard.");
-                    else  
-                        break;
-                
-                if (i == 0)
-                    lastNode = PermissionService.Parents.FirstOrDefault(p =>
-                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
-                else
-                    lastNode = lastNode.children.FirstOrDefault(p =>
-                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+            string verifyResult = PermissionService.TryVerifyNode(node);
+            if (verifyResult != null)
+                return CommandResult.FromError(verifyResult);
 
-                if (lastNode == null)
-                    return CommandResult.FromError("Node does not correspond to any valid command.");
-            }
-            
-            //Save node    
+            //Save node
             if (permissions.Map.TryGetValue(role.Id, out var nodes) && nodes != null)
             {
                 nodes.Add(node);
@@ -241,10 +220,10 @@ namespace BotCatMaxy
             else
                 permissions.Map[role.Id] = new List<string> {node};
             permissions.SaveToFile();
-            
+
             return CommandResult.FromSuccess($"Added node `{node}` to `{role.Name}`.");
         }
-        
+
         [Command("RemovePermission")]
         [DynamicPermission("Permissions.Nodes.Remove")]
         public Task<RuntimeResult> RemovePermission(IRole role, string node)

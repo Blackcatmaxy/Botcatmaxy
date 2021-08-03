@@ -8,7 +8,7 @@ using Discord.Commands;
 
 namespace BotCatMaxy.Components.CommandHandling
 {
-    public class PermissionService 
+    public class PermissionService
     {
         public IList<TreeNode> Parents { get; private set; } = new List<TreeNode>(8);
 
@@ -47,6 +47,41 @@ namespace BotCatMaxy.Components.CommandHandling
                 nodes.Add(node);
             }
             return node;
+        }
+
+        /// <summary>
+        /// Verify if Node is valid
+        /// </summary>
+        /// <param name="node">Command Permission node like Moderation.User.Kick</param>
+        /// <returns>A string about the failed result, or null on success</returns>
+        public string TryVerifyNode(string node)
+        {
+            if (node[0] == '.')
+                return "`.` cannot be the first character.";
+            TreeNode lastNode = null;
+            string[] split = node.Split('.');
+            for (var i = 0; i < split.Length; i++)
+            {
+                string part = split[i];
+                //Verifying valid use of wildcard as only part of substring (for now?) and as last part
+                if (part.Contains('*'))
+                    if (part.Length > 1 || i != split.Length - 1)
+                        return "Invalid use of `*` wildcard.";
+                    else
+                        break;
+
+                if (i == 0)
+                    lastNode = Parents.FirstOrDefault(p =>
+                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+                else
+                    lastNode = lastNode.children.FirstOrDefault(p =>
+                        p.Name.Equals(part, StringComparison.InvariantCultureIgnoreCase));
+
+                if (lastNode == null)
+                    return "Node does not correspond to any valid command.";
+            }
+
+            return null;
         }
     }
 }
