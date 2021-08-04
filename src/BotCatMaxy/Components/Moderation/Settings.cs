@@ -186,25 +186,31 @@ namespace BotCatMaxy
             if (permissions.enabled == false && Interactivity != null)
             {
                 var pageBuilder = new PageBuilder()
-                    .WithTitle("Are you sure?")
-                    .WithDescription("Adding a new permission would enable the new advanced permission system, " +
-                                     "'restricted' commands will no longer permit users based on Discord permissions. " +
-                                     "Are you sure you're ready for this change to take effect?");
+                                  .WithTitle("Are you sure?")
+                                  .WithDescription(
+                                      "Adding a new permission would enable the new advanced permission system, " +
+                                      "'restricted' commands will no longer permit users based on Discord permissions. " +
+                                      "Are you sure you're ready for this change to take effect?");
                 var confirmation = new ConfirmationBuilder()
-                    .WithContent(pageBuilder)
-                    .WithConfirmEmote(new Emoji("\U00002705"))
-                    .WithDeclineEmote(new Emoji("\U0000274c"));
+                                   .WithContent(pageBuilder)
+                                   .WithConfirmEmote(new Emoji("\U00002705"))
+                                   .WithDeclineEmote(new Emoji("\U0000274c"));
                 var result = await Interactivity.SendConfirmationAsync(confirmation.Build(), Context.Channel,
                     TimeSpan.FromMinutes(3));
+
                 //if not success
                 if (result.Value == false)
-                    return CommandResult.FromSuccess("Command cancelled");
+                    return CommandResult.FromSuccess("Command cancelled.");
                 await ReplyAsync("Advanced permission system activated.");
-                permissions.enabled = true;
+            }
+            else if (permissions.RoleHasValue(role.Id, node))
+            {
+                return CommandResult.FromError($"Role `{role.Name}` already has permissions set to this role.");
             }
 
-            if (permissions.RoleHasValue(role.Id, node))
-                return CommandResult.FromError($"Role `{role.Name}` already has permissions set to this role.");
+            //Can't have this in the if condition for tests to work
+            if (permissions.enabled == false)
+                permissions.enabled = true;
 
             string verifyResult = PermissionService.TryVerifyNode(node);
             if (verifyResult != null)

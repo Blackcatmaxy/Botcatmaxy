@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
@@ -13,7 +14,7 @@ using Xunit;
 
 namespace Tests.Commands
 {
-    public class BaseDynamicNodeTest : BaseDynamicCommandTest
+    public class DynamicNodeTest : BaseDynamicCommandTest
     {
         [InsertRole("TestRole")]
         private IRole _testRole;
@@ -38,6 +39,8 @@ namespace Tests.Commands
 
             var owner = await Guild.GetOwnerAsync();
             Tuple<CommandResult, MockCommandContext> cmdResult = await ExecuteCommandResult($"!AddPermission {_testRole.Id} {node}", owner, channel);
+            var permissions = Guild.LoadFromFile<CommandPermissions>(false);
+            Assert.True(permissions.RoleHasValue(_testRole.Id, node));
             message = channel.SendMessageAsOther("Test2", _testUser);
             context = new MockCommandContext(Client, message);
             result = await instance.CheckPermissionsAsync(context, null, null);
