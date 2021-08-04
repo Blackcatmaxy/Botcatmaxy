@@ -172,7 +172,8 @@ namespace BotCatMaxy
         [Summary("Kicks a user, and warns them with an optional reason.")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireContext(ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireBotPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Remove.Kick", GuildPermission.KickMembers)]
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
         {
             await user.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
@@ -187,7 +188,8 @@ namespace BotCatMaxy
         [Summary("Kicks a user, and warns them with a specific size along with an optional reason.")]
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [RequireContext(ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [RequireBotPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Remove.Kick", GuildPermission.KickMembers)]
         public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, float size, [Remainder] string reason = "Unspecified")
         {
             await user.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
@@ -203,7 +205,7 @@ namespace BotCatMaxy
         [Alias("tban", "temp-ban")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Temp.Ban", GuildPermission.KickMembers)]
         public async Task TempBanUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
             if (time.TotalMinutes < 1)
@@ -254,7 +256,7 @@ namespace BotCatMaxy
         [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn", "tbw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Temp.Ban", GuildPermission.KickMembers)]
         public async Task TempBanWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
             if (time.TotalMinutes < 1)
@@ -287,7 +289,7 @@ namespace BotCatMaxy
         [Summary("Temporarily bans a user, and warns them with a specific size along with a reason.")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Temp.Ban", GuildPermission.KickMembers)]
         public async Task TempBanWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, float size, [Remainder] string reason)
         {
             if (time.TotalMinutes < 1)
@@ -320,7 +322,7 @@ namespace BotCatMaxy
         [Alias("tmute", "temp-mute")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Temp.Mute", GuildPermission.KickMembers)]
         public async Task<RuntimeResult> TempMuteUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
             var result = await userRef.TempMute(time, reason, Context);
@@ -333,7 +335,7 @@ namespace BotCatMaxy
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Temp.Mute", GuildPermission.KickMembers)]
         public async Task<RuntimeResult> TempMuteWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
             var muteResult = await userRef.TempMute(time, reason, Context);
@@ -355,14 +357,14 @@ namespace BotCatMaxy
         [Alias("tmutewarn", "temp-mutewarn", "warntmute", "tempmuteandwarn", "tmw")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.ManageRoles)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
+        [DynamicPermission("Moderation.Temp.Mute", GuildPermission.KickMembers)]
         public async Task<RuntimeResult> TempMuteWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, float size, [Remainder] string reason)
         {
             if (size > 999 || size < 0.01)
             {
                 return CommandResult.FromError("Why would you need to warn someone with that size? (command canceled)");
             }
-            
+
             var muteResult = await userRef.TempMute(time, reason, Context);
             if (muteResult == null) //Success because no fail message 
             {
@@ -381,7 +383,7 @@ namespace BotCatMaxy
         [Summary("Bans a user with a reason.")]
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.BanMembers)]
+        [DynamicPermission("Moderation.Remove.Ban", GuildPermission.BanMembers)]
         public async Task Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
             if (reason.Split(' ').First().ToTime() != null)
