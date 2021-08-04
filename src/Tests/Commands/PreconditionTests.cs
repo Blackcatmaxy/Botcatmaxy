@@ -6,13 +6,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tests.Commands.Attributes;
+using Tests.Commands.BaseTests;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
 using Xunit;
 
 namespace Tests.Commands
 {
-    public class PreconditionTests : DynamicCommandTest
+    public class PreconditionTests : BaseDynamicCommandTest
     {
         [InsertUser("testee")]
         private IGuildUser testee;

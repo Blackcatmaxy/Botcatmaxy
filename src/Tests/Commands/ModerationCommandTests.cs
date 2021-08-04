@@ -7,12 +7,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Tests.Mocks;
 using BotCatMaxy.Moderation;
+using Tests.Commands.Attributes;
+using Tests.Commands.BaseTests;
 using Tests.Mocks.Guild;
 using Xunit;
 
 namespace Tests.Commands
 {
-    public class ModerationCommandTests : DynamicCommandTest
+    public class ModerationCommandTests : BaseDynamicCommandTest
     {
         [InsertUser("testee")]
         private IGuildUser testee;

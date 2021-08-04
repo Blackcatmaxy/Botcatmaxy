@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 
 namespace Tests
 {
-    public class FilterTests : BaseDataTests
+    public class FilterTest : BaseDataTest
     {
         private readonly BadWord[] _badWords = { new BadWord("Calzone"), new BadWord("Something") { PartOfWord = false }, new BadWord("Substitution") };
         private readonly MockDiscordClient _client = new();
@@ -26,7 +26,7 @@ namespace Tests
         private readonly FilterSettings _settings;
         private readonly Task<ITextChannel> _channelTask;
 
-        public FilterTests()
+        public FilterTest()
         {
             _filter = new(_client);
             _client.guilds.Add(_guild);

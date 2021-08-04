@@ -5,13 +5,15 @@ using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.Rest;
+using Tests.Commands.Attributes;
+using Tests.Commands.BaseTests;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
 using Xunit;
 
 namespace Tests.Commands
 {
-    public class DynamicNodeTest : DynamicCommandTest
+    public class BaseDynamicNodeTest : BaseDynamicCommandTest
     {
         [InsertRole("TestRole")]
         private IRole _testRole;

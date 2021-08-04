@@ -1,7 +1,7 @@
 using System;
 using Discord;
 
-namespace Tests.Commands
+namespace Tests.Commands.Attributes
 {
     [AttributeUsage(AttributeTargets.Field)]
     public class InsertRoleAttribute : Attribute

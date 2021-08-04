@@ -6,17 +6,17 @@ using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
-using Discord.Commands;
+using Tests.Commands.Attributes;
 using Tests.Mocks.Guild;
 using Xunit;
 
-namespace Tests.Commands
+namespace Tests.Commands.BaseTests
 {
-    public class DynamicCommandTest : CommandTests, IAsyncLifetime
+    public class BaseDynamicCommandTest : BaseCommandTest, IAsyncLifetime
     {
         public PermissionService PermissionService { get; }
 
-        public DynamicCommandTest()
+        public BaseDynamicCommandTest()
         {
             PermissionService = new PermissionService();
             PermissionService.SetUp(Service);

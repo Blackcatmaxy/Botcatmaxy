@@ -19,14 +19,14 @@ namespace Tests
     //Forces all tests that inherit from this to run serialized
     //In theory it should work in parallel but seems unstable
     [Collection("Data")]
-    public class BaseDataTests : IDisposable
+    public class BaseDataTest : IDisposable
     {
         protected MongoDbRunner runner;
         protected MongoCollectionBase<BsonDocument> collection;
         protected IMongoDatabase settingsDB;
         protected SettingsCache cache;
 
-        public BaseDataTests()
+        public BaseDataTest()
         {
             runner = MongoDbRunner.Start();
             MongoClient client = new MongoClient(runner.ConnectionString);
@@ -42,7 +42,7 @@ namespace Tests
         }
     }
 
-    public class DataTests : BaseDataTests, IDisposable
+    public class DataTest : BaseDataTest, IDisposable
     {
         [Fact]
         public void TestBasic()

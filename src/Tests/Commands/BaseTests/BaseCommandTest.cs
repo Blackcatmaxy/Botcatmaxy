@@ -1,25 +1,22 @@
-﻿using BotCatMaxy.Cache;
-using BotCatMaxy.Data;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using BotCatMaxy.Cache;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Models;
 using BotCatMaxy.Startup;
 using BotCatMaxy.TypeReaders;
 using Discord;
 using Discord.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BotCatMaxy.Components.CommandHandling;
 using Microsoft.Extensions.DependencyInjection;
-using Tests.Commands;
+using Tests.Commands.Attributes;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
 using Xunit;
 
-namespace Tests
+namespace Tests.Commands.BaseTests
 {
-    public class CommandTests : BaseDataTests, IAsyncLifetime
+    public class BaseCommandTest : BaseDataTest, IAsyncLifetime
     {
         protected MockDiscordClient Client { get; } = new();
         protected MockGuild Guild { get; } = new();
@@ -29,7 +26,7 @@ namespace Tests
         protected CommandResult CommandResult { get; private set; }
         protected TaskCompletionSource<CommandResult> CompletionSource { get; private set; }
 
-        public CommandTests()
+        public BaseCommandTest()
         {
             cache = new SettingsCache(Client);
             Client.guilds.Add(Guild);
@@ -86,7 +83,7 @@ namespace Tests
         public CommandTestException(IResult result) : base(result.ErrorReason) { }
     }
 
-    public class BasicCommandTests : DynamicCommandTest
+    public class BasicCommandTests : BaseDynamicCommandTest
     {
         [InsertUser("testee")]
         private IGuildUser testee;
