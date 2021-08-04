@@ -147,7 +147,7 @@ namespace BotCatMaxy
         [Command("removewarn")]
         [Summary("Removes a warn from a user.")]
         [Alias("warnremove", "removewarning")]
-        [HasAdmin()]
+        [DynamicPermission("Moderation.Warn.Remove", GuildPermission.Administrator)]
         public async Task<RuntimeResult> RemoveWarnAsync([RequireHierarchy] UserRef userRef, int index)
         {
             List<Infraction> infractions = userRef.LoadInfractions(Context.Guild, false);
