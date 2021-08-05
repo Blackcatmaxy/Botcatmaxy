@@ -20,7 +20,8 @@ namespace Tests.Commands.BaseTests
     {
         protected MockDiscordClient Client { get; } = new();
         protected MockGuild Guild { get; } = new();
-        protected CommandService Service { get; }
+        protected CommandService CommandService { get; }
+        protected PermissionService PermissionService { get; }
         protected CommandHandler Handler { get; }
         protected ServiceProvider Provider { get; }
         protected CommandResult CommandResult { get; private set; }
@@ -30,14 +31,15 @@ namespace Tests.Commands.BaseTests
         {
             cache = new SettingsCache(Client);
             Client.guilds.Add(Guild);
-            var permissions = new PermissionService();
+            PermissionService = new PermissionService();
+            CommandService = new CommandService();
+            PermissionService.SetUp(CommandService);
             Provider = new ServiceCollection()
                 .AddSingleton(Client)
-                .AddSingleton(permissions)
+                .AddSingleton(PermissionService)
                 .BuildServiceProvider();
-            Service = new CommandService();
-            Handler = new CommandHandler(Client, null, Provider, Service, permissions);
-            Service.CommandExecuted += CommandExecuted;
+            Handler = new CommandHandler(Client, null, Provider, CommandService, PermissionService);
+            CommandService.CommandExecuted += CommandExecuted;
         }
 
         public async Task InitializeAsync()

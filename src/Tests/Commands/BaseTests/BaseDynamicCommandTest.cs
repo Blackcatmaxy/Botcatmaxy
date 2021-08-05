@@ -14,14 +14,6 @@ namespace Tests.Commands.BaseTests
 {
     public class BaseDynamicCommandTest : BaseCommandTest, IAsyncLifetime
     {
-        public PermissionService PermissionService { get; }
-
-        public BaseDynamicCommandTest()
-        {
-            PermissionService = new PermissionService();
-            PermissionService.SetUp(Service);
-        }
-
         public new async Task InitializeAsync()
         {
             await base.InitializeAsync();
