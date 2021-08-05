@@ -38,7 +38,9 @@ namespace Tests.Commands
             Assert.False(result.IsSuccess);
 
             var owner = await Guild.GetOwnerAsync();
-            Tuple<CommandResult, MockCommandContext> cmdResult = await ExecuteCommandResult($"!AddPermission {_testRole.Id} {node}", owner, channel);
+            var cmdResult = await TryExecuteCommand($"!AddPermission {_testRole.Id} {node}", owner, channel);
+            Assert.True(cmdResult.IsSuccess);
+            Assert.StartsWith("Added node", cmdResult.Reason);
             var permissions = Guild.LoadFromFile<CommandPermissions>(false);
             Assert.True(permissions.RoleHasValue(_testRole.Id, node));
             message = channel.SendMessageAsOther("Test2", _testUser);

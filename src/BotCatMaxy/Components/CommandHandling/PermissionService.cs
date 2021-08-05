@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,26 +11,24 @@ namespace BotCatMaxy.Components.CommandHandling
 {
     public class PermissionService
     {
-        public IList<TreeNode> Parents { get; private set; } = new List<TreeNode>(8);
+        public IList<TreeNode> Parents { get; } = new List<TreeNode>(8);
 
         /// <summary>
-        /// Set up with commands once <see cref="CommandService"/> has been initialized with modules
+        /// Adds commands as nodes once <see cref="CommandService"/> has been initialized with modules
         /// </summary>
         public void SetUp(CommandService commandService)
         {
-            foreach (var command in commandService.Commands)
+            foreach (var command in commandService.Commands.ToImmutableArray())
             {
-                Console.WriteLine("Saving command");
-                var dynamicPrecondition = command.Preconditions
-                    .FirstOrDefault(precondition => precondition is DynamicPermissionAttribute) as DynamicPermissionAttribute;
-                if (dynamicPrecondition == null)
+                string node = GetNodeFromAttributes(command);
+                if (node == null)
                     continue;
-                
-                var node = dynamicPrecondition.Node;
-                var parts = node.Split('.');
-                var currentList = Parents;
+
+                string[] parts = node.Split('.');
                 TreeNode lastNode = null;
-                foreach (var part in parts)
+                //current list is at first iteration Parents but then just adds children to the nodes
+                IList<TreeNode> currentList = Parents;
+                foreach (string part in parts)
                 {
                     lastNode = SearchAndAdd(currentList, part, lastNode);
                     currentList = lastNode.children;
@@ -37,9 +36,32 @@ namespace BotCatMaxy.Components.CommandHandling
             }
         }
 
+        /// <summary>
+        /// Search through the attributes of a command for an attribute with a Permission Node and return it
+        /// </summary>
+        /// <param name="command">The command to search</param>
+        /// <returns>The permission node string or null if none found</returns>
+        public static string GetNodeFromAttributes(CommandInfo command)
+        {
+            foreach (var precondition in command.Preconditions)
+            {
+                string result = precondition switch
+                {
+                    DynamicPermissionAttribute dynamicAttribute => dynamicAttribute.Node,
+                    CanWarnAttribute => CanWarnAttribute.Node,
+                    _ => null
+                };
+
+                if (result != null)
+                    return result;
+            }
+
+            return null;
+        }
+
         public static TreeNode SearchAndAdd(IList<TreeNode> nodes, string name, TreeNode parent)
         {
-            var node = nodes.FirstOrDefault(treeNode 
+            var node = nodes.FirstOrDefault(treeNode
                 => name.Equals(treeNode?.Name, StringComparison.InvariantCultureIgnoreCase));
             if (node is null)
             {

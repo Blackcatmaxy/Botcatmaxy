@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
@@ -43,7 +41,7 @@ namespace Discord.Commands
                 return Task.FromResult(PreconditionResult.FromError($"You need server permission {Fallback.ToString().Humanize(LetterCasing.LowerCase)}."));
             }
 
-            foreach (ulong role in gUser.RoleIds.ToArray())
+            foreach (ulong role in gUser.RoleIds.ToImmutableArray())
             {
                 if (permissions.RoleHasValue(role, Node))
                     return Task.FromResult(PreconditionResult.FromSuccess());
