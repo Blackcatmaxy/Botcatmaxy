@@ -7,6 +7,7 @@ using Discord.WebSocket;
 using Interactivity;
 using Humanizer;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,108 +21,89 @@ public class ReportModule : InteractiveModule
     [Command("report", RunMode = RunMode.Async)]
     [Summary("Create a new report.")]
     [RequireContext(ContextType.DM)]
-    public async Task Report()
+    public async Task<CommandResult> Report()
     {
-        try
+        var socketContext = Context as SocketCommandContext;
+        var guildsEmbed = new EmbedBuilder();
+        guildsEmbed.WithTitle("Reply with the number next to the guild you want to make the report in");
+        var mutualGuilds = socketContext.User.MutualGuilds.ToArray();
+        for (int i = 0; i < mutualGuilds.Length; i++)
         {
-            var socketContext = Context as SocketCommandContext;
-            var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the number next to the guild you want to make the report in");
-            var mutualGuilds = socketContext.User.MutualGuilds.ToArray();
-            for (int i = 0; i < mutualGuilds.Length; i++)
-            {
-                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
-            }
-            await ReplyAsync(embed: guildsEmbed.Build());
-            SocketGuild guild;
-            while (true)
-            {
-                var result = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
-                var message = result.Value;
-                if (message == null || message.Content == "cancel")
-                {
-                    await ReplyAsync("You have timed out or canceled");
-                    return;
-                }
-                try
-                {
-                    guild = mutualGuilds[ushort.Parse(message.Content) - 1];
-                    break;
-                }
-                catch
-                {
-                    await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
-                }
-            }
-
-            ReportSettings settings = guild.LoadFromFile<ReportSettings>(false);
-            if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null)
-            {
-                await ReplyAsync("This guild does not currently have reporting set up, command canceled");
-                return;
-            }
-            SocketGuildUser gUser = guild.GetUser(Context.Message.Author.Id);
-            if (settings.requiredRole != null && !(gUser.RoleIDs().Contains(settings.requiredRole.Value) || gUser.GuildPermissions.Administrator))
-            {
-                await ReplyAsync("You are missing required role for reporting");
-                return;
-            }
-
-            if (settings.cooldown != null)
-            {
-                int messageAmount = 100;
-                var messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToListAsync();
-                messages.OrderBy(msg => msg.CreatedAt);
-                while (messages.Last().CreatedAt.Offset > settings.cooldown.Value)
-                {
-                    _ = ReplyAsync("Downloading more messages");
-                    messageAmount += 100;
-                    messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten().ToListAsync();
-                    messages.OrderBy(msg => msg.Timestamp.Offset);
-                }
-                foreach (IMessage message in messages)
-                {
-                    TimeSpan timeAgo = message.GetTimeAgo();
-                    if (message.Author.IsBot && message.Content == "Report has been sent")
-                    {
-                        if (timeAgo > settings.cooldown.Value) break;
-                        else
-                        {
-                            await ReplyAsync($"You need to wait the full {settings.cooldown.Value.Humanize()}, {timeAgo.Humanize()} have passed from {message.GetJumpUrl()}");
-                            return;
-                        }
-                    }
-                }
-            }
-
-            await ReplyAsync("Please reply with what you want to report");
-            var reportMsg = await Interactivity.NextMessageAsync(timeout: TimeSpan.FromMinutes(5));
-            if (!reportMsg.IsSuccess)
-            {
-                await ReplyAsync("Report aborted");
-                return;
-            }
-
-            var embed = new EmbedBuilder();
-            embed.WithAuthor(Context.Message.Author);
-            embed.WithTitle("Report");
-            embed.WithDescription(reportMsg.Value.Content);
-            embed.WithFooter("User ID: " + Context.Message.Author.Id);
-            embed.WithCurrentTimestamp();
-            string links = "";
-            if (reportMsg.Value.Attachments?.Count is not null or 0)
-                links = reportMsg.Value.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
-            var channel = guild.GetTextChannel(settings.channelID.Value);
-            await channel.SendMessageAsync(embed: embed.Build());
-            if (!string.IsNullOrEmpty(links))
-                await channel.SendMessageAsync("The message above had these attachments: " + links);
-
-            await ReplyAsync("Report has been sent");
+            guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
         }
-        catch (Exception e)
+        await ReplyAsync(embed: guildsEmbed.Build());
+        SocketGuild guild;
+        Predicate<SocketMessage> filter = msg => msg.Channel.Id == Context.Channel.Id;
+        while (true)
         {
-            ReplyAsync("Error: " + e);
+            var result = await Interactivity.NextMessageAsync(filter: filter, timeout: TimeSpan.FromMinutes(1));
+            var message = result.Value;
+            if (message?.Content?.ToLower() is null or "cancel")
+                return CommandResult.FromError("You have timed out or canceled");
+
+            try
+            {
+                guild = mutualGuilds[ushort.Parse(message.Content) - 1];
+                break;
+            }
+            catch
+            {
+                await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
+            }
         }
+
+        ReportSettings settings = guild.LoadFromFile<ReportSettings>(false);
+        if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null)
+            return CommandResult.FromError("This guild does not currently have reporting set up, command canceled");
+            
+        SocketGuildUser gUser = guild.GetUser(Context.Message.Author.Id);
+        if (settings.requiredRole != null && !(gUser.RoleIDs().Contains(settings.requiredRole.Value) || gUser.GuildPermissions.Administrator))
+            return CommandResult.FromError("You are missing required role for reporting");
+
+        if (settings.cooldown != null)
+        {
+            int messageAmount = 100;
+            List<IMessage> messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten()
+                                                   .OrderBy(msg => msg.CreatedAt).ToListAsync();
+            while (messages.Last().CreatedAt.Offset > settings.cooldown.Value)
+            {
+                _ = ReplyAsync("Downloading more messages");
+                messageAmount += 100;
+                messages = await Context.Channel.GetMessagesAsync(messageAmount).Flatten()
+                                        .OrderBy(msg => msg.CreatedAt).ToListAsync();
+            }
+            foreach (var message in messages)
+            {
+                TimeSpan timeAgo = message.GetTimeAgo();
+                if (!message.Author.IsBot || message.Content != "Report has been sent")
+                    continue;
+
+                if (timeAgo > settings.cooldown.Value) break;
+                return CommandResult.FromError(
+                    $"You need to wait the full {settings.cooldown.Value.Humanize()}, {timeAgo.Humanize()} have passed from {message.GetJumpUrl()}");
+            }
+        }
+
+        await ReplyAsync("Please reply with what you want to report");
+        var reportMsg = await Interactivity.NextMessageAsync(filter: filter, timeout: TimeSpan.FromMinutes(5));
+        if (!reportMsg.IsSuccess)
+            return CommandResult.FromError("Report cancelled.");
+
+        var embed = new EmbedBuilder();
+        embed.WithAuthor(Context.Message.Author);
+        embed.WithTitle("Report");
+        embed.WithDescription(reportMsg.Value.Content);
+        embed.WithFooter("User ID: " + Context.Message.Author.Id);
+        embed.WithCurrentTimestamp();
+        string links = "";
+        if (reportMsg.Value.Attachments?.Count is not null or 0)
+            links = reportMsg.Value.Attachments.Select(attachment => attachment.ProxyUrl).ListItems(" ");
+        var channel = guild.GetTextChannel(settings.channelID.Value);
+        await channel.SendMessageAsync(embed: embed.Build());
+        if (!string.IsNullOrEmpty(links))
+            await channel.SendMessageAsync("The message above had these attachments: " + links);
+
+        return CommandResult.FromSuccess("Report has been sent");
     }
 
     [Command("setreportchannel")]
