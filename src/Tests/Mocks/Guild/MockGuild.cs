@@ -154,7 +154,7 @@ namespace Tests.Mocks.Guild
         {
             if (isHoisted)
                 throw new NotImplementedException();
-            var result = new MockRole(name, permissions ?? GuildPermissions.None, roles.Count, this);
+            var result = new MockRole(name, permissions ?? GuildPermissions.None, roles.Count + 1, this);
             roles.Add(result);
             return Task.FromResult<IRole>(result);
         }
@@ -163,7 +163,7 @@ namespace Tests.Mocks.Guild
         {
             if (isHoisted || isMentionable)
                 throw new NotImplementedException();
-            var result = new MockRole(name, permissions ?? GuildPermissions.None, roles.Count, this);
+            var result = new MockRole(name, permissions ?? GuildPermissions.None, roles.Count + 1, this);
             roles.Add(result);
             return Task.FromResult<IRole>(result);
         }

@@ -16,9 +16,9 @@ namespace Tests.Commands.Attributes
             CommandNodes = commandNodes;
         }
 
-        public InsertRoleAttribute(string name, GuildPermissions permissions, string[] commandNodes = null) : this(name, commandNodes)
+        public InsertRoleAttribute(string name, GuildPermission permission, string[] commandNodes = null) : this(name, commandNodes)
         {
-            Permissions = permissions;
+            Permissions = new GuildPermissions((ulong)permission);
         }
     }
 }
