@@ -52,6 +52,29 @@ namespace Tests.Mocks
             throw new NotImplementedException();
         }
 
+        public Task<IUserMessage> SendMessageAsync(string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null,
+            AllowedMentions allowedMentions = null, MessageReference messageReference = null,
+            MessageComponent component = null)
+        {
+            var message = new MockUserMessage(text, this, Bot);
+            messages.Insert(0, message);
+            return Task.FromResult(message as IUserMessage);
+        }
+
+        public Task<IUserMessage> SendFileAsync(string filePath, string text = null, bool isTTS = false, Embed embed = null,
+            RequestOptions options = null, bool isSpoiler = false, AllowedMentions allowedMentions = null,
+            MessageReference messageReference = null, MessageComponent component = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IUserMessage> SendFileAsync(Stream stream, string filename, string text = null, bool isTTS = false, Embed embed = null,
+            RequestOptions options = null, bool isSpoiler = false, AllowedMentions allowedMentions = null,
+            MessageReference messageReference = null, MessageComponent component = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IMessage> GetMessageAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
             return Task.FromResult(messages.FirstOrDefault(message => message.Id == id) as IMessage);
@@ -94,23 +117,6 @@ namespace Tests.Mocks
         public IAsyncEnumerable<IReadOnlyCollection<IUser>> GetUsersAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
             throw new NotImplementedException();
-        }
-
-        public Task<IUserMessage> SendFileAsync(string filePath, string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, bool isSpoiler = false, AllowedMentions allowedMentions = null, MessageReference messageReference = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IUserMessage> SendFileAsync(Stream stream, string filename, string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, bool isSpoiler = false, AllowedMentions allowedMentions = null, MessageReference messageReference = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IUserMessage> SendMessageAsync(string text = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null)
-        {
-            var message = new MockUserMessage(text, this, Bot);
-            messages.Insert(0, message);
-            return Task.FromResult(message as IUserMessage);
         }
 
         public IUserMessage SendMessageAsOther(string text, IUser user = null)

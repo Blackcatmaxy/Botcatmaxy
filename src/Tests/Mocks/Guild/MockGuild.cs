@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,11 +23,14 @@ namespace Tests.Mocks.Guild
         protected List<MockTextChannel> channels = new(4);
         protected List<MockBan> bans = new(4);
 
+        public Task<IReadOnlyCollection<IApplicationCommand>> BulkOverwriteApplicationCommandsAsync(ApplicationCommandProperties[] properties, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public string Name => "TestName";
 
         public int AFKTimeout => throw new NotImplementedException();
-
-        public bool IsEmbeddable => throw new NotImplementedException();
 
         public bool IsWidgetEnabled => throw new NotImplementedException();
 
@@ -54,10 +58,6 @@ namespace Tests.Mocks.Guild
 
         public ulong? AFKChannelId => throw new NotImplementedException();
 
-        public ulong DefaultChannelId => throw new NotImplementedException();
-
-        public ulong? EmbedChannelId => throw new NotImplementedException();
-
         public ulong? WidgetChannelId => throw new NotImplementedException();
 
         public ulong? SystemChannelId => throw new NotImplementedException();
@@ -77,6 +77,7 @@ namespace Tests.Mocks.Guild
         public IRole EveryoneRole => throw new NotImplementedException();
 
         public IReadOnlyCollection<GuildEmote> Emotes => throw new NotImplementedException();
+        public IReadOnlyCollection<ICustomSticker> Stickers { get; }
 
         public IReadOnlyCollection<string> Features => throw new NotImplementedException();
 
@@ -107,6 +108,7 @@ namespace Tests.Mocks.Guild
         public int? ApproximatePresenceCount => throw new NotImplementedException();
 
         public string PreferredLocale => throw new NotImplementedException();
+        public NsfwLevel NsfwLevel { get; }
 
         public CultureInfo PreferredCulture => throw new NotImplementedException();
 
@@ -159,6 +161,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IReadOnlyCollection<IThreadChannel>> GetThreadChannelsAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<ITextChannel> CreateTextChannelAsync(string name, Action<TextChannelProperties> func = null, RequestOptions options = null)
         {
             var channel = new MockTextChannel(new MockSelfUser(), this, name);
@@ -181,6 +188,52 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<ICustomSticker> CreateStickerAsync(string name, string description, IEnumerable<string> tags, Image image, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ICustomSticker> CreateStickerAsync(string name, string description, IEnumerable<string> tags, string path, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ICustomSticker> CreateStickerAsync(string name, string description, IEnumerable<string> tags, Stream stream, string filename,
+            RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ICustomSticker> GetStickerAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyCollection<ICustomSticker>> GetStickersAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteStickerAsync(ICustomSticker sticker, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyCollection<IApplicationCommand>> GetApplicationCommandsAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IApplicationCommand> GetApplicationCommandAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IApplicationCommand> CreateApplicationCommandAsync(ApplicationCommandProperties properties, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task DownloadUsersAsync()
         {
             userList = new(4);
@@ -191,6 +244,11 @@ namespace Tests.Mocks.Guild
             userList.Add(new MockGuildUser("Tester", this));
             userList.Add(new MockGuildUser("Testee", this));
             return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyCollection<IStageChannel>> GetStageChannelsAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<IVoiceChannel> GetAFKChannelAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
@@ -272,6 +330,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IThreadChannel> GetThreadChannelAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public IRole GetRole(ulong id)
         {
             throw new NotImplementedException();
@@ -314,6 +377,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IStageChannel> GetStageChannelAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IReadOnlyCollection<IVoiceChannel>> GetVoiceChannelsAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -345,11 +413,6 @@ namespace Tests.Mocks.Guild
         }
 
         public Task ModifyAsync(Action<GuildProperties> func, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task ModifyEmbedAsync(Action<GuildEmbedProperties> func, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }

@@ -59,6 +59,9 @@ namespace Tests.Mocks
         public MessageReference Reference => throw new NotImplementedException();
 
         public IReadOnlyDictionary<IEmote, ReactionMetadata> Reactions => throw new NotImplementedException();
+        public IReadOnlyCollection<IMessageComponent> Components { get; }
+        IReadOnlyCollection<IStickerItem> IMessage.Stickers => Stickers;
+
         public IReadOnlyCollection<ISticker> Stickers { get; }
 
         public MessageFlags? Flags => throw new NotImplementedException();
