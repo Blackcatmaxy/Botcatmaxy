@@ -54,7 +54,6 @@ namespace BotCatMaxy
                             true, //going to keep here for new guilds added, but seems to be broken for startup per https://github.com/discord-net/Discord.Net/issues/1646
                         ConnectionTimeout = 6000,
                         MessageCacheSize = 120,
-                        ExclusiveBulkDelete = false,
                         LogLevel = LogSeverity.Info,
                         DefaultRetryMode = RetryMode.AlwaysRetry,
                         GatewayIntents = GatewayIntents.GuildBans | GatewayIntents.GuildMembers |

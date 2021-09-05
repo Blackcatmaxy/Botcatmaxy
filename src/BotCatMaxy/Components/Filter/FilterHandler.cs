@@ -42,7 +42,7 @@ namespace BotCatMaxy.Startup
             return Task.CompletedTask;
         }
 
-        public Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
+        public Task HandleReaction(Cacheable<IUserMessage, ulong> cachedMessage, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
             Task.Run(() => CheckReaction(cachedMessage, channel, reaction));
             return Task.CompletedTask;
@@ -126,8 +126,9 @@ namespace BotCatMaxy.Startup
             }
         }
 
-        public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, ISocketMessageChannel channel, SocketReaction reaction)
+        public async Task CheckReaction(Cacheable<IUserMessage, ulong> cachedMessage, Cacheable<IMessageChannel, ulong> cachedChannel, SocketReaction reaction)
         {
+            IMessageChannel channel = await cachedChannel.GetOrDownloadAsync();
             if ((reaction.User.IsSpecified && reaction.User.Value.IsBot) || !(channel is IGuildChannel))
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
