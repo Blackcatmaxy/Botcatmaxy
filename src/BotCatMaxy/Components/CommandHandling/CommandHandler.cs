@@ -142,12 +142,14 @@ namespace BotCatMaxy.Startup
 
         private async Task LogCommandException(Optional<CommandInfo> command, ICommandContext context, Exception exception, IResult result)
         {
-            string logMessage = $"Command `!{command.Value?.Name}` in";
+            //To make any null variables clear and stand out if they shouldn't normally be null
+            const string nullIndicator = "NULL_MESSAGE";
+            string logMessage = $"Command `!{command.Value?.Name ?? nullIndicator}` in";
 
             if (context.Guild != null)
-                logMessage += $" {await context.Guild.Describe()}";
+                logMessage += $" {await context.Guild.Describe("`")}";
             else
-                logMessage += $" {context.User.Describe()} DMs";
+                logMessage += $" `{context.User.Describe()}` DMs";
 
             logMessage += $" encountered: result type `{result.GetType().Name}` with reason: `{result.ErrorReason}`";
 
@@ -164,12 +166,9 @@ namespace BotCatMaxy.Startup
             if (context.Guild is not null)
                 errorEmbed.AddField("Guild", $"{context.Guild.Name}\n({context.Guild.Id})", true);
 
-            if (context is not null)
-                errorEmbed.AddField("Message Content", $"```{context.Message.Content}```");
-
+            errorEmbed.AddField($"Message Content {context.Message?.Id.ToString() ?? nullIndicator}",
+                $"```{context.Message?.Content ?? nullIndicator}```[Jump to Invocation]({context.Message.GetJumpUrl()})");
             errorEmbed.AddField("Exception", $"```{exception}```");
-
-            await BotInfo.LogChannel.SendMessageAsync(embed: errorEmbed.Build());
             await LogSeverity.Error.LogExceptionAsync("Command", logMessage, exception, errorEmbed);
         }
     }

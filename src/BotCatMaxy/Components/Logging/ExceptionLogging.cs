@@ -124,8 +124,12 @@ namespace BotCatMaxy
             await new LogMessage(LogSeverity.Error, "Filter", $"Something went wrong with the {type} filter in {guild.Name} guild ({guild.Id}) owned by {guild.OwnerId}", exception).Log();
         }
 
+        /// <param name="markdown">String to surround info with to generate markdown, default empty</param>
         /// <returns>String with all generic information available from <see cref="IGuild"/></returns>
-        public static async Task<string> Describe(this IGuild guild) => $"{guild.Name} ({guild.Id}) owned by {(await guild.GetOwnerAsync()).Describe()}";
+        public static async Task<string> Describe(this IGuild guild, string markdown = "")
+        {
+            return $"{markdown}{guild.Name} ({guild.Id}){markdown} owned by {markdown}{(await guild.GetOwnerAsync()).Describe()}{markdown}";
+        }
 
         /// <returns>String with all generic information available from <see cref="IUser"/></returns>
         public static string Describe(this IUser user)
