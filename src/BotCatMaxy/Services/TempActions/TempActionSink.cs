@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Serilog.Core;
 using Serilog.Events;
@@ -15,22 +16,19 @@ namespace BotCatMaxy.Services.TempActions
     {
         private const string _format = "[{@t:mm:ss.fff} {@l:u3}]{#if IsDefined(GuildID)} {GuildID} {GuildIndex}:{#end} {@m:lj}\n{@x}";
         private readonly ITextFormatter _textFormatter;
-        private readonly DiscordSocketClient _client;
-        private readonly SocketTextChannel _channel;
         private readonly MemoryStream _memoryStream;
         private readonly StreamWriter _streamWriter;
+        private readonly ITextChannel _channel;
         private ushort _events = 0;
 
         public delegate Task FlushLogDelegate();
 
-        public TempActionSink(DiscordSocketClient client, IFormatProvider formatProvider, out FlushLogDelegate flush)
+        public TempActionSink(ITextChannel channel, IFormatProvider formatProvider, out FlushLogDelegate flush)
         {
-            const ulong logChannel = 866833376882589716;
             _memoryStream = new MemoryStream();
-            _client = client;
+            _channel = channel;
 
             flush = FlushLog;
-            _channel = _client.GetChannel(logChannel) as SocketTextChannel;
             _streamWriter = new StreamWriter(_memoryStream, new UTF8Encoding(false));
             _textFormatter = new ExpressionTemplate(_format, formatProvider);
         }

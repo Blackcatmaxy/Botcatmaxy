@@ -11,10 +11,10 @@ namespace BotCatMaxy.Components.Logging
     public static class SerilogSinkExtensions
     {
         public static LoggerConfiguration TempActionSink(
-            this LoggerSinkConfiguration loggerConfiguration, DiscordSocketClient client, LogEventLevel minLevel, out TempActionSink.FlushLogDelegate _flush,
+            this LoggerSinkConfiguration loggerConfiguration, ITextChannel channel, LogEventLevel minLevel, out TempActionSink.FlushLogDelegate _flush,
             IFormatProvider formatProvider = null)
         {
-            var sink = new TempActionSink(client, formatProvider, out var flush);
+            var sink = new TempActionSink(channel, formatProvider, out var flush);
             _flush = flush;
             return loggerConfiguration.Sink(sink, minLevel);
         }

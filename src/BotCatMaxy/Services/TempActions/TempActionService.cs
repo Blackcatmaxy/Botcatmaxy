@@ -10,6 +10,8 @@ using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;
 using Discord.WebSocket;
 using Humanizer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Serilog;
@@ -22,31 +24,50 @@ namespace BotCatMaxy.Services.TempActions
     {
         public TempActionChecker ActiveChecker { get; private set; }
         private TempActionSink.FlushLogDelegate _flushLogDelegate;
+        private readonly IConfiguration _configuration;
         private readonly DiscordSocketClient _client;
         private readonly System.Timers.Timer _timer;
+        private readonly TimeSpan _flushInterval;
         private CancellationToken _shutdownToken;
         private Serilog.ILogger _verboseLogger;
         private DateTime _lastFlush;
 
-        public TempActionService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
+        public TempActionService(DiscordSocketClient client, IConfiguration configuration,
+            ILogger<DiscordClientService> logger) : base(client, logger)
         {
+            _configuration = configuration;
             _client = client;
+
             _timer = new System.Timers.Timer(45000);
             client.UserJoined += CheckNewUserAsync;
             _lastFlush = DateTime.Now;
+
+            _flushInterval = TimeSpan.FromMinutes(float
+                .TryParse(configuration["ActLogFlushTime"], out float flushInterval) ? flushInterval : 10);
         }
 
         protected override async Task ExecuteAsync(CancellationToken shutdownToken)
         {
             _shutdownToken = shutdownToken;
             await _client.WaitForReadyAsync(shutdownToken);
-            _verboseLogger = new LoggerConfiguration()
-                             .MinimumLevel.Verbose()
-                             .WriteTo.Logger(Log.Logger, LogEventLevel.Warning)
-                             .WriteTo.TempActionSink(_client, LogEventLevel.Verbose, out var flushLogDelegate)
-                             .CreateLogger()
-                             .ForContext("Source", "TempAct");
-            _flushLogDelegate = flushLogDelegate;
+            var verboseLoggerConfig = new LoggerConfiguration()
+                                      .MinimumLevel.Verbose()
+                                      .WriteTo.Logger(Log.Logger, LogEventLevel.Warning);
+
+            if (ulong.TryParse(_configuration["ActLogChannel"], out ulong channelId))
+            {
+                verboseLoggerConfig = verboseLoggerConfig.WriteTo.TempActionSink(_client.GetChannel(channelId) as ITextChannel,
+                    LogEventLevel.Verbose, out var flushLogDelegate);
+                _flushLogDelegate = flushLogDelegate;
+            }
+            else
+            {
+                LogSeverity.Warning.Log("TempAct", "Log Channel not set, verbose logs will not be sent");
+            }
+
+            _verboseLogger = verboseLoggerConfig.CreateLogger()
+                                                .ForContext("Source", "TempAct");
+
             _timer.Elapsed += async (_, _) => await TryActCheckAsync();
             _timer.Start();
         }
@@ -60,7 +81,8 @@ namespace BotCatMaxy.Services.TempActions
             var actions = user.Guild?.LoadFromFile<TempActionList>();
 
             //Can be done better and cleaner
-            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null || (actions?.tempMutes?.Count is null or 0))
+            if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null ||
+                (actions?.tempMutes?.Count is null or 0))
                 return;
             if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id))
                 await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
@@ -90,12 +112,14 @@ namespace BotCatMaxy.Services.TempActions
             ActiveChecker = new TempActionChecker(_client, _verboseLogger);
             CurrentInfo.Checking = true;
             var start = DateTime.UtcNow;
-            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic, (context, timespan, task) =>
-            {
-                _verboseLogger.Log(LogEventLevel.Error, "TempAct",
-                    $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(2)} and through {CurrentInfo.CheckedGuilds}/{_client.Guilds.Count} guilds");
-                return ResetInfo(start);
-            });
+            var timeoutPolicy = Policy.TimeoutAsync(40, Polly.Timeout.TimeoutStrategy.Optimistic,
+                (context, timespan, task) =>
+                {
+                    _verboseLogger.Log(LogEventLevel.Error, "TempAct",
+                        $"TempAct check canceled at {DateTime.UtcNow.Subtract(start).Humanize(2)} and through {CurrentInfo.CheckedGuilds}/{_client.Guilds.Count} guilds");
+
+                    return ResetInfo(start);
+                });
 
             return timeoutPolicy.ExecuteAsync(async ct =>
             {
@@ -111,7 +135,7 @@ namespace BotCatMaxy.Services.TempActions
             CachedInfo.LastCheck = DateTime.UtcNow;
             CurrentInfo.Checking = false;
 
-            return (DateTime.Now - _lastFlush > TimeSpan.FromMinutes(10)) ? _flushLogDelegate() : Task.CompletedTask;
+            return (DateTime.Now - _lastFlush > _flushInterval) ? _flushLogDelegate() : Task.CompletedTask;
         }
     }
 }
