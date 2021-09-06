@@ -21,49 +21,35 @@ namespace BotCatMaxy
         {
         }
 
-        [Command("warn")]
-        [Summary("Warn a user with a reason.")]
-        [CanWarn()]
-        public async Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
+        public async Task<RuntimeResult> ExecuteWarnAsync(UserRef userRef, float size, string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
+            WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logMessage?.GetJumpUrl());
 
             if (result.success)
             {
-                Context.Message.DeleteOrRespond($"**{userRef.User.GetTag()}** has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.", Context.Guild);
-                return CommandResult.FromSuccess(null);
+                return CommandResult.FromSuccess($"{userRef.Mention()} has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.");
             }
-            else
+
+            if (logMessage != null)
             {
-                if (logMessage != null)
-                {
-                    DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
-                    await logMessage.DeleteAsync();
-                }
-                return CommandResult.FromError(result.description.Truncate(1500));
+                DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
+                await logMessage.DeleteAsync();
             }
+            return CommandResult.FromError(result.description.Truncate(1500));
         }
+
+        [Command("warn")]
+        [Summary("Warn a user with a reason.")]
+        [CanWarn()]
+        public Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
+            => ExecuteWarnAsync(userRef, 1, reason);
 
         [Command("warn")]
         [Summary("Warn a user with a specific size, along with a reason.")]
         [CanWarn()]
-        public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
-        {
-            IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(size, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
-            if (result.success)
-                Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
-            else
-            {
-                if (logMessage != null)
-                {
-                    DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
-                    await logMessage.DeleteAsync();
-                }
-                await ReplyAsync(result.description.Truncate(1500));
-            }
-        }
+        public Task WarnUserWithSizeAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
+            => ExecuteWarnAsync(userRef, size, reason);
 
         [Command("dmwarns", RunMode = RunMode.Async)]
         [Summary("Views a user's infractions.")]
