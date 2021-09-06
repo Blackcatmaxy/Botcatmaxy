@@ -5,6 +5,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.Interactivity;
 
 namespace BotCatMaxy.Components.Logging
 {

@@ -27,9 +27,9 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Hosting" Version="4.0.2-labs" />
-    <PackageReference Include="Discord.InteractivityAddon.Labs" Version="2.4.1-labs-20210709.1" />
     <PackageReference Include="Discord.Net.Labs" Version="3.0.2" />
     <PackageReference Include="DotNetEnv" Version="2.1.1" />
+    <PackageReference Include="Fergun.Interactive.Labs" Version="1.1.0" />
     <PackageReference Include="Humanizer.Core" Version="2.11.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />

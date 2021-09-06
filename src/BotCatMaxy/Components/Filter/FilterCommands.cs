@@ -4,11 +4,11 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
-using Interactivity;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.Interactivity;
 
 namespace BotCatMaxy.Components.Filter
 {
@@ -39,10 +39,10 @@ namespace BotCatMaxy.Components.Filter
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             SocketGuild guild;
-            Predicate<SocketMessage> filter = message => message.Channel == Context.Channel;
+            var filter = new InteractivePredicate(Context.Message);
             while (true)
             {
-                var result = await Interactivity.NextMessageAsync(filter, timeout: TimeSpan.FromMinutes(1));
+                var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel, timeout: TimeSpan.FromMinutes(1));
                 if (result.Value?.Content is null or "cancel")
                 {
                     await ReplyAsync("You have timed out or canceled");
@@ -77,7 +77,7 @@ namespace BotCatMaxy.Components.Filter
                 else
                 {
                     await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
-                    var result = await Interactivity.NextMessageAsync(filter, timeout: TimeSpan.FromMinutes(1));
+                    var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel);
                     if (result.Value?.Content.Equals("!confirm", StringComparison.InvariantCultureIgnoreCase) ?? false)
                     {
                         useExplicit = true;

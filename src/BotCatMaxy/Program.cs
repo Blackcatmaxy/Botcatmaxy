@@ -9,15 +9,13 @@ using Discord;
 using Discord.Addons.Hosting;
 using Discord.Commands;
 using Discord.WebSocket;
-using Interactivity;
+using Fergun.Interactive;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
-using Serilog.Core;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace BotCatMaxy
@@ -28,11 +26,11 @@ namespace BotCatMaxy
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.Async(a => 
+                .WriteTo.Async(a =>
                     a.File("logs/log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .CreateLogger();
-            
+
             var hostBuilder = Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureAppConfiguration((context, config) =>
@@ -78,21 +76,20 @@ namespace BotCatMaxy
                     var mongo = new MongoClient(context.Configuration["DataToken"]);
                     DataManipulator.dbClient = mongo;
                     services.AddSingleton(mongo);
-                    
-                    services.AddSingleton(x =>
-                        new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
+
+                    services.AddSingleton<InteractiveService>();
                     services.AddSingleton(new CommandService(new CommandServiceConfig
                     {
                         DefaultRunMode = RunMode.Async,
                         CaseSensitiveCommands = false,
                         IgnoreExtraArgs = true
                     }));
-                    
+
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<CommandHandler>();
                     services.AddHostedService<TempActionService>();
                 });
-            
+
             try
             {
                 //Throws OptionsValidationException when Discord token isn't valid

@@ -4,12 +4,12 @@ using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Interactivity;
 using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.Interactivity;
 
 [Name("Report")]
 public class ReportModule : InteractiveModule
@@ -33,10 +33,10 @@ public class ReportModule : InteractiveModule
         }
         await ReplyAsync(embed: guildsEmbed.Build());
         SocketGuild guild;
-        Predicate<SocketMessage> filter = msg => msg.Channel.Id == Context.Channel.Id;
+        var filter = new InteractivePredicate(Context.Message);
         while (true)
         {
-            var result = await Interactivity.NextMessageAsync(filter: filter, timeout: TimeSpan.FromMinutes(1));
+            var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel, timeout: TimeSpan.FromMinutes(1));
             var message = result.Value;
             if (message?.Content?.ToLower() is null or "cancel")
                 return CommandResult.FromError("You have timed out or canceled");
@@ -55,7 +55,7 @@ public class ReportModule : InteractiveModule
         ReportSettings settings = guild.LoadFromFile<ReportSettings>(false);
         if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null)
             return CommandResult.FromError("This guild does not currently have reporting set up, command canceled");
-            
+
         SocketGuildUser gUser = guild.GetUser(Context.Message.Author.Id);
         if (settings.requiredRole != null && !(gUser.RoleIDs().Contains(settings.requiredRole.Value) || gUser.GuildPermissions.Administrator))
             return CommandResult.FromError("You are missing required role for reporting");
@@ -85,7 +85,8 @@ public class ReportModule : InteractiveModule
         }
 
         await ReplyAsync("Please reply with what you want to report");
-        var reportMsg = await Interactivity.NextMessageAsync(filter: filter, timeout: TimeSpan.FromMinutes(5));
+        var reportMsg = await Interactivity.NextMessageAsync(filter.EvaluateChannel,
+            timeout: TimeSpan.FromMinutes(5));
         if (!reportMsg.IsSuccess)
             return CommandResult.FromError("Report cancelled.");
 
