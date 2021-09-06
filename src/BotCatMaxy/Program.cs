@@ -39,7 +39,7 @@ namespace BotCatMaxy
                     var path = "Properties/BotCatMaxy";
 #if DEBUG
                     if (File.Exists($"{path}.DEBUG.ini"))
-                        path += ".DEBUG";                    
+                        path += ".DEBUG";
 #endif
                     Console.WriteLine($"Loading config from {path}.ini");
                     config.AddIniFile($"{path}.ini", optional: true, reloadOnChange: true);
@@ -86,6 +86,7 @@ namespace BotCatMaxy
                     }));
 
                     services.AddHostedService<BotInfo>();
+                    services.AddHostedService<FilterHandler>();
                     services.AddHostedService<CommandHandler>();
                     services.AddHostedService<TempActionService>();
                 });

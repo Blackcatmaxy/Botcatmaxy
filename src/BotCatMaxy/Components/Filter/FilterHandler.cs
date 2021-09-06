@@ -10,11 +10,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace BotCatMaxy.Startup
 {
-    public class FilterHandler
+    public class FilterHandler : BackgroundService
     {
         public const string inviteRegex = @"(?:https?:\/\/)?(?:\w+\.)?discord(?:(?:app)?\.com\/invite|\.gg)\/([A-Za-z0-9-]+)";
         private const RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
@@ -24,16 +26,20 @@ namespace BotCatMaxy.Startup
         public FilterHandler(IDiscordClient client)
         {
             this.client = client;
-            if (client is BaseSocketClient socketClient)
-            {
-                socketClient.MessageReceived += HandleMessage;
-                socketClient.MessageUpdated += HandleEdit;
-                socketClient.ReactionAdded += HandleReaction;
-                socketClient.UserJoined += HandleUserJoin;
-                socketClient.UserUpdated += HandleUserChange;
-            }
 
-            new LogMessage(LogSeverity.Info, "Filter", "Filter is active").Log();
+            if (client is not BaseSocketClient socketClient)
+                return;
+            socketClient.MessageReceived += HandleMessage;
+            socketClient.MessageUpdated += HandleEdit;
+            socketClient.ReactionAdded += HandleReaction;
+            socketClient.UserJoined += HandleUserJoin;
+            socketClient.UserUpdated += HandleUserChange;
+        }
+
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            LogSeverity.Info.Log("Filter", "Filter is active");
+            return Task.CompletedTask;
         }
 
         private Task HandleEdit(Cacheable<IMessage, ulong> oldMessage, SocketMessage editedMessage, ISocketMessageChannel channel)
@@ -161,7 +167,7 @@ namespace BotCatMaxy.Startup
 
         public async Task CheckMessage(IMessage message, ICommandContext context = null)
         {
-            if (message.Author.IsBot || message.Channel is not IGuildChannel chnl || message is not IUserMessage userMessage || string.IsNullOrWhiteSpace(message.Content))
+            if (message.Author.IsBot || message.Channel is not IGuildChannel chnl || message is not IUserMessage || string.IsNullOrWhiteSpace(message.Content))
             {
                 return; //Makes sure it's not logging a message from a bot and that it's in a discord server
             }
