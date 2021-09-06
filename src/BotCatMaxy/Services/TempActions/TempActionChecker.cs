@@ -28,13 +28,13 @@ namespace BotCatMaxy.Services.TempActions
             _log = logger;
         }
 
-        public void CheckCompletion()
+        public bool CheckCompletion()
         {
             if (_finished)
-                return;
-            _log.Log(LogEventLevel.Warning, "TempAct",
-                $"Check taking longer than normal to complete and still haven't canceled.\nIt has gone through {CurrentInfo.CheckedGuilds}/{_client.Guilds.Count} guilds. Not starting new check.");
-            throw new InvalidOperationException();
+               return true;
+            _log.Warning("Check taking longer than normal to complete and still hasn't canceled.\nIt has gone through {CheckedGuilds}/{Count} guilds. Not starting new check",
+                CurrentInfo.CheckedGuilds, _client.Guilds.Count);
+            return false;
         }
 
         public async Task ExecuteAsync(CancellationToken ct)

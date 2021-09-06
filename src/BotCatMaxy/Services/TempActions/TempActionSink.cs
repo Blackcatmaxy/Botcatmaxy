@@ -7,12 +7,13 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Display;
+using Serilog.Templates;
 
 namespace BotCatMaxy.Services.TempActions
 {
     public class TempActionSink : ILogEventSink
     {
-        private const string _format = "[{Timestamp:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+        private const string _format = "[{@t:mm:ss.fff} {@l:u3}]{#if IsDefined(GuildID)} {GuildID} {GuildIndex}:{#end} {@m:lj}\n{@x}";
         private readonly ITextFormatter _textFormatter;
         private readonly DiscordSocketClient _client;
         private readonly SocketTextChannel _channel;
@@ -24,14 +25,14 @@ namespace BotCatMaxy.Services.TempActions
 
         public TempActionSink(DiscordSocketClient client, IFormatProvider formatProvider, out FlushLogDelegate flush)
         {
-            _memoryStream = new MemoryStream();
             const ulong logChannel = 866833376882589716;
+            _memoryStream = new MemoryStream();
             _client = client;
 
             flush = FlushLog;
             _channel = _client.GetChannel(logChannel) as SocketTextChannel;
             _streamWriter = new StreamWriter(_memoryStream, new UTF8Encoding(false));
-            _textFormatter = new MessageTemplateTextFormatter(_format, formatProvider);
+            _textFormatter = new ExpressionTemplate(_format, formatProvider);
         }
 
         public void Emit(LogEvent logEvent)

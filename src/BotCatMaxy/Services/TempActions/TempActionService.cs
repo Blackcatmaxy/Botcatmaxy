@@ -25,13 +25,15 @@ namespace BotCatMaxy.Services.TempActions
         private readonly DiscordSocketClient _client;
         private readonly System.Timers.Timer _timer;
         private CancellationToken _shutdownToken;
-        private Logger _verboseLogger;
+        private Serilog.ILogger _verboseLogger;
+        private DateTime _lastFlush;
 
         public TempActionService(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
         {
             _client = client;
             _timer = new System.Timers.Timer(45000);
             client.UserJoined += CheckNewUserAsync;
+            _lastFlush = DateTime.Now;
         }
 
         protected override async Task ExecuteAsync(CancellationToken shutdownToken)
@@ -42,9 +44,10 @@ namespace BotCatMaxy.Services.TempActions
                              .MinimumLevel.Verbose()
                              .WriteTo.Logger(Log.Logger, LogEventLevel.Warning)
                              .WriteTo.TempActionSink(_client, LogEventLevel.Verbose, out var flushLogDelegate)
-                             .CreateLogger();
+                             .CreateLogger()
+                             .ForContext("Source", "TempAct");
             _flushLogDelegate = flushLogDelegate;
-            _timer.Elapsed += async (_, _) => await ActCheckExecAsync();
+            _timer.Elapsed += async (_, _) => await TryActCheckAsync();
             _timer.Start();
         }
 
@@ -63,12 +66,27 @@ namespace BotCatMaxy.Services.TempActions
                 await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 
+        public async Task TryActCheckAsync()
+        {
+            try
+            {
+                await ActCheckExecAsync();
+            }
+            catch (Exception e)
+            {
+                await LogSeverity.Error.LogExceptionAsync("TempAct",
+                    "Something went wrong with the TempAct cycle, continuing.", e);
+                _verboseLogger.Information(e, "Something went wrong with the TempAct cycle, continuing");
+            }
+        }
+
         /// <summary>
         /// Initialize the act check and perform sanity checks
         /// </summary>
         public Task ActCheckExecAsync()
         {
-            ActiveChecker?.CheckCompletion();
+            if (!ActiveChecker?.CheckCompletion() ?? false)
+                return Task.CompletedTask;
             ActiveChecker = new TempActionChecker(_client, _verboseLogger);
             CurrentInfo.Checking = true;
             var start = DateTime.UtcNow;
@@ -92,7 +110,8 @@ namespace BotCatMaxy.Services.TempActions
             CachedInfo.CheckExecutionTimes.Enqueue(execTime);
             CachedInfo.LastCheck = DateTime.UtcNow;
             CurrentInfo.Checking = false;
-            return _flushLogDelegate();
+
+            return (DateTime.Now - _lastFlush > TimeSpan.FromMinutes(10)) ? _flushLogDelegate() : Task.CompletedTask;
         }
     }
 }
