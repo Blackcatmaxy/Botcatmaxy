@@ -69,6 +69,7 @@ namespace Tests.Mocks.Guild
         public string VoiceSessionId => throw new NotImplementedException();
 
         public bool IsStreaming => throw new NotImplementedException();
+        public DateTimeOffset? RequestToSpeakTimestamp { get; }
 
         public Task AddRoleAsync(ulong roleId, RequestOptions options = null)
         {

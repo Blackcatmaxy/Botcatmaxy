@@ -35,7 +35,7 @@ namespace BotCatMaxy.Startup
             return Task.CompletedTask;
         }
 
-        private Task HandleDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        private Task HandleDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
             Task.Run(() => LogDelete(message, channel));
             return Task.CompletedTask;
@@ -108,8 +108,9 @@ namespace BotCatMaxy.Startup
             }
         }
 
-        private async Task LogDelete(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        private async Task LogDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> cachedChannel)
         {
+            IMessageChannel channel = await cachedChannel.GetOrDownloadAsync();
             try
             {
                 if (!(channel is SocketGuildChannel)) return;

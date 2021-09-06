@@ -1,7 +1,8 @@
-﻿using Interactivity;
-using System;
+﻿using System;
+using Discord.Commands;
+using Fergun.Interactive;
 
-namespace Discord.Commands
+namespace BotCatMaxy.Components.Interactivity
 {
     /// <summary>
     /// Wrapper around <seealso cref="ModuleBase{T}"/> with T as <see cref="ICommandContext"/>
@@ -15,9 +16,9 @@ namespace Discord.Commands
         /// </summary>
         public InteractiveModule(IServiceProvider service) : base()
         {
-            Interactivity = (InteractivityService)service.GetService(typeof(InteractivityService));
+            Interactivity = (InteractiveService)service.GetService(typeof(InteractiveService));
         }
 
-        protected InteractivityService Interactivity { get; init; }
+        protected InteractiveService Interactivity { get; }
     }
 }

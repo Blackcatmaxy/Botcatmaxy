@@ -9,15 +9,13 @@ using Discord;
 using Discord.Addons.Hosting;
 using Discord.Commands;
 using Discord.WebSocket;
-using Interactivity;
+using Fergun.Interactive;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
-using Serilog.Core;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace BotCatMaxy
@@ -28,11 +26,11 @@ namespace BotCatMaxy
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.Async(a => 
+                .WriteTo.Async(a =>
                     a.File("logs/log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .CreateLogger();
-            
+
             var hostBuilder = Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureAppConfiguration((context, config) =>
@@ -41,7 +39,7 @@ namespace BotCatMaxy
                     var path = "Properties/BotCatMaxy";
 #if DEBUG
                     if (File.Exists($"{path}.DEBUG.ini"))
-                        path += ".DEBUG";                    
+                        path += ".DEBUG";
 #endif
                     Console.WriteLine($"Loading config from {path}.ini");
                     config.AddIniFile($"{path}.ini", optional: true, reloadOnChange: true);
@@ -54,7 +52,6 @@ namespace BotCatMaxy
                             true, //going to keep here for new guilds added, but seems to be broken for startup per https://github.com/discord-net/Discord.Net/issues/1646
                         ConnectionTimeout = 6000,
                         MessageCacheSize = 120,
-                        ExclusiveBulkDelete = false,
                         LogLevel = LogSeverity.Info,
                         DefaultRetryMode = RetryMode.AlwaysRetry,
                         GatewayIntents = GatewayIntents.GuildBans | GatewayIntents.GuildMembers |
@@ -79,21 +76,21 @@ namespace BotCatMaxy
                     var mongo = new MongoClient(context.Configuration["DataToken"]);
                     DataManipulator.dbClient = mongo;
                     services.AddSingleton(mongo);
-                    
-                    services.AddSingleton(x =>
-                        new InteractivityService(x.GetRequiredService<DiscordSocketClient>()));
+
+                    services.AddSingleton<InteractiveService>();
                     services.AddSingleton(new CommandService(new CommandServiceConfig
                     {
                         DefaultRunMode = RunMode.Async,
                         CaseSensitiveCommands = false,
                         IgnoreExtraArgs = true
                     }));
-                    
+
                     services.AddHostedService<BotInfo>();
+                    services.AddHostedService<FilterHandler>();
                     services.AddHostedService<CommandHandler>();
                     services.AddHostedService<TempActionService>();
                 });
-            
+
             try
             {
                 //Throws OptionsValidationException when Discord token isn't valid

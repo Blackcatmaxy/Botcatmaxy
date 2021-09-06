@@ -23,11 +23,6 @@ namespace Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task ModifySuppressionAsync(bool suppressEmbeds, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task PinAsync(RequestOptions options = null)
         {
             throw new NotImplementedException();

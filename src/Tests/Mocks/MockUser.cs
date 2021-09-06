@@ -19,7 +19,14 @@ namespace Tests.Mocks
         }
 
         MockDMChannel channel;
+        public Task<IDMChannel> CreateDMChannelAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public string AvatarId => throw new NotImplementedException();
+        public string BannerId { get; }
+        public Color? AccentColor { get; }
 
         public string Discriminator => $"#{DiscriminatorValue}";
 
@@ -39,8 +46,6 @@ namespace Tests.Mocks
 
         public string Mention => $"@{Username}";
 
-        public IActivity Activity => throw new NotImplementedException();
-
         public UserStatus Status => throw new NotImplementedException();
 
         public IImmutableSet<ClientType> ActiveClients => throw new NotImplementedException();
@@ -48,6 +53,11 @@ namespace Tests.Mocks
         public IImmutableList<IActivity> Activities => throw new NotImplementedException();
 
         public string GetAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetBannerUrl(ImageFormat format = ImageFormat.Auto, ushort size = 256)
         {
             throw new NotImplementedException();
         }

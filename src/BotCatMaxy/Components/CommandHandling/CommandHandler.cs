@@ -1,13 +1,10 @@
-﻿using BotCatMaxy;
-using BotCatMaxy.Models;
+﻿using BotCatMaxy.Models;
 using BotCatMaxy.TypeReaders;
 using Discord;
-using Interactivity;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
 using Humanizer;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Globalization;
 using System.Reflection;
@@ -15,9 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord.Addons.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using BotCatMaxy.Components.Logging;
 
 namespace BotCatMaxy.Startup
 {

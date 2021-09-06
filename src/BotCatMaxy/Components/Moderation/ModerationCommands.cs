@@ -1,10 +1,8 @@
-﻿using BotCatMaxy;
-using BotCatMaxy.Components.Logging;
+﻿using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using BotCatMaxy.Moderation;
 using Discord;
-using Interactivity;
 using Discord.Commands;
 using Discord.WebSocket;
 using Humanizer;
@@ -12,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Interactivity.Confirmation;
+using BotCatMaxy.Components.Interactivity;
 
 namespace BotCatMaxy
 {
@@ -23,49 +21,35 @@ namespace BotCatMaxy
         {
         }
 
-        [Command("warn")]
-        [Summary("Warn a user with a reason.")]
-        [CanWarn()]
-        public async Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
+        public async Task<RuntimeResult> ExecuteWarnAsync(UserRef userRef, float size, string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
+            WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logMessage?.GetJumpUrl());
 
             if (result.success)
             {
-                Context.Message.DeleteOrRespond($"**{userRef.User.GetTag()}** has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.", Context.Guild);
-                return CommandResult.FromSuccess(null);
+                return CommandResult.FromSuccess($"{userRef.Mention()} has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.");
             }
-            else
+
+            if (logMessage != null)
             {
-                if (logMessage != null)
-                {
-                    DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
-                    await logMessage.DeleteAsync();
-                }
-                return CommandResult.FromError(result.description.Truncate(1500));
+                DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
+                await logMessage.DeleteAsync();
             }
+            return CommandResult.FromError(result.description.Truncate(1500));
         }
+
+        [Command("warn")]
+        [Summary("Warn a user with a reason.")]
+        [CanWarn()]
+        public Task<RuntimeResult> WarnUserAsync([RequireHierarchy] UserRef userRef, [Remainder] string reason)
+            => ExecuteWarnAsync(userRef, 1, reason);
 
         [Command("warn")]
         [Summary("Warn a user with a specific size, along with a reason.")]
         [CanWarn()]
-        public async Task WarnWithSizeUserAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
-        {
-            IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(size, reason, Context.Channel as ITextChannel, logLink: logMessage?.GetJumpUrl());
-            if (result.success)
-                Context.Message.DeleteOrRespond($"{userRef.Mention()} has gotten their {result.warnsAmount.Suffix()} infraction for {reason}", Context.Guild);
-            else
-            {
-                if (logMessage != null)
-                {
-                    DiscordLogging.deletedMessagesCache.Enqueue(logMessage.Id);
-                    await logMessage.DeleteAsync();
-                }
-                await ReplyAsync(result.description.Truncate(1500));
-            }
-        }
+        public Task WarnUserWithSizeAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
+            => ExecuteWarnAsync(userRef, size, reason);
 
         [Command("dmwarns", RunMode = RunMode.Async)]
         [Summary("Views a user's infractions.")]
@@ -92,10 +76,11 @@ namespace BotCatMaxy
             }
             await ReplyAsync(embed: guildsEmbed.Build());
             IGuild guild;
-            Predicate<SocketMessage> filter = message => message.Channel == Context.Channel;
+            var filter = new InteractivePredicate(Context.Message);
             while (true)
             {
-                var result = await Interactivity.NextMessageAsync(filter, timeout: TimeSpan.FromMinutes(1)); ;
+                var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel,
+                    timeout: TimeSpan.FromMinutes(1)); ;
                 var message = result.Value;
                 if (message == null || message.Content == "cancel")
                 {
@@ -228,12 +213,11 @@ namespace BotCatMaxy
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
-                var text = $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({(oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize()} left), are you sure you want to change the length?";
-                var request = new ConfirmationBuilder()
-                    .WithContent(new PageBuilder().WithText(text))
-                    .Build();
-                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(2));
-                if (result.Value)
+
+                string timeLeft = (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize();
+                var query = await ReplyAsync(
+                    $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({timeLeft} left), are you sure you want to change the length?");
+                if (await Interactivity.TryConfirmation(query))
                 {
                     actions.tempBans.Remove(oldAct);
                     actions.SaveToFile();
@@ -385,14 +369,10 @@ namespace BotCatMaxy
         {
             if (reason.Split(' ').First().ToTime() != null)
             {
-                var query = "Are you sure you don't mean to use !tempban?";
-                var request = new ConfirmationBuilder()
-                    .WithContent(new PageBuilder().WithText(query))
-                    .Build();
-                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(1));
-                if (result.Value)
+                var query = await ReplyAsync("Are you sure you don't mean to use `!tempban`?");
+                if (await Interactivity.TryConfirmation(query))
                 {
-                    await ReplyAsync("Command Canceled");
+                    await ReplyAsync("Command canceled.");
                     return;
                 }
             }
@@ -400,14 +380,10 @@ namespace BotCatMaxy
             TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.User == userRef.ID) ?? false)
             {
-                var query = "User is already tempbanned, are you sure you want to ban?";
-                var request = new ConfirmationBuilder()
-                    .WithContent(new PageBuilder().WithText(query))
-                    .Build();
-                var result = await Interactivity.SendConfirmationAsync(request, Context.Channel, TimeSpan.FromMinutes(2));
-                if (result.Value)
+                var query = await ReplyAsync("User is already tempbanned, are you sure you want to ban?");
+                if (!await Interactivity.TryConfirmation(query))
                 {
-                    await ReplyAsync("Command Canceled");
+                    await ReplyAsync("Command canceled.");
                     return;
                 }
                 actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.User == userRef.ID));
