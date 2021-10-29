@@ -31,6 +31,7 @@ namespace Tests.Mocks
         public bool MentionedEveryone => throw new NotImplementedException();
 
         public string Content { get; init; }
+        public string CleanContent => throw new NotImplementedException();
 
         public DateTimeOffset Timestamp => throw new NotImplementedException();
 
@@ -65,6 +66,7 @@ namespace Tests.Mocks
         public IReadOnlyCollection<ISticker> Stickers { get; }
 
         public MessageFlags? Flags => throw new NotImplementedException();
+        public IMessageInteraction Interaction { get; }
 
         public DateTimeOffset CreatedAt => throw new NotImplementedException();
 

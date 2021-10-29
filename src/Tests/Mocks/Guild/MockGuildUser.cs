@@ -21,6 +21,7 @@ namespace Tests.Mocks.Guild
         public DateTimeOffset? JoinedAt => throw new NotImplementedException();
 
         public string Nickname => throw new NotImplementedException();
+        public string GuildAvatarId { get; }
 
         public GuildPermissions GuildPermissions
         {
@@ -53,6 +54,7 @@ namespace Tests.Mocks.Guild
         public IReadOnlyCollection<ulong> RoleIds => new ReadOnlyCollection<ulong>(roles.Select(role => role.Id).ToList());
 
         public bool? IsPending => throw new NotImplementedException();
+        public int Hierarchy => throw new NotImplementedException();
 
         public bool IsDeafened => throw new NotImplementedException();
 
@@ -97,6 +99,11 @@ namespace Tests.Mocks.Guild
         }
 
         public ChannelPermissions GetPermissions(IGuildChannel channel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetGuildAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
         {
             throw new NotImplementedException();
         }

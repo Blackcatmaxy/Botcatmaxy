@@ -136,6 +136,16 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task DisconnectAsync(IGuildUser user)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IStageChannel> CreateStageChannelAsync(string name, Action<VoiceChannelProperties> func = null, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<ICategoryChannel> CreateCategoryAsync(string name, Action<GuildChannelProperties> func = null, RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -179,6 +189,11 @@ namespace Tests.Mocks.Guild
         }
 
         public Task DeleteAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MoveAsync(IGuildUser user, IVoiceChannel targetChannel)
         {
             throw new NotImplementedException();
         }
