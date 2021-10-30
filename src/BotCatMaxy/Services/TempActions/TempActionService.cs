@@ -84,7 +84,7 @@ namespace BotCatMaxy.Services.TempActions
             if (settings == null || user.Guild?.GetRole(settings.mutedRole) == null ||
                 (actions?.tempMutes?.Count is null or 0))
                 return;
-            if (actions.tempMutes.Any(tempMute => tempMute.User == user.Id))
+            if (actions.tempMutes.Any(tempMute => tempMute.UserId == user.Id))
                 await user.AddRoleAsync(user.Guild.GetRole(settings.mutedRole));
         }
 

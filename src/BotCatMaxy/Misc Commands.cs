@@ -267,35 +267,25 @@ namespace BotCatMaxy
         [RequireOwner]
         public async Task ActSanityCheck()
         {
-            List<TypedTempAct> tempActsToEnd = new List<TypedTempAct>();
-            RequestOptions requestOptions = RequestOptions.Default;
-            requestOptions.RetryMode = RetryMode.AlwaysRetry;
+            var tempActsToEnd = new List<ITempAction>();
+            RequestOptions requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
             foreach (SocketGuild sockGuild in Context.Client.Guilds)
             {
                 TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                 if (actions != null)
                 {
-                    if (actions.tempBans?.Count is null or 0)
+                    if (actions.tempBans?.Count is not (null or 0))
                     {
-                        foreach (TempAct tempBan in actions.tempBans)
-                        {
-                            if (DateTime.UtcNow >= tempBan.End)
-                            {
-                                tempActsToEnd.Add(new TypedTempAct(tempBan, TempActType.TempBan));
-                            }
-                        }
+                        tempActsToEnd.AddRange(actions.tempBans.
+                                                       Where(action => (action as ITempAction).ShouldEnd));
                     }
 
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
-                    if (settings is not null && sockGuild.GetRole(settings.mutedRole) != null && actions.tempMutes?.Count is not null or 0)
+                    if (settings is not null && sockGuild.GetRole(settings.mutedRole) != null
+                                             && actions.tempMutes?.Count is not (null or 0))
                     {
-                        foreach (TempAct tempMute in actions.tempMutes)
-                        {
-                            if (DateTime.UtcNow >= tempMute.End)
-                            { //Normal mute end
-                                tempActsToEnd.Add(new TypedTempAct(tempMute, TempActType.TempMute));
-                            }
-                        }
+                        tempActsToEnd.AddRange(actions.tempMutes
+                                                      .Where(action => (action as ITempAction).ShouldEnd));
                     }
                 }
             }
@@ -306,14 +296,18 @@ namespace BotCatMaxy
             }
 
             var embed = new EmbedBuilder();
-            embed.Title = $"{tempActsToEnd.Count} tempacts should've ended (longest one ended ago is {TimeSpan.FromMilliseconds(tempActsToEnd.Select(tempAct => DateTime.UtcNow.Subtract(tempAct.End).TotalMilliseconds).Max()).Humanize(2)}";
-            foreach (TypedTempAct tempAct in tempActsToEnd)
+
+            // Don't ask me what exactly or why this does, it just does
+            var longestTimeAgo = TimeSpan.FromMilliseconds(tempActsToEnd.Select(tempAct
+                              => DateTime.UtcNow.Subtract(tempAct.EndTime).TotalMilliseconds).Max());
+            embed.Title = $"{tempActsToEnd.Count} tempacts should've ended (longest one ended ago is {longestTimeAgo.Humanize(2)}";
+            foreach (ITempAction tempAct in tempActsToEnd)
             {
-                embed.AddField($"{tempAct.Type} started on {tempAct.DateBanned.ToShortTimeString()} {tempAct.DateBanned.ToShortDateString()} for {tempAct.Length.LimitedHumanize()}",
-                    $"Should've ended {DateTime.UtcNow.Subtract(tempAct.End).LimitedHumanize()}");
+                embed.AddField($"{tempAct.GetType()} started on {tempAct.Start.ToShortTimeString()} for {tempAct.Length.LimitedHumanize()}",
+                    $"Should've ended {DateTime.UtcNow.Subtract(tempAct.EndTime).LimitedHumanize()}");
             }
             await ReplyAsync(embed: embed.Build());
-            if (tempActsToEnd.Any(tempAct => DateTime.UtcNow.Subtract(tempAct.End).CompareTo(TimeSpan.Zero) < 0))
+            if (tempActsToEnd.Any(tempAct => DateTime.UtcNow.Subtract(tempAct.EndTime).CompareTo(TimeSpan.Zero) < 0))
                 await ReplyAsync("Note: some of the values seem broken");
         }
 

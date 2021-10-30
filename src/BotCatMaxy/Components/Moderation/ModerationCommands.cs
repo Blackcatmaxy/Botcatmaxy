@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Interactivity;
+using BotCatMaxy.Services.TempActions;
 
 namespace BotCatMaxy
 {
@@ -204,17 +205,17 @@ namespace BotCatMaxy
                     return;
                 }
             }
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            TempAct oldAct = actions.tempBans.FirstOrDefault(tempMute => tempMute.User == userRef.ID);
+            var actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            var oldAct = actions.tempBans.FirstOrDefault(tempBan => tempBan.UserId == userRef.ID);
             if (oldAct != null)
             {
-                if (!(Context.Message.Author as IGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)) >= time)
+                if (!(Context.Message.Author as IGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.Start)) >= time)
                 {
                     await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
                     return;
                 }
 
-                string timeLeft = (oldAct.Length - (DateTime.UtcNow - oldAct.DateBanned)).LimitedHumanize();
+                string timeLeft = (oldAct.Length - (DateTime.UtcNow - oldAct.Start)).LimitedHumanize();
                 var query = await ReplyAsync(
                     $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({timeLeft} left), are you sure you want to change the length?");
                 if (await Interactivity.TryConfirmation(query))
@@ -255,8 +256,8 @@ namespace BotCatMaxy
                 }
             }
             await userRef.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.User == userRef.ID))
+            var actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempBans.Any(tempBan => tempBan.UserId == userRef.ID))
             {
                 Context.Message.DeleteOrRespond($"{userRef.Name()} is already temp-banned (the warn did go through)", Context.Guild);
                 return;
@@ -288,8 +289,8 @@ namespace BotCatMaxy
                 }
             }
             await userRef.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.User == userRef.ID))
+            var actions = Context.Guild.LoadFromFile<TempActionList>(true);
+            if (actions.tempBans.Any(tempBan => tempBan.UserId == userRef.ID))
             {
                 await ReplyAsync($"{userRef.Name()} is already temp-banned (the warn did go through)");
                 return;
@@ -377,8 +378,8 @@ namespace BotCatMaxy
                 }
             }
 
-            TempActionList actions = Context.Guild.LoadFromFile<TempActionList>(false);
-            if (actions?.tempBans?.Any(tempBan => tempBan.User == userRef.ID) ?? false)
+            var actions = Context.Guild.LoadFromFile<TempActionList>(false);
+            if (actions?.tempBans?.Any(tempBan => tempBan.UserId == userRef.ID) ?? false)
             {
                 var query = await ReplyAsync("User is already tempbanned, are you sure you want to ban?");
                 if (!await Interactivity.TryConfirmation(query))
@@ -386,7 +387,7 @@ namespace BotCatMaxy
                     await ReplyAsync("Command canceled.");
                     return;
                 }
-                actions.tempBans.Remove(actions.tempBans.First(tempban => tempban.User == userRef.ID));
+                actions.tempBans.Remove(actions.tempBans.First(tempBan => tempBan.UserId == userRef.ID));
             }
             else if ((await Context.Guild.GetBansAsync()).Any(ban => ban.User.Id == userRef.ID))
             {

@@ -33,7 +33,7 @@ namespace BotCatMaxy.Data
                 BsonClassMap.RegisterClassMap<UserInfractions>();
                 BsonClassMap.RegisterClassMap<LogSettings>();
                 BsonClassMap.RegisterClassMap<Infraction>();
-                BsonClassMap.RegisterClassMap<TempAct>();
+                BsonClassMap.RegisterClassMap<TempActionList>();
                 BsonClassMap.RegisterClassMap<BadWord>();
             }
             catch (Exception e)

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Services.TempActions;
 
 namespace BotCatMaxy.Moderation
 {
@@ -226,8 +227,8 @@ namespace BotCatMaxy.Moderation
 
         public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, ICommandContext context, TempActionList actions = null)
         {
-            TempAct tempBan = new TempAct(userRef, time, reason);
-            if (actions == null) actions = context.Guild.LoadFromFile<TempActionList>(true);
+            var tempBan = new TempBan {Length = time, Reason = reason, Start = DateTime.UtcNow, UserId = userRef.ID};
+            actions ??= context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempBans.Add(tempBan);
             actions.SaveToFile();
             await context.Guild.AddBanAsync(userRef.ID, reason: reason);
@@ -259,7 +260,14 @@ namespace BotCatMaxy.Moderation
             var role = context.Guild.GetRole(settings?.mutedRole ?? 0);
             if (role == null)
                 return CommandResult.FromError("Muted role is null or invalid");
-            var tempMute = new TempAct(userRef.ID, time, reason);
+            var tempMute = new TempMute
+                {
+                    Length = time,
+                    RoleId = role.Id,
+                    Reason = reason,
+                    Start = DateTime.UtcNow,
+                    UserId = userRef.ID
+                };
             var actions = context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempMutes.Add(tempMute);
             actions.SaveToFile();
