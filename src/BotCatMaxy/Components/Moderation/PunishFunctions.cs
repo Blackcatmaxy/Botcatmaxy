@@ -231,8 +231,6 @@ namespace BotCatMaxy.Moderation
             actions ??= context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempBans.Add(tempBan);
             actions.SaveToFile();
-            await context.Guild.AddBanAsync(userRef.ID, reason: reason);
-            DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
             if (userRef.User != null)
             {
                 try
@@ -244,6 +242,8 @@ namespace BotCatMaxy.Moderation
                     if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
                 }
             }
+            await context.Guild.AddBanAsync(userRef.ID, reason: reason);
+            DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
             userRef.ID.RecordAct(context.Guild, tempBan, "tempban", context.Message.GetJumpUrl());
         }
 
