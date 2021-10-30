@@ -17,7 +17,7 @@ namespace BotCatMaxy.Models
 
         public DateTime EndTime => Start.Add(Length);
 
-        public bool ShouldEnd => EndTime >= DateTime.UtcNow;
+        public bool ShouldEnd => DateTime.UtcNow >= EndTime;
 
         public string LogString { get; }
 
