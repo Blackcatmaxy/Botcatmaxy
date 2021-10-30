@@ -194,7 +194,7 @@ namespace BotCatMaxy
         /// <summary>
         /// Saves a <see cref="TempAct"/> to a users record
         /// </summary>
-        public static void RecordAct(this ulong userID, IGuild guild, ITempAction tempAct, string type, string loglink = null)
+        public static void RecordAct(this ulong userID, IGuild guild, TempAction tempAct, string type, string loglink = null)
         {
             var acts = userID.LoadActRecord(guild, true);
             acts.Add(new ActRecord()

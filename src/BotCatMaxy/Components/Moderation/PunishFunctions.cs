@@ -227,7 +227,7 @@ namespace BotCatMaxy.Moderation
 
         public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, ICommandContext context, TempActionList actions = null)
         {
-            var tempBan = new TempBan {Length = time, Reason = reason, Start = DateTime.UtcNow, UserId = userRef.ID};
+            var tempBan = new TempBan {Length = time, Reason = reason, UserId = userRef.ID};
             actions ??= context.Guild.LoadFromFile<TempActionList>(true);
             actions.tempBans.Add(tempBan);
             actions.SaveToFile();
@@ -265,7 +265,6 @@ namespace BotCatMaxy.Moderation
                     Length = time,
                     RoleId = role.Id,
                     Reason = reason,
-                    Start = DateTime.UtcNow,
                     UserId = userRef.ID
                 };
             var actions = context.Guild.LoadFromFile<TempActionList>(true);

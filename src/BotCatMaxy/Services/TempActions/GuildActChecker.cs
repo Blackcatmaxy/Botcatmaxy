@@ -60,7 +60,7 @@ namespace BotCatMaxy.Services.TempActions
             }
         }
 
-        public async Task<List<TAction>> CheckTempActsAsync<TAction>(List<TAction> actions) where TAction : ITempAction
+        public async Task<List<TAction>> CheckTempActsAsync<TAction>(List<TAction> actions) where TAction : TempAction
         {
             string actType = typeof(TAction).Name;
             if (actions?.Count is null or 0)
@@ -76,10 +76,13 @@ namespace BotCatMaxy.Services.TempActions
                 await CheckTempAct(action, editedActions);
             }
 
+            int delta = editedActions.Count - actions.Count;
+            _log.Information("Checked {Actions} {ActType}s, ended up with {EditedActions} (delta {Delta})",
+                actions.Count, actType, editedActions.Count, delta);
             return editedActions;
         }
 
-        public async Task CheckTempAct<TAction>(TAction action, List<TAction> editedActions) where TAction : ITempAction
+        public async Task CheckTempAct<TAction>(TAction action, List<TAction> editedActions) where TAction : TempAction
         {
             string actType = typeof(TAction).Name;
             try
@@ -90,7 +93,7 @@ namespace BotCatMaxy.Services.TempActions
                     await action.VerifyResolvedAsync(_guild, _requestOptions);
                     _needSave = true;
                     editedActions.Remove(action);
-                    await action.LogEndAsync(_guild, false);
+                    await action.LogEndAsync(_guild, _client, false);
                 }
             }
             catch (Exception e)

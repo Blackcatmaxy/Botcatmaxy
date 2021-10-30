@@ -267,7 +267,7 @@ namespace BotCatMaxy
         [RequireOwner]
         public async Task ActSanityCheck()
         {
-            var tempActsToEnd = new List<ITempAction>();
+            var tempActsToEnd = new List<TempAction>();
             RequestOptions requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
             foreach (SocketGuild sockGuild in Context.Client.Guilds)
             {
@@ -277,7 +277,7 @@ namespace BotCatMaxy
                     if (actions.tempBans?.Count is not (null or 0))
                     {
                         tempActsToEnd.AddRange(actions.tempBans.
-                                                       Where(action => (action as ITempAction).ShouldEnd));
+                                                       Where(action => (action as TempAction).ShouldEnd));
                     }
 
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
@@ -285,7 +285,7 @@ namespace BotCatMaxy
                                              && actions.tempMutes?.Count is not (null or 0))
                     {
                         tempActsToEnd.AddRange(actions.tempMutes
-                                                      .Where(action => (action as ITempAction).ShouldEnd));
+                                                      .Where(action => (action as TempAction).ShouldEnd));
                     }
                 }
             }
@@ -301,7 +301,7 @@ namespace BotCatMaxy
             var longestTimeAgo = TimeSpan.FromMilliseconds(tempActsToEnd.Select(tempAct
                               => DateTime.UtcNow.Subtract(tempAct.EndTime).TotalMilliseconds).Max());
             embed.Title = $"{tempActsToEnd.Count} tempacts should've ended (longest one ended ago is {longestTimeAgo.Humanize(2)}";
-            foreach (ITempAction tempAct in tempActsToEnd)
+            foreach (TempAction tempAct in tempActsToEnd)
             {
                 embed.AddField($"{tempAct.GetType()} started on {tempAct.Start.ToShortTimeString()} for {tempAct.Length.LimitedHumanize()}",
                     $"Should've ended {DateTime.UtcNow.Subtract(tempAct.EndTime).LimitedHumanize()}");
