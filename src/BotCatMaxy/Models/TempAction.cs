@@ -25,19 +25,26 @@ namespace BotCatMaxy.Models
         /// <summary>
         /// Verify temp action was resolved
         /// </summary>
-        public abstract Task VerifyResolvedAsync(IGuild guild, RequestOptions requestOptions);
+        public abstract Task<bool> CheckResolvedAsync(IGuild guild, ResolutionType resolutionType, RequestOptions requestOptions);
 
         /// <summary>
         /// Log end of temp action and notify user
         /// </summary>
-        public virtual async Task LogEndAsync(IGuild guild, IDiscordClient client, bool wasManual)
+        public virtual async Task LogEndAsync(IGuild guild, IDiscordClient client, ResolutionType resolutionType)
         {
-            string action = $"{(wasManual ? "auto" : "manually")} untemp{LogString}ed";
+            bool isManual = resolutionType == ResolutionType.Early;
+            string action = $"{(isManual ? "manually" : "auto")} untemp{LogString}ed";
 
             CachedUser ??= await client.GetUserAsync(UserId);
             CachedUser?.Notify(action, Reason, guild, client.CurrentUser);
             var userRef = CachedUser != null ? new UserRef(CachedUser) : new UserRef(UserId);
-            await guild.LogEndTempAct(userRef, LogString, Reason, Length, wasManual);
+            await guild.LogEndTempAct(userRef, LogString, Reason, Length, isManual);
         }
+    }
+
+    public enum ResolutionType
+    {
+        Early,
+        Normal
     }
 }

@@ -34,6 +34,7 @@ namespace BotCatMaxy.Services.TempActions
             _log = logger.ForContext("GuildID", _guild.Id.ToString())
                          .ForContext("GuildIndex", _guildIndex);
             _ct = ct;
+            _requestOptions.CancelToken = ct;
             _requestOptions.RetryMode = RetryMode.AlwaysRetry;
         }
 
@@ -87,13 +88,17 @@ namespace BotCatMaxy.Services.TempActions
             string actType = typeof(TAction).Name;
             try
             {
-                if (action.ShouldEnd)
+                if (await action.CheckResolvedAsync(_guild, ResolutionType.Early, _requestOptions))
+                {
+                    await RemoveActionAsync(action, editedActions, ResolutionType.Early);
+                }
+                else if (action.ShouldEnd)
                 {
                     await action.ResolveAsync(_guild, _requestOptions);
-                    await action.VerifyResolvedAsync(_guild, _requestOptions);
-                    _needSave = true;
-                    editedActions.Remove(action);
-                    await action.LogEndAsync(_guild, _client, false);
+                    var result = await action.CheckResolvedAsync(_guild, ResolutionType.Normal, _requestOptions);
+                    if (result == false)
+                        throw new Exception($"User:{action.UserId} still {actType}!");
+                    await RemoveActionAsync(action, editedActions, ResolutionType.Normal);
                 }
             }
             catch (Exception e)
@@ -102,6 +107,13 @@ namespace BotCatMaxy.Services.TempActions
                 _log.Information(e, "Something went wrong resolving {ActType} of {User}, continuing",
                     actType, action.UserId);
             }
+        }
+
+        private async Task RemoveActionAsync<TAction>(TAction action, List<TAction> editedActions, ResolutionType resolutionType) where TAction : TempAction
+        {
+            _needSave = true;
+            editedActions.Remove(action);
+            await action.LogEndAsync(_guild, _client, resolutionType);
         }
 
         // private async Task CheckTempBansAsync(TempActionList actions)

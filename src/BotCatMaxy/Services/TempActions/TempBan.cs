@@ -14,14 +14,15 @@ namespace BotCatMaxy.Services.TempActions
             return guild.RemoveBanAsync(UserId, requestOptions);
         }
 
-        public override async Task VerifyResolvedAsync(IGuild guild, RequestOptions requestOptions)
+        public override async Task<bool> CheckResolvedAsync(IGuild guild, ResolutionType _, RequestOptions requestOptions)
         {
             var ban = await guild.GetBanAsync(UserId, requestOptions);
             if (ban == null)
-                return;
+                return true;
 
             CachedUser = ban.User;
-            throw new Exception($"User:{UserId} still banned!");
+
+            return false;
         }
     }
 }
