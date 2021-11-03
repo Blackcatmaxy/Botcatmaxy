@@ -8,10 +8,16 @@ namespace BotCatMaxy.Models
 {
     public abstract class TempAction
     {
+        protected TempAction()
+        {
+            Start = DateTime.UtcNow;
+        }
+
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        public DateTime Start { get; private set; }
         public string Reason { get; init; }
         public ulong UserId { get; init; }
         public TimeSpan Length { get; init; }
-        public DateTime Start { get; } = DateTime.UtcNow;
         public DateTime EndTime => Start.Add(Length);
         public bool ShouldEnd => DateTime.UtcNow >= EndTime;
         protected abstract string LogString { get; }
