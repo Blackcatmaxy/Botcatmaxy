@@ -77,6 +77,20 @@ namespace Tests.Mocks
             throw new NotImplementedException();
         }
 
+        public Task<IUserMessage> SendFileAsync(FileAttachment attachment, string text = null, bool isTTS = false, Embed embed = null,
+            RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null,
+            MessageComponent component = null, ISticker[] stickers = null, Embed[] embeds = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IUserMessage> SendFilesAsync(IEnumerable<FileAttachment> attachments, string text = null, bool isTTS = false, Embed embed = null,
+            RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null,
+            MessageComponent component = null, ISticker[] stickers = null, Embed[] embeds = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IMessage> GetMessageAsync(ulong id, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
             return Task.FromResult(messages.FirstOrDefault(message => message.Id == id) as IMessage);

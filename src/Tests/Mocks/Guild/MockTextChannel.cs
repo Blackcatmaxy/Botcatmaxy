@@ -18,7 +18,7 @@ namespace Tests.Mocks.Guild
         IReadOnlyCollection<IGuildUser> users;
 
         public Task<IThreadChannel> CreateThreadAsync(string name, ThreadType type = ThreadType.PublicThread, ThreadArchiveDuration autoArchiveDuration = ThreadArchiveDuration.OneDay,
-            IMessage message = null, RequestOptions options = null)
+            IMessage message = null, bool? invitable = null, int? slowmode = null, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }

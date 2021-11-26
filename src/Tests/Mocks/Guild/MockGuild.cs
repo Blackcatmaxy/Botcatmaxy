@@ -22,6 +22,7 @@ namespace Tests.Mocks.Guild
         protected List<MockGuildUser> userList = new(8);
         protected List<MockTextChannel> channels = new(4);
         protected List<MockBan> bans = new(4);
+        private GuildFeatures _features;
 
         public Task<IReadOnlyCollection<IApplicationCommand>> BulkOverwriteApplicationCommandsAsync(ApplicationCommandProperties[] properties, RequestOptions options = null)
         {
@@ -78,6 +79,7 @@ namespace Tests.Mocks.Guild
 
         public IReadOnlyCollection<GuildEmote> Emotes => throw new NotImplementedException();
         public IReadOnlyCollection<ICustomSticker> Stickers { get; }
+        GuildFeatures IGuild.Features => _features;
 
         public IReadOnlyCollection<string> Features => throw new NotImplementedException();
 
@@ -111,6 +113,7 @@ namespace Tests.Mocks.Guild
         public NsfwLevel NsfwLevel { get; }
 
         public CultureInfo PreferredCulture => throw new NotImplementedException();
+        public bool IsBoostProgressBarEnabled { get; }
 
         public DateTimeOffset CreatedAt => throw new NotImplementedException();
 
@@ -230,6 +233,23 @@ namespace Tests.Mocks.Guild
         }
 
         public Task DeleteStickerAsync(ICustomSticker sticker, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IGuildScheduledEvent> GetEventAsync(ulong id, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyCollection<IGuildScheduledEvent>> GetEventsAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IGuildScheduledEvent> CreateEventAsync(string name, DateTimeOffset startTime, GuildScheduledEventType type,
+            GuildScheduledEventPrivacyLevel privacyLevel = GuildScheduledEventPrivacyLevel.Private, string description = null, DateTimeOffset? endTime = null,
+            ulong? channelId = null, string location = null, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
