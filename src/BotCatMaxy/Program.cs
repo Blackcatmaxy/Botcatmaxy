@@ -40,7 +40,7 @@ namespace BotCatMaxy
                 .ConfigureAppConfiguration((context, config) =>
                 {
                     config.Sources.Clear();
-                    var path = "Properties/BotCatMaxy";
+                    var path = "BotCatMaxy";
 #if DEBUG
                     if (File.Exists($"{path}.DEBUG.ini"))
                         path += ".DEBUG";

@@ -93,8 +93,8 @@ namespace BotCatMaxy
                 errorEmbed ??= new EmbedBuilder()
                                .WithAuthor(BotInfo.User)
                                .WithTitle(source)
-                               .AddField(severity.ToString(), message.Truncate(2000))
-                               .AddField("Exception", exception.ToString().Truncate(2000))
+                               .AddField(severity.ToString(), message.Truncate(1024))
+                               .AddField("Exception", exception.ToString().Truncate(1024))
                                .WithCurrentTimestamp();
                 
                 task = BotInfo.LogChannel.SendMessageAsync(embed: errorEmbed.Build());
