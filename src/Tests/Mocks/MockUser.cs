@@ -48,9 +48,9 @@ namespace Tests.Mocks
 
         public UserStatus Status => throw new NotImplementedException();
 
-        public IImmutableSet<ClientType> ActiveClients => throw new NotImplementedException();
+        public IReadOnlyCollection<ClientType> ActiveClients => throw new NotImplementedException();
 
-        public IImmutableList<IActivity> Activities => throw new NotImplementedException();
+        public IReadOnlyCollection<IActivity> Activities => throw new NotImplementedException();
 
         public string GetAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
         {

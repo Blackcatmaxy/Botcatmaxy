@@ -62,6 +62,12 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IInviteMetadata> CreateInviteToApplicationAsync(DefaultApplications application, int? maxAge, int? maxUses = null,
+            bool isTemporary = false, bool isUnique = false, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IInviteMetadata> CreateInviteToStreamAsync(IUser user, int? maxAge, int? maxUses = null, bool isTemporary = false,
             bool isUnique = false, RequestOptions options = null)
         {

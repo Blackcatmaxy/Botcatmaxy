@@ -108,6 +108,7 @@ namespace Tests.Mocks.Guild
         public int? ApproximateMemberCount => userList.Count;
 
         public int? ApproximatePresenceCount => throw new NotImplementedException();
+        public int MaxBitrate { get; }
 
         public string PreferredLocale => throw new NotImplementedException();
         public NsfwLevel NsfwLevel { get; }
