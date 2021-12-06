@@ -14,8 +14,10 @@ namespace BotCatMaxy.Models
         }
 
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        [BsonElement("dateBanned")]
         public DateTime Start { get; private set; }
         public string Reason { get; init; }
+        [BsonElement("user")]
         public ulong UserId { get; init; }
         public TimeSpan Length { get; init; }
         public DateTime EndTime => Start.Add(Length);
