@@ -263,7 +263,6 @@ namespace BotCatMaxy.Moderation
             var tempMute = new TempMute
                 {
                     Length = time,
-                    RoleId = role.Id,
                     Reason = reason,
                     UserId = userRef.ID
                 };

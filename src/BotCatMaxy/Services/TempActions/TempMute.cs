@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 
@@ -7,7 +8,6 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempMute : TempAction
     {
-        public ulong RoleId { get; init; }
 
         protected override string LogString => "mut";
 
@@ -18,6 +18,7 @@ namespace BotCatMaxy.Services.TempActions
                 return;
 
             CachedUser = user;
+            var RoleId = guild.LoadFromFile<ModerationSettings>().mutedRole;
             await user.RemoveRoleAsync(RoleId, requestOptions);
         }
 
@@ -29,6 +30,7 @@ namespace BotCatMaxy.Services.TempActions
             // If checking for normal ends, and user missing then is resolved.
                 return resolutionType == ResolutionType.Normal;
 
+            var RoleId = guild.LoadFromFile<ModerationSettings>().mutedRole;
             foreach (ulong roleId in user.RoleIds)
             {
                 if (roleId == RoleId)
