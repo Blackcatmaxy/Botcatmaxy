@@ -80,7 +80,7 @@ namespace BotCatMaxy
                     var mongo = new MongoClient(context.Configuration["DataToken"]);
                     DataManipulator.dbClient = mongo;
                     DataManipulator.MapTypes();
-                    
+
                     services.AddSingleton(mongo);
                     services.AddSingleton(context.Configuration);
                     services.AddSingleton<InteractiveService>();
@@ -94,6 +94,7 @@ namespace BotCatMaxy
                     services.AddHostedService<BotInfo>();
                     services.AddHostedService<StatusManager>();
                     services.AddHostedService<FilterHandler>();
+                    services.AddHostedService<LoggingHandler>();
                     services.AddHostedService<CommandHandler>();
                     services.AddHostedService<TempActionService>();
                 });

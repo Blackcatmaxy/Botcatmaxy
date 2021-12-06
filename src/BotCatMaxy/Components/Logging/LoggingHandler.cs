@@ -6,27 +6,29 @@ using Discord;
 using Discord.WebSocket;
 using Humanizer;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Discord.Addons.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace BotCatMaxy.Startup
 {
-    public class LoggingHandler
+    public class LoggingHandler : DiscordClientService
     {
         private readonly DiscordSocketClient _client;
-        public LoggingHandler(DiscordSocketClient client)
+        public LoggingHandler(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
         {
             _client = client;
-
-            _ = SetUpAsync();
         }
 
-        public async Task SetUpAsync()
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _client.MessageDeleted += HandleDelete;
             _client.MessageUpdated += HandleEdit;
             _client.MessageReceived += HandleNew;
 
-            await new LogMessage(LogSeverity.Info, "Logs", "Logging set up").Log();
+            LogSeverity.Info.Log("Logs", "Logging set up");
+            return Task.CompletedTask;
         }
 
         public Task HandleNew(IMessage message)
