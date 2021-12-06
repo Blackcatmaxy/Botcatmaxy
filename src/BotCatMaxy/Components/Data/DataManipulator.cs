@@ -22,7 +22,7 @@ namespace BotCatMaxy.Data
         static readonly Type cacheType = typeof(GuildSettings);
         static readonly ReplaceOptions replaceOptions = new() { IsUpsert = true };
             
-        public static async Task MapTypes()
+        public static void MapTypes()
         {
             try
             {
@@ -38,7 +38,7 @@ namespace BotCatMaxy.Data
             }
             catch (Exception e)
             {
-                await new LogMessage(LogSeverity.Critical, "Main", "Unable to map type", e).Log();
+                LogSeverity.Critical.LogExceptionAsync("Main", "Unable to map type", e);
             }
         }
 
