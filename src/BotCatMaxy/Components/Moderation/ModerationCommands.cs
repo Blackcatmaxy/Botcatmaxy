@@ -29,7 +29,8 @@ namespace BotCatMaxy
 
             if (result.success)
             {
-                return CommandResult.FromSuccess($"{userRef.Mention()} has been given their {result.warnsAmount.Suffix()} warning because of `{reason}`.");
+                string modifier = (size != 1) ? $"(size of `{size}x`) " : "";
+                return CommandResult.FromSuccess($"{userRef.Mention()} has been given their `{result.warnsAmount.Suffix()}` warning {modifier}because of `{reason}`.");
             }
 
             if (logMessage != null)
