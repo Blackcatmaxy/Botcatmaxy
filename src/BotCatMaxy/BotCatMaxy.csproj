@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Addons.Hosting" Version="4.0.2-labs" />
-    <PackageReference Include="Discord.Net.Labs" Version="3.4.8" />
+    <PackageReference Include="Discord.Net.Labs" Version="3.4.9" />
     <PackageReference Include="DotNetEnv" Version="2.2.0" />
     <PackageReference Include="Fergun.Interactive.Labs" Version="1.2.4" />
     <PackageReference Include="Humanizer.Core" Version="2.13.14" />
