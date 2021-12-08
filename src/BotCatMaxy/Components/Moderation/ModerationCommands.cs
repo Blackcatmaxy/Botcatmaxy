@@ -25,7 +25,7 @@ namespace BotCatMaxy
         public async Task<RuntimeResult> ExecuteWarnAsync(UserRef userRef, float size, string reason)
         {
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.Message.Author, userRef.ID, reason, Context.Message.GetJumpUrl());
-            WarnResult result = await userRef.Warn(1, reason, Context.Channel as ITextChannel, logMessage?.GetJumpUrl());
+            WarnResult result = await userRef.Warn(size, reason, Context.Channel as ITextChannel, logMessage?.GetJumpUrl());
 
             if (result.success)
             {
