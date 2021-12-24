@@ -1,4 +1,4 @@
-﻿using BotCatMaxy.Cache;
+using BotCatMaxy.Cache;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
@@ -58,6 +58,8 @@ namespace BotCatMaxy
                 context = $"{GUILDMESSSAGE} \n**Requires administrator permission**";
             else if (command.Preconditions.Any(attribute => attribute is CanWarnAttribute))
                 context = $"{GUILDMESSSAGE} \n**Requires ability to warn**";
+            else if (command.Preconditions.Any(attribute => attribute is GuildOwnerAttribute))
+                context = $"{GUILDMESSSAGE} \n**Guild owner only**";
             else
             {
                 var permissionAttribute = command.Preconditions
