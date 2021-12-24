@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Interactivity;
-using BotCatMaxy.Services.TempActions;
 
 namespace BotCatMaxy
 {
@@ -53,66 +52,36 @@ namespace BotCatMaxy
         public Task WarnUserWithSizeAsync([RequireHierarchy] UserRef userRef, float size, [Remainder] string reason)
             => ExecuteWarnAsync(userRef, size, reason);
 
+        #nullable enable
         [Command("dmwarns", RunMode = RunMode.Async)]
         [Summary("Views a user's infractions.")]
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         [Alias("dminfractions", "dmwarnings", "warns", "infractions", "warnings")]
-        public async Task DMUserWarnsAsync(UserRef userRef = null, int amount = 50)
+        public async Task<RuntimeResult> DMUserWarnsAsync(UserRef? userRef = null, int amount = 50)
         {
             if (amount < 1)
-            {
-                await ReplyAsync("Why would you want to see that many infractions?");
-                return;
-            }
+                return CommandResult.FromError("Why would you want to see that many infractions?");
 
-            var mutualGuilds = (await Context.Message.Author.GetMutualGuildsAsync(Context.Client)).ToArray();
-            if (userRef == null)
-                userRef = new UserRef(Context.Message.Author);
+            var guild = await Interactivity.QueryMutualGuild(Context);
+            if (guild == null)
+                return CommandResult.FromError("You have timed out or canceled.");
 
-            var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the number next to the guild you want to check the infractions from");
-
-            for (int i = 0; i < mutualGuilds.Length; i++)
-            {
-                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", mutualGuilds[i].Id);
-            }
-            await ReplyAsync(embed: guildsEmbed.Build());
-            IGuild guild;
-            var filter = new InteractivePredicate(Context.Message);
-            while (true)
-            {
-                var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel,
-                    timeout: TimeSpan.FromMinutes(1)); ;
-                var message = result.Value;
-                if (message == null || message.Content == "cancel")
-                {
-                    await ReplyAsync("You have timed out or canceled");
-                    return;
-                }
-                try
-                {
-                    guild = mutualGuilds[ushort.Parse(message.Content) - 1];
-                    break;
-                }
-                catch
-                {
-                    await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
-                }
-            }
-
+            userRef ??= new UserRef(Context.Message.Author);
             List<Infraction> infractions = userRef.LoadInfractions(guild, false);
             if (infractions?.Count is null or 0)
             {
-                string message = $"{userRef.Mention()} has no infractions";
-                if (userRef.User == null) message += " or doesn't exist";
-                await ReplyAsync(message);
-                return;
+                var message = $"{userRef.Mention()} has no infractions";
+                if (userRef.User == null)
+                    message += " or doesn't exist";
+                return CommandResult.FromSuccess(message);
             }
-            userRef = userRef with { GuildUser = await guild.GetUserAsync(userRef.ID) };
-            await ReplyAsync($"Here are {userRef.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
-                embed: infractions.GetEmbed(userRef, guild, amount: amount));
-        }
 
+            userRef = userRef with { GuildUser = await guild.GetUserAsync(userRef.ID) };
+            var embed = infractions.GetEmbed(userRef, guild, amount: amount);
+            return CommandResult.FromSuccess($"Here are {userRef.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
+                embed: embed);
+        }
+        #nullable disable
 
         [Command("warns")]
         [Summary("Views a user's infractions.")]

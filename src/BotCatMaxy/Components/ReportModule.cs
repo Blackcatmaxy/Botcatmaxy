@@ -23,35 +23,14 @@ public class ReportModule : InteractiveModule
     [RequireContext(ContextType.DM)]
     public async Task<CommandResult> Report()
     {
-        var socketContext = Context as SocketCommandContext;
-        var guildsEmbed = new EmbedBuilder();
-        guildsEmbed.WithTitle("Reply with the number next to the guild you want to make the report in");
-        var mutualGuilds = socketContext.User.MutualGuilds.ToArray();
-        for (int i = 0; i < mutualGuilds.Length; i++)
-        {
-            guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name} discord", mutualGuilds[i].Id);
-        }
-        await ReplyAsync(embed: guildsEmbed.Build());
-        SocketGuild guild;
-        var filter = new InteractivePredicate(Context.Message);
-        while (true)
-        {
-            var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel, timeout: TimeSpan.FromMinutes(1));
-            var message = result.Value;
-            if (message?.Content?.ToLower() is null or "cancel")
-                return CommandResult.FromError("You have timed out or canceled");
+        if (Context is not SocketCommandContext socketContext)
+            throw new NotImplementedException("Command not ready for tests.");
 
-            try
-            {
-                guild = mutualGuilds[ushort.Parse(message.Content) - 1];
-                break;
-            }
-            catch
-            {
-                await ReplyAsync("Invalid number, please reply again with a valid number or ``cancel``");
-            }
-        }
+        var queryGuild = await Interactivity.QueryMutualGuild(Context);
+        if (queryGuild == null)
+            return CommandResult.FromError("You have timed out or canceled.");
 
+        var guild = queryGuild as SocketGuild ?? socketContext.Client.GetGuild(queryGuild.Id);
         ReportSettings settings = guild.LoadFromFile<ReportSettings>(false);
         if (settings?.channelID == null || guild.GetChannel(settings.channelID ?? 0) == null)
             return CommandResult.FromError("This guild does not currently have reporting set up, command canceled");
@@ -85,8 +64,8 @@ public class ReportModule : InteractiveModule
         }
 
         await ReplyAsync("Please reply with what you want to report");
-        var reportMsg = await Interactivity.NextMessageAsync(filter.EvaluateChannel,
-            timeout: TimeSpan.FromMinutes(5));
+        var reportMsg = await Interactivity.NextMessageAsync(
+            msg => msg.Channel.Id == Context.Channel.Id, timeout: TimeSpan.FromMinutes(5));
         if (!reportMsg.IsSuccess)
             return CommandResult.FromError("Report cancelled.");
 

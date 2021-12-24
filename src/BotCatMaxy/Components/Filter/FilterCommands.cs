@@ -26,38 +26,11 @@ namespace BotCatMaxy.Components.Filter
         [Summary("View filter information.")]
         [Alias("info")]
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
-        public async Task ListAutoMod(string extension = "")
+        public async Task<RuntimeResult> ListAutoMod(string extension = "")
         {
-            var mutualGuilds = (Context.Message.Author as SocketUser).MutualGuilds.ToArray();
-
-            var guildsEmbed = new EmbedBuilder();
-            guildsEmbed.WithTitle("Reply with the number corresponding to the guild you want to check the filter info from");
-
-            for (int i = 0; i < mutualGuilds.Length; i++)
-            {
-                guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", $"ID: {mutualGuilds[i].Id}");
-            }
-            await ReplyAsync(embed: guildsEmbed.Build());
-            SocketGuild guild;
-            var filter = new InteractivePredicate(Context.Message);
-            while (true)
-            {
-                var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel, timeout: TimeSpan.FromMinutes(1));
-                if (result.Value?.Content is null or "cancel")
-                {
-                    await ReplyAsync("You have timed out or canceled");
-                    return;
-                }
-                try
-                {
-                    guild = mutualGuilds[ushort.Parse(result.Value.Content) - 1];
-                    break;
-                }
-                catch
-                {
-                    await ReplyAsync("Invalid number, please reply again with a valid number or `cancel`");
-                }
-            }
+            var guild = await Interactivity.QueryMutualGuild(Context);
+            if (guild == null)
+                return CommandResult.FromError("You have timed out or canceled.");
 
             var settings = guild.LoadFromFile<FilterSettings>(false);
             BadWords badWords = new BadWords(guild);
@@ -70,22 +43,17 @@ namespace BotCatMaxy.Components.Filter
             extension = extension?.ToLowerInvariant();
             if (extension == "explicit" || extension == "e")
             {
-                if (guild.GetUser(Context.Message.Author.Id).CanWarn())
+                var user = await (guild.GetUserAsync(Context.Message.Author.Id));
+                if (user.CanWarn())
                 {
                     useExplicit = true;
                 }
                 else
                 {
                     await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
-                    var result = await Interactivity.NextMessageAsync(filter.EvaluateChannel);
-                    if (result.Value?.Content.Equals("!confirm", StringComparison.InvariantCultureIgnoreCase) ?? false)
-                    {
-                        useExplicit = true;
-                    }
-                    else
-                    {
-                        useExplicit = false;
-                    }
+                    var result = await Interactivity.NextMessageAsync(msg => msg.Channel.Id == msg.Id);
+                    useExplicit =
+                        result.Value?.Content?.Equals("!confirm", StringComparison.InvariantCultureIgnoreCase) ?? false;
                 }
             }
 
@@ -170,7 +138,7 @@ namespace BotCatMaxy.Components.Filter
                 embed.AddField(listName, message, false);
             }
 
-            await ReplyAsync("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
+            return CommandResult.FromSuccess("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
         }
 
         [HasAdmin]
