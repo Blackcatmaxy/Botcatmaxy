@@ -99,10 +99,10 @@ namespace BotCatMaxy.Startup
 
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
-            if (result is CommandResult)
+            if (result is CommandResult commandResult)
             {
                 if (!string.IsNullOrEmpty(result.ErrorReason))
-                    await context.Channel.SendMessageAsync(result.ErrorReason);
+                    await context.Channel.SendMessageAsync(result.ErrorReason, embed: commandResult.Embed);
                 return;
             }
 

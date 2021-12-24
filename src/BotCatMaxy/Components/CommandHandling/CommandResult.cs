@@ -13,15 +13,17 @@ namespace Discord.Commands
     /// </summary>
     public class CommandResult : RuntimeResult
     {
-        public CommandResult(CommandError? error, string reason) : base(error, reason)
-        {
+        public readonly Embed Embed;
 
+        public CommandResult(CommandError? error, string reason, Embed embed = null) : base(error, reason)
+        {
+            Embed = embed;
         }
 
-        public static CommandResult FromError(string reason)
-            => new(CommandError.Unsuccessful, reason);
+        public static CommandResult FromError(string reason, Embed embed = null)
+            => new(CommandError.Unsuccessful, reason, embed);
 
-        public static CommandResult FromSuccess(string reason)
-            => new(null, reason);
+        public static CommandResult FromSuccess(string reason, Embed embed = null)
+            => new(null, reason, embed);
     }
 }
