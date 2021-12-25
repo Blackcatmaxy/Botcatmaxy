@@ -45,7 +45,7 @@ namespace BotCatMaxy
                     if (File.Exists($"{path}.DEBUG.ini"))
                         path += ".DEBUG";
 #endif
-                    Console.WriteLine($"Loading config from {path}.ini");
+                    Console.WriteLine($"Checking config for {path}.ini at {Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()!.Location)}/");
                     config.AddIniFile($"{path}.ini", optional: true, reloadOnChange: true);
                 })
                 .ConfigureDiscordHost((context, config) =>
@@ -74,14 +74,10 @@ namespace BotCatMaxy
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    //Tell Dependency Injection that it can put DiscordSocketClient where IDiscordClient is requested 
+                    //Tell Dependency Injection that it can put DiscordSocketClient where IDiscordClient is requested
                     services.AddSingleton<IDiscordClient, DiscordSocketClient>(x => x.GetRequiredService<DiscordSocketClient>());
-                    //Set up and add Mongo
-                    var mongo = new MongoClient(context.Configuration["DataToken"]);
-                    DataManipulator.dbClient = mongo;
-                    DataManipulator.MapTypes();
 
-                    services.AddSingleton(mongo);
+                    AddMongoToServices(context, services);
                     services.AddSingleton(context.Configuration);
                     services.AddSingleton<InteractiveService>();
                     services.AddSingleton(new CommandService(new CommandServiceConfig
@@ -108,6 +104,26 @@ namespace BotCatMaxy
             {
                 await new LogMessage(LogSeverity.Critical, "Discord", "Invalid Discord Token").Log();
             }
+        }
+
+        //Set up and add Mongo
+        private static void AddMongoToServices(HostBuilderContext context, IServiceCollection services)
+        {
+            MongoClient mongo = null;
+            try
+            {
+                mongo = new MongoClient(context.Configuration["DataToken"]);
+            }
+            catch
+            {
+                LogSeverity.Critical.Log("Data",
+                    "Mongo connection not successful, is BotCatMaxy.ini created? Follow Properties/Template.ini for instructions.");
+
+                return;
+            }
+            DataManipulator.dbClient = mongo;
+            DataManipulator.MapTypes();
+            services.AddSingleton(mongo);
         }
     }
 }
