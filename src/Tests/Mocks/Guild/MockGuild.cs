@@ -115,6 +115,7 @@ namespace Tests.Mocks.Guild
 
         public CultureInfo PreferredCulture => throw new NotImplementedException();
         public bool IsBoostProgressBarEnabled { get; }
+        public ulong MaxUploadLimit { get; }
 
         public DateTimeOffset CreatedAt => throw new NotImplementedException();
 

@@ -18,6 +18,11 @@ namespace Tests.Mocks.Guild
 
         List<IRole> roles = new();
 
+        public Task RemoveTimeOutAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public DateTimeOffset? JoinedAt => throw new NotImplementedException();
 
         public string Nickname => throw new NotImplementedException();
@@ -55,6 +60,7 @@ namespace Tests.Mocks.Guild
 
         public bool? IsPending => throw new NotImplementedException();
         public int Hierarchy => throw new NotImplementedException();
+        public DateTimeOffset? TimedOutUntil { get; }
 
         public bool IsDeafened => throw new NotImplementedException();
 
@@ -131,6 +137,11 @@ namespace Tests.Mocks.Guild
         }
 
         public Task RemoveRolesAsync(IEnumerable<IRole> roles, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetTimeOutAsync(TimeSpan span, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
