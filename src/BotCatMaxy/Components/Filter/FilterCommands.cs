@@ -5,6 +5,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,124 +23,132 @@ namespace BotCatMaxy.Components.Filter
         {
         }
 
+#nullable enable
         [Command("list")]
         [Summary("View filter information.")]
         [Alias("info")]
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
-        public async Task<RuntimeResult> ListAutoMod(string extension = "")
+        public async Task<RuntimeResult> ListAutoMod(string? extension = null)
         {
             var guild = await Interactivity.QueryMutualGuild(Context);
             if (guild == null)
                 return CommandResult.FromError("You have timed out or canceled.");
 
-            var settings = guild.LoadFromFile<FilterSettings>(false);
-            BadWords badWords = new BadWords(guild);
-
+            var filterSettings = guild.LoadFromFile<FilterSettings>(false);
             var embed = new EmbedBuilder()
                 .WithGuildAsAuthor(guild);
-            string message = "";
 
-            bool useExplicit = false;
-            extension = extension?.ToLowerInvariant();
-            if (extension == "explicit" || extension == "e")
+            if (filterSettings == null)
             {
-                var user = await (guild.GetUserAsync(Context.Message.Author.Id));
-                if (user.CanWarn())
-                {
-                    useExplicit = true;
-                }
-                else
-                {
-                    await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
-                    var result = await Interactivity.NextMessageAsync(msg => msg.Channel.Id == msg.Id);
-                    useExplicit =
-                        result.Value?.Content?.Equals("!confirm", StringComparison.InvariantCultureIgnoreCase) ?? false;
-                }
-            }
-
-            if (settings == null)
-            {
-                embed.AddField("Filter settings", "Are null", true);
+                embed.AddField("Filter Settings", "Are not set.", true);
             }
             else
             {
-                embed.AddField("Warn for posting invite", !settings.invitesAllowed, true);
-                if (settings.allowedLinks == null || settings.allowedLinks.Count == 0)
+                embed.AddField("Are invites restricted:", !filterSettings.invitesAllowed, true);
+                if (filterSettings.allowedLinks?.Count is null or 0)
                 {
-                    embed.AddField("Allowed links", "Links aren't moderated  ", true);
+                    embed.AddField("Link filter:", "Disabled.", true);
                 }
                 else
                 {
-                    message = settings.allowedLinks.ListItems("\n");
-                    if (message?.Length is not null or 0) embed.AddField("Allowed links", message, true);
-                    if (settings.allowedToLink != null && settings.allowedToLink.Count > 0)
+                    string allowedLinks = filterSettings.allowedLinks.ListItems("\n");
+                    embed.AddField("Link filter:", allowedLinks, true);
+
+                    if (filterSettings.allowedToLink?.Count is not null or 0)
                     {
-                        message = guild.Roles.Where(
-                            role => (role.Permissions.Administrator && !role.IsManaged) || settings.allowedToLink.Contains(role.Id)).Select(role => role.Name).ToArray().ListItems("\n");
-                        if (message?.Length is not null or 0) embed.AddField("Roles that can post links", message, true);
+                        var linkRoles = guild.Roles.Where(role => (role.Permissions.Administrator && !role.IsManaged)
+                                                                     || filterSettings.allowedToLink.Contains(role.Id));
+                        string linkRoleListed = linkRoles.Select(role => role.Name).ListItems("\n");
+
+                        embed.AddField("Roles that can post links:", linkRoleListed, true);
                     }
                 }
-                if (settings.allowedCaps > 0)
+
+                string allowedCaps = filterSettings.allowedCaps > 0 ?
+                    $"{filterSettings.allowedCaps}% in messages more than 5 characters long." :
+                    "Capitalization is not filtered.";
+                embed.AddField("Allowed capitalized characters:", allowedCaps, true);
+                string? badUniEmojis = filterSettings.badUEmojis?.ListItems("");
+                if (!string.IsNullOrWhiteSpace(badUniEmojis))
                 {
-                    embed.AddField("Allowed caps", $"{settings.allowedCaps}% in msgs more than 5 long", true);
+                    embed.AddField("Banned Emojis:", badUniEmojis, true);
                 }
-                else
-                {
-                    embed.AddField("Allowed caps", "Capitalization is not filtered", true);
-                }
-                string badUniEmojis = settings.badUEmojis?.ListItems("");
-                if (!badUniEmojis.IsNullOrEmpty())
-                {
-                    embed.AddField("Banned Emojis", badUniEmojis, true);
-                }
-                if (settings.moderateNames) embed.AddField("Name moderation", "True", true);
-                if (settings.maxNewLines != null) embed.AddField("Maximum new lines", $"{settings.maxNewLines.Value} new lines", true);
+                if (filterSettings.moderateNames)
+                    embed.AddField("Name moderation", "True", true);
+                if (filterSettings.maxNewLines is > 0)
+                    embed.AddField("Maximum new lines", $"{filterSettings.maxNewLines.Value} new lines", true);
             }
-            if (badWords?.all != null && badWords.all.Count > 0 && (useExplicit || badWords.all.Any(word => !string.IsNullOrWhiteSpace(word.Euphemism))))
+
+            var badWordList = guild.LoadFromFile<BadWordList>(false)?.badWords;
+            if (badWordList?.Count is > 0)
             {
-                List<string> words = new List<string>();
-                foreach (List<BadWord> group in badWords.grouped)
+                BadWordSets badWords = new BadWordSets(guild);
+                bool useExplicit = false;
+                if (extension?.ToLowerInvariant() is "explicit" or "e")
                 {
-                    BadWord first = group.FirstOrDefault();
-                    if (first != null)
+                    var user = await (guild.GetUserAsync(Context.Message.Author.Id));
+                    if (user.CanWarn())
                     {
-                        string word = "";
-                        if (useExplicit)
-                        {
-                            if (group.Count == 1 || group.All(badWord => badWord.Size == first.Size))
-                            {
-                                word = $"[{first.Size}x] ";
-                            }
-                            else
-                            {
-                                var sizes = group.Select(badword => badword.Size);
-                                word = $"[{sizes.Min()}-{sizes.Max()}x] ";
-                            }
-                            if (first.Euphemism?.Length is not null or 0) word += $"{first.Euphemism} ";
-                            word += $"({group.Select(badWord => $"{badWord.Word}{(badWord.PartOfWord ? "¤" : "")}").ToArray().ListItems(", ")})";
-                        }
-                        else if (!first.Euphemism.IsNullOrEmpty())
-                            word = first.Euphemism;
-                        if (first.PartOfWord && (!first.Euphemism.IsNullOrEmpty() && !useExplicit))
-                        {
-                            word += "¤";
-                        }
-                        words.Add(word);
+                        useExplicit = true;
                     }
                     else
                     {
-                        _ = new LogMessage(LogSeverity.Error, "Filter", "Empty badword list in badwords").Log();
+                        await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
+                        var result = await Interactivity.NextMessageAsync(msg => msg.Channel.Id == msg.Id);
+                        useExplicit = "!confirm".Equals(result.Value?.Content, StringComparison.InvariantCultureIgnoreCase);
                     }
                 }
-                message = words.ListItems("\n");
-                string listName;
-                if (useExplicit) listName = "Bad words with euphemisms";
-                else listName = "Bad word euphemisms (not an exhaustive list)";
-                embed.AddField(listName, message, false);
+
+                AddBadWordsToEmbed(embed, badWords, useExplicit);
+            }
+            return CommandResult.FromSuccess("The symbol '¤' next to a word means that you can be warned for any text that contains the bad word", embed: embed.Build());
+        }
+
+        public void AddBadWordsToEmbed(EmbedBuilder embed, BadWordSets badWords, bool useExplicit)
+        {
+            string list = "";
+            foreach (ImmutableHashSet<BadWord> group in badWords.Grouped)
+            {
+                if (group.Count == 0)
+                    throw new InvalidOperationException("Invalid bad words state.");
+                list += RenderBadWordGroup(group, useExplicit);
+                list += '\n';
+            }
+            string listName = useExplicit ? "Bad words with euphemisms" : "Bad word euphemisms (words without euphemisms not shown)";
+            embed.AddField(listName, list[..^1], false);
+        }
+
+        public static string RenderBadWordGroup(ImmutableHashSet<BadWord> group, bool useExplicit)
+        {
+            var category = group.First();
+            string word;
+            if (group.Count == 1 || group.All(badWord => badWord.Size == category.Size))
+            {
+                word = $"[{category.Size}x] ";
+            }
+            else
+            {
+                IEnumerable<float> sizesEnumerable = group.Select(badword => badword.Size);
+                float[] sizes = sizesEnumerable as float[] ?? sizesEnumerable.ToArray();
+                word = $"[{sizes.Min()}-{sizes.Max()}x] ";
             }
 
-            return CommandResult.FromSuccess("The symbol '¤' next to a word means that you can be warned for a word that contains the bad word", embed: embed.Build());
+            if (useExplicit)
+            {
+                if (!string.IsNullOrWhiteSpace(category.Euphemism))
+                    word += $"{category.Euphemism} ";
+                word += $"({group.Select(badWord => $"{badWord.Word}{(badWord.PartOfWord ? "¤" : "")}").ListItems(", ")})";
+            }
+            else if (!string.IsNullOrWhiteSpace(category.Euphemism))
+                word = category.Euphemism;
+            if (category.PartOfWord && (!string.IsNullOrWhiteSpace(category.Euphemism) && !useExplicit))
+            {
+                word += "¤";
+            }
+
+            return word;
         }
+#nullable disable
 
         [HasAdmin]
         [Command("maxemoji"), Alias("setmaxemoji")]
@@ -300,43 +309,30 @@ namespace BotCatMaxy.Components.Filter
 
             await ReplyAsync($"Role '{role.Name}' wasn't exempt from link filtering");
         }
-
+        
+#nullable enable
         [Command("ToggleContainBadWord")]
         [Summary("Toggle strict filtering and checks if a bad word is sent even if inside another word.")]
         [Alias("togglecontainword", "togglecontainword")]
         [HasAdmin()]
-        public async Task ToggleContainBadWord(string word)
+        public async Task<RuntimeResult> ToggleContainBadWord(string word)
         {
             var file = Context.Guild.LoadFromFile<BadWordList>(false);
             var badWords = file?.badWords;
             if (badWords?.Count is null or 0)
-            {
-                await ReplyAsync("No badwords have been set");
-                return;
-            }
-            var editedList = new List<BadWord>(badWords);
-            for (int i = 0; i < badWords.Count; i++)
-            {
-                var badWord = badWords[i];
-                if (badWord.Word.Equals(word, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    if (badWord.PartOfWord)
-                    {
-                        editedList[i] = badWord with { PartOfWord = false };
-                        await ReplyAsync("Set badword to not be filtered if it's inside of another word");
-                    }
-                    else
-                    {
-                        editedList[i] = badWord with { PartOfWord = true };
-                        await ReplyAsync("Set badword to be filtered even if it's inside of another word");
-                    }
-                    file.badWords = editedList;
-                    file.SaveToFile();
-                    return;
-                }
-            }
-            await ReplyAsync("Badword not found");
+                return CommandResult.FromError("No badwords have been set yet.");
+
+            var badWord = badWords.FirstOrDefault(bw => bw.Word == word);
+            if (badWord == null)
+                return CommandResult.FromError("Badword was not found.");
+
+            badWords.Remove(badWord);
+            badWords.Add(badWord with {PartOfWord = !badWord.PartOfWord});
+            file.SaveToFile();
+            string status = $"Set badword to {(badWord.PartOfWord ? "" : "not ")}be filtered even if it's inside of another word.";
+            return CommandResult.FromSuccess(status);
         }
+#nullable disable
 
         [Command("channeltoggle")]
         [Summary("Toggles if this channel is exempt from automoderation.")]

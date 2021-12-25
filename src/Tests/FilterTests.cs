@@ -36,7 +36,7 @@ namespace Tests
                 moderateNames = true,
                 maxNewLines = 5
             };
-            BadWordList badWordList = new BadWordList() { badWords = badWords.ToList(), guild = guild };
+            BadWordList badWordList = new BadWordList() { badWords = badWords.ToHashSet(), guild = guild };
             badWordList.SaveToFile();
             settings.SaveToFile();
         }

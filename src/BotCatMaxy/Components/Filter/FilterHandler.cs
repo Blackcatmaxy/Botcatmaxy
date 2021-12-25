@@ -180,7 +180,7 @@ namespace BotCatMaxy.Startup
             {
                 var modSettings = guild.LoadFromFile<ModerationSettings>();
                 var filterSettings = guild.LoadFromFile<FilterSettings>();
-                List<BadWord> badWords = guild.LoadFromFile<BadWordList>()?.badWords;
+                var badWords = guild.LoadFromFile<BadWordList>()?.badWords;
 
                 string msgContent = message.Content;
                 if (modSettings != null && filterSettings != null)
