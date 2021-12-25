@@ -19,8 +19,8 @@ namespace BotCatMaxy.Components.Logging
     {
         public static SocketTextChannel LogChannel { get; private set; }
         public static ISelfUser User { get; private set; }
+        private readonly IConfiguration _configuration;
         private readonly DiscordSocketClient _client;
-        private IConfiguration _configuration;
         private readonly string[] _args;
 
         public BotInfo(DiscordSocketClient client, ILogger<DiscordClientService> logger, IConfiguration configuration) : base(client, logger)
@@ -43,24 +43,32 @@ namespace BotCatMaxy.Components.Logging
                 if (index > 0)
                 {
                     value = value.Substring(index + buildVersionMetadataPrefix.Length);
-                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, 
+                    if (DateTime.TryParseExact(value, "yyyyMMddHHmmss", CultureInfo.InvariantCulture,
                         DateTimeStyles.AssumeUniversal, out var result))
                     {
                         buildDate = result.ToUniversalTime();
                     }
                 }
             }
-            
-            string version = _configuration["version"] ?? "unknown";
+
+            string version = _configuration["Version"] ?? "unknown";
             string versionMessage = $"Starting with version {version}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago";
             LogSeverity.Info.Log("Main", versionMessage);
 
             await _client.WaitForReadyAsync(cancellationToken);
-            SocketGuild guild = _client.GetGuild(285529027383525376);
-            LogChannel = guild.GetTextChannel(593128958552309761);
+            try
+            {
+                SocketGuild guild = _client.GetGuild(ulong.Parse(_configuration["LogGuild"]));
+                LogChannel = guild.GetTextChannel(ulong.Parse(_configuration["ExceptionLogChannel"]));
+            }
+            catch
+            {
+                LogSeverity.Warning.Log("BotInfo", "Exception log channel is not set, is the configuration `BotCatMaxy.ini` set up?");
+            }
+
             User = _client.CurrentUser;
 
-            int databaseCount = (await DataManipulator.dbClient.ListDatabasesAsync(cancellationToken)).ToList().Count;
+            int databaseCount = (await DataManipulator.dbClient.ListDatabasesAsync(cancellationToken)).ToList(cancellationToken: cancellationToken).Count;
             LogSeverity.Info.Log("Mongo",$"Connected to cluster {DataManipulator.dbClient.Cluster.ClusterId} with {databaseCount} databases");
         }
     }

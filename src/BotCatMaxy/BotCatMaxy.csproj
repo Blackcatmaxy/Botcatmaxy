@@ -18,12 +18,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Update="Properties\BotCatMaxy*.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Properties\BotCatMaxy.DEBUG.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Update="Properties\BotCatMaxy*.ini" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" LinkBase="" />
   </ItemGroup>
 
   <ItemGroup>
