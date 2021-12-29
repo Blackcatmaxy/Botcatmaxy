@@ -62,7 +62,7 @@ namespace BotCatMaxy
             if (amount < 1)
                 return CommandResult.FromError("Why would you want to see that many infractions?");
 
-            var guild = await Interactivity.QueryMutualGuild(Context);
+            var guild = await QueryMutualGuild();
             if (guild == null)
                 return CommandResult.FromError("You have timed out or canceled.");
 
@@ -188,7 +188,7 @@ namespace BotCatMaxy
                 string timeLeft = (oldAct.Length - (DateTime.UtcNow - oldAct.Start)).LimitedHumanize();
                 var query = await ReplyAsync(
                     $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({timeLeft} left), are you sure you want to change the length?");
-                if (await Interactivity.TryConfirmation(query))
+                if (await TryConfirmation(query))
                 {
                     actions.tempBans.Remove(oldAct);
                     actions.SaveToFile();
@@ -341,7 +341,7 @@ namespace BotCatMaxy
             if (reason.Split(' ').First().ToTime() != null)
             {
                 var query = await ReplyAsync("Are you sure you don't mean to use `!tempban`?");
-                if (await Interactivity.TryConfirmation(query))
+                if (await TryConfirmation(query))
                 {
                     await ReplyAsync("Command canceled.");
                     return;
@@ -352,7 +352,7 @@ namespace BotCatMaxy
             if (actions?.tempBans?.Any(tempBan => tempBan.UserId == userRef.ID) ?? false)
             {
                 var query = await ReplyAsync("User is already tempbanned, are you sure you want to ban?");
-                if (!await Interactivity.TryConfirmation(query))
+                if (!await TryConfirmation(query))
                 {
                     await ReplyAsync("Command canceled.");
                     return;

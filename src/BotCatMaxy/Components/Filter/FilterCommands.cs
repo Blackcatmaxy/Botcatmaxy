@@ -30,7 +30,7 @@ namespace BotCatMaxy.Components.Filter
         [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
         public async Task<RuntimeResult> ListAutoMod(string? extension = null)
         {
-            var guild = await Interactivity.QueryMutualGuild(Context);
+            var guild = await QueryMutualGuild();
             if (guild == null)
                 return CommandResult.FromError("You have timed out or canceled.");
 

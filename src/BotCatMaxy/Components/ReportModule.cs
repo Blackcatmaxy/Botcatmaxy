@@ -26,7 +26,7 @@ public class ReportModule : InteractiveModule
         if (Context is not SocketCommandContext socketContext)
             throw new NotImplementedException("Command not ready for tests.");
 
-        var queryGuild = await Interactivity.QueryMutualGuild(Context);
+        var queryGuild = await QueryMutualGuild();
         if (queryGuild == null)
             return CommandResult.FromError("You have timed out or canceled.");
 
