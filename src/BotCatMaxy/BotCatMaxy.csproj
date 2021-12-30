@@ -1,41 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</SourceRevisionId>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <StartupObject>BotCatMaxy.Program</StartupObject>
-    <AssemblyName>BotCatMaxy</AssemblyName>
-    <RepositoryUrl>https://github.com/Blackcatmaxy/Botcatmaxy/</RepositoryUrl>
-    <Authors>https://github.com/Blackcatmaxy/Botcatmaxy/graphs/contributors</Authors>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</SourceRevisionId>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <StartupObject>BotCatMaxy.Program</StartupObject>
+        <AssemblyName>BotCatMaxy</AssemblyName>
+        <RepositoryUrl>https://github.com/Blackcatmaxy/Botcatmaxy/</RepositoryUrl>
+        <Authors>https://github.com/Blackcatmaxy/Botcatmaxy/graphs/contributors</Authors>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <DefineConstants>TRACE</DefineConstants>
+        <Optimize>true</Optimize>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>DEBUG</DefineConstants>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <None Update="Properties\BotCatMaxy*.ini" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" LinkBase="" />
-  </ItemGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+        <DefineConstants>DEBUG</DefineConstants>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Discord.Addons.Hosting" Version="5.0.0" />
-    <PackageReference Include="Discord.Net" Version="3.1.0" />
-    <PackageReference Include="Fergun.Interactive" Version="1.3.0" />
-    <PackageReference Include="Humanizer.Core" Version="2.13.14" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.14.1" />
-    <PackageReference Include="Polly" Version="7.2.2" />
-    <PackageReference Include="Serilog" Version="2.10.0" />
-    <PackageReference Include="Serilog.Expressions" Version="3.2.1" />
-    <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
-    <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Condition="'$(Configuration)'=='Debug'" Update="Properties/BotCatMaxy.DEBUG.ini" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+        <None Update="Properties/BotCatMaxy.ini" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Discord.Addons.Hosting" Version="5.0.0" />
+        <PackageReference Include="Discord.Net" Version="3.1.0" />
+        <PackageReference Include="Fergun.Interactive" Version="1.3.0" />
+        <PackageReference Include="Humanizer.Core" Version="2.13.14" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+        <PackageReference Include="MongoDB.Driver" Version="2.14.1" />
+        <PackageReference Include="Polly" Version="7.2.2" />
+        <PackageReference Include="Serilog" Version="2.10.0" />
+        <PackageReference Include="Serilog.Expressions" Version="3.2.1" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
+        <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    </ItemGroup>
 </Project>
