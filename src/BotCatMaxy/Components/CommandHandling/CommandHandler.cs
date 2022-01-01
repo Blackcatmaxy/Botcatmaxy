@@ -164,7 +164,7 @@ namespace BotCatMaxy.Startup
             errorEmbed.AddField($"Message Content {context.Message?.Id.ToString() ?? nullIndicator}",
                 $"```{context.Message?.Content ?? nullIndicator}```[Jump to Invocation]({context.Message.GetJumpUrl()})");
             errorEmbed.AddField("Exception", $"```{exception}```");
-            await LogSeverity.Error.LogExceptionAsync("Command", logMessage, exception, errorEmbed);
+            await LogSeverity.Error.SendExceptionAsync("Command", logMessage, exception, errorEmbed);
         }
     }
 }

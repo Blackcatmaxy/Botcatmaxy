@@ -15,7 +15,7 @@ namespace BotCatMaxy
     public static class ExceptionLogging
     {
         /// <summary>
-        /// Calls <see cref="LogExceptionAsync"/> if there's an exception, otherwise calls <see cref="Log(Discord.LogMessage)"/> 
+        /// Calls <see cref="SendExceptionAsync"/> if there's an exception, otherwise calls <see cref="Log(Discord.LogMessage)"/> 
         /// </summary>
         [Obsolete("Use LogSeverity.Log or LogExceptionAsync instead")]
         public static Task Log(this LogMessage message)
@@ -25,7 +25,7 @@ namespace BotCatMaxy
             var content = message.Message;
             var exception = message.Exception;
             if (exception != null)
-                return severity.LogExceptionAsync(source, content, exception);
+                return severity.SendExceptionAsync(source, content, exception);
             severity.Log(source, content);
             return Task.CompletedTask;
         }
@@ -76,16 +76,28 @@ namespace BotCatMaxy
                 LogSeverity.Debug => LogEventLevel.Debug,
                 _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null)
             };
+
+        /// <summary>
+        /// Directly formats an exception and message to be logged to Serilog WITHOUT sending to Discord
+        /// </summary>
+        /// <param name="severity"></param>
+        /// <param name="source"></param>
+        /// <param name="message"></param>
+        /// <param name="exception"></param>
+        public static void LogException(this LogSeverity severity, string source, string message, Exception exception)
+        {
+            severity.Log(source, $"{message}\n{exception}");
+        }
         
         /// <summary>
-        /// Formats an embed to be sent in Discord if bot is connected, and then calls <see cref="Log(Discord.LogMessage)"/> to use Serilog
+        /// Formats an embed to be sent in Discord if bot is connected, and then calls Serilog
         /// </summary>
         /// <param name="severity">The importance of the message</param>
         /// <param name="source">Where it came from, max 7 chars</param>
         /// <param name="message">Main content written</param>
         /// <param name="exception"><b>Required</b>, the exception to be logged</param>
         /// <param name="errorEmbed">Optional override for Discord embed</param>
-        public static Task LogExceptionAsync(this LogSeverity severity, string source, string message, Exception exception, EmbedBuilder errorEmbed = null)
+        public static async Task SendExceptionAsync(this LogSeverity severity, string source, string message, Exception exception, EmbedBuilder errorEmbed = null)
         {
             Task task = null;
             if (BotInfo.LogChannel != null)
@@ -96,15 +108,20 @@ namespace BotCatMaxy
                                .AddField(severity.ToString(), message.Truncate(1024))
                                .AddField("Exception", exception.ToString().Truncate(1024))
                                .WithCurrentTimestamp();
-                
+
                 task = BotInfo.LogChannel.SendMessageAsync(embed: errorEmbed.Build());
             }
 
-            severity.Log(source, message);
-            if (exception != null)
-                Console.WriteLine(exception.ToString());
-            
-            return task ?? Task.CompletedTask;
+            LogException(severity, source, message, exception);
+            try
+            {
+                if (task != null)
+                    await task;
+            }
+            catch (Exception e)
+            {
+                LogException(severity, "Logging", "Something went wrong sending an exception to Discord:", exception);
+            }
         }
 
         public static void Assert(this bool assertion, string message = "Assertion failed")

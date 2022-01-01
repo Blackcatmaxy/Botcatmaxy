@@ -32,7 +32,7 @@ namespace BotCatMaxy.Services.TempActions
             }
             catch (Exception e)
             {
-                await LogSeverity.Error.LogExceptionAsync("Logging", "Error", e);
+                await LogSeverity.Error.SendExceptionAsync("Logging", "Error", e);
             }
         }
     }

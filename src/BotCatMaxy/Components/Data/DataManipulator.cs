@@ -38,7 +38,7 @@ namespace BotCatMaxy.Data
             }
             catch (Exception e)
             {
-                LogSeverity.Critical.LogExceptionAsync("Main", "Unable to map type", e);
+                LogSeverity.Critical.LogException("Main", "Unable to map type", e);
             }
         }
 

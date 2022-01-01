@@ -96,7 +96,7 @@ namespace BotCatMaxy.Services.TempActions
             }
             catch (Exception e)
             {
-                await LogSeverity.Error.LogExceptionAsync("TempAct",
+                await LogSeverity.Error.SendExceptionAsync("TempAct",
                     "Something went wrong with the TempAct cycle, continuing.", e);
                 _verboseLogger.Information(e, "Something went wrong with the TempAct cycle, continuing");
             }

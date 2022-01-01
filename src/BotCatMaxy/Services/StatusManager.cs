@@ -58,7 +58,7 @@ namespace BotCatMaxy
             }
             catch (Exception e)
             {
-                await LogSeverity.Error.LogExceptionAsync("Status", "Something went wrong setting status", e);
+                await LogSeverity.Error.SendExceptionAsync("Status", "Something went wrong setting status", e);
             }
         }
     }

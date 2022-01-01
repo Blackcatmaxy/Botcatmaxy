@@ -48,7 +48,7 @@ namespace BotCatMaxy.Services.TempActions
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                await LogSeverity.Critical.LogExceptionAsync("TempAct", "Something went wrong checking TempActions", e);
+                await LogSeverity.Critical.SendExceptionAsync("TempAct", "Something went wrong checking TempActions", e);
                 _log.Information("Something went wrong checking TempActions");
             }
             finally

@@ -103,7 +103,7 @@ namespace BotCatMaxy.Services.TempActions
             }
             catch (Exception e)
             {
-                await LogSeverity.Error.LogExceptionAsync("TempAct", $"Something went wrong resolving {actType}, continuing.", e);
+                await LogSeverity.Error.SendExceptionAsync("TempAct", $"Something went wrong resolving {actType}, continuing.", e);
                 _log.Information(e, "Something went wrong resolving {ActType} of {User}, continuing",
                     actType, action.UserId);
             }
