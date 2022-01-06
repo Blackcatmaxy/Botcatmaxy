@@ -74,7 +74,8 @@ namespace BotCatMaxy.Services
             User = _client.CurrentUser;
 
             int databaseCount = (await DataManipulator.dbClient.ListDatabasesAsync(ctx)).ToList(ctx).Count;
-            LogSeverity.Info.Log("Mongo",$"Connected to cluster {DataManipulator.dbClient.Cluster.ClusterId} with {databaseCount} databases");
+            _logger.Information("Mongo connected to cluster {ClusterID} with {DatabaseCount} databases",
+                DataManipulator.dbClient.Cluster.ClusterId, databaseCount);
         }
     }
 }

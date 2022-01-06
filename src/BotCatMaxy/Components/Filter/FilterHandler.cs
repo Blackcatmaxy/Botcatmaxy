@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCatMaxy.Services.Logging;
 using Microsoft.Extensions.Hosting;
 
 namespace BotCatMaxy.Startup

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
+using BotCatMaxy.Services.Logging;
 using Discord;
 using Discord.WebSocket;
 

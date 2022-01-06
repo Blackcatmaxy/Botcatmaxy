@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using BotCatMaxy.Services.Logging;
 
 namespace BotCatMaxy.Data
 {

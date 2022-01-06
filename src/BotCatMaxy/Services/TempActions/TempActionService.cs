@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;
+using BotCatMaxy.Services.Logging;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;

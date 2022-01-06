@@ -1,6 +1,4 @@
-﻿using BotCatMaxy;
-using BotCatMaxy.Components.Logging;
-using BotCatMaxy.Data;
+﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.WebSocket;
@@ -11,118 +9,117 @@ using System.Threading.Tasks;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace BotCatMaxy.Startup
+namespace BotCatMaxy.Services.Logging;
+
+public class LoggingHandler : DiscordClientService
 {
-    public class LoggingHandler : DiscordClientService
+    private readonly DiscordSocketClient _client;
+    public LoggingHandler(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
     {
-        private readonly DiscordSocketClient _client;
-        public LoggingHandler(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
+        _client = client;
+    }
+
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _client.MessageDeleted += HandleDelete;
+        _client.MessageUpdated += HandleEdit;
+        _client.MessageReceived += HandleNew;
+
+        LogSeverity.Info.Log("Logs", "Logging set up");
+        return Task.CompletedTask;
+    }
+
+    public Task HandleNew(IMessage message)
+    {
+        Task.Run(() => LogNew(message));
+        return Task.CompletedTask;
+    }
+
+    private Task HandleDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
+    {
+        Task.Run(() => LogDelete(message, channel));
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+    {
+        Task.Run(() => LogEdit(cachedMessage, newMessage, channel));
+        return Task.CompletedTask;
+    }
+
+    public Task LogNew(IMessage message)
+    {
+        if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
         {
-            _client = client;
+            SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
+            Task.Run(() => DiscordLogging.LogMessage("Role ping", message, guild, true));
         }
+        return Task.CompletedTask;
+    }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+    {
+        try
         {
-            _client.MessageDeleted += HandleDelete;
-            _client.MessageUpdated += HandleEdit;
-            _client.MessageReceived += HandleNew;
+            //Just makes sure that it's not logged when it shouldn't be
+            if (!(channel is SocketGuildChannel)) return;
+            SocketGuild guild = (channel as SocketGuildChannel).Guild;
+            IMessage oldMessage = await cachedMessage.GetOrDownloadAsync();
+            if (oldMessage?.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
+            LogSettings settings = guild.LoadFromFile<LogSettings>();
+            //if settings or the log channel are null, or edit logging is disabled, just stop
+            if (settings?.logChannel == null || !settings.logEdits) return;
+            SocketTextChannel logChannel = guild.GetChannel(settings.logChannel.Value) as SocketTextChannel;
+            if (logChannel == null) return;
 
-            LogSeverity.Info.Log("Logs", "Logging set up");
-            return Task.CompletedTask;
-        }
-
-        public Task HandleNew(IMessage message)
-        {
-            Task.Run(() => LogNew(message));
-            return Task.CompletedTask;
-        }
-
-        private Task HandleDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
-        {
-            Task.Run(() => LogDelete(message, channel));
-            return Task.CompletedTask;
-        }
-
-        private Task HandleEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
-        {
-            Task.Run(() => LogEdit(cachedMessage, newMessage, channel));
-            return Task.CompletedTask;
-        }
-
-        public Task LogNew(IMessage message)
-        {
-            if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
+            var embed = new EmbedBuilder();
+            if (string.IsNullOrEmpty(oldMessage?.Content))
             {
-                SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
-                Task.Run(() => DiscordLogging.LogMessage("Role ping", message, guild, true));
-            }
-            return Task.CompletedTask;
-        }
-
-        public async Task LogEdit(Cacheable<IMessage, ulong> cachedMessage, SocketMessage newMessage, ISocketMessageChannel channel)
-        {
-            try
-            {
-                //Just makes sure that it's not logged when it shouldn't be
-                if (!(channel is SocketGuildChannel)) return;
-                SocketGuild guild = (channel as SocketGuildChannel).Guild;
-                IMessage oldMessage = await cachedMessage.GetOrDownloadAsync();
-                if (oldMessage?.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
-                LogSettings settings = guild.LoadFromFile<LogSettings>();
-                //if settings or the log channel are null, or edit logging is disabled, just stop
-                if (settings?.logChannel == null || !settings.logEdits) return;
-                SocketTextChannel logChannel = guild.GetChannel(settings.logChannel.Value) as SocketTextChannel;
-                if (logChannel == null) return;
-
-                var embed = new EmbedBuilder();
-                if (string.IsNullOrEmpty(oldMessage?.Content))
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
+                embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
                     "`This message had no text or was null`");
-                }
-                else
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
+            }
+            else
+            {
+                embed.AddField($"Message was edited in #{newMessage.Channel.Name} from",
                     oldMessage.Content.Truncate(1020));
-                }
-                if (string.IsNullOrEmpty(newMessage.Content))
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
+            }
+            if (string.IsNullOrEmpty(newMessage.Content))
+            {
+                embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
                     "`This message had no text or is null`");
-                }
-                else
-                {
-                    embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
+            }
+            else
+            {
+                embed.AddField($"Message was edited in #{newMessage.Channel.Name} to",
                     newMessage.Content.Truncate(1020));
-                }
-
-                embed.AddField("Message Link", "[Click Here](" + newMessage.GetJumpUrl() + ")", false);
-                embed.WithFooter("ID: " + newMessage.Id)
-                    .WithAuthor(newMessage.Author)
-                    .WithColor(Color.Teal)
-                    .WithCurrentTimestamp();
-
-                await logChannel.SendMessageAsync(embed: embed.Build());
             }
-            catch (Exception exception)
-            {
-                await new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
-            }
+
+            embed.AddField("Message Link", "[Click Here](" + newMessage.GetJumpUrl() + ")", false);
+            embed.WithFooter("ID: " + newMessage.Id)
+                 .WithAuthor(newMessage.Author)
+                 .WithColor(Color.Teal)
+                 .WithCurrentTimestamp();
+
+            await logChannel.SendMessageAsync(embed: embed.Build());
         }
-
-        private async Task LogDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> cachedChannel)
+        catch (Exception exception)
         {
-            IMessageChannel channel = await cachedChannel.GetOrDownloadAsync();
-            try
-            {
-                if (!(channel is SocketGuildChannel)) return;
-                await DiscordLogging.LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
-            }
-            catch (Exception exception)
-            {
-                await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
-            }
-            //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
+            await new LogMessage(LogSeverity.Error, "Logging", exception.Message, exception).Log();
         }
+    }
+
+    private async Task LogDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> cachedChannel)
+    {
+        IMessageChannel channel = await cachedChannel.GetOrDownloadAsync();
+        try
+        {
+            if (!(channel is SocketGuildChannel)) return;
+            await DiscordLogging.LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
+        }
+        catch (Exception exception)
+        {
+            await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
+        }
+        //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
     }
 }

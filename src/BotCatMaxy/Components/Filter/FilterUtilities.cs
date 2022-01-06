@@ -1,17 +1,15 @@
-﻿using BotCatMaxy.Components.Logging;
-using BotCatMaxy.Data;
+﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using BotCatMaxy.Moderation;
 using Discord;
 using Discord.Commands;
-using Discord.Rest;
-using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BotCatMaxy.Services.Logging;
 
 namespace BotCatMaxy.Components.Filter
 {

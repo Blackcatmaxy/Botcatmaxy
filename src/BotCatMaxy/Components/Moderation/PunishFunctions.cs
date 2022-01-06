@@ -1,16 +1,14 @@
-﻿using BotCatMaxy;
-using BotCatMaxy.Components.Logging;
-using BotCatMaxy.Data;
+﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Services.Logging;
 using BotCatMaxy.Services.TempActions;
 
 namespace BotCatMaxy.Moderation

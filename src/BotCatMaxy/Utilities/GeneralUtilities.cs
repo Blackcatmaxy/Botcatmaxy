@@ -1,6 +1,6 @@
-﻿using BotCatMaxy.Components.Logging;
-using BotCatMaxy.Data;
+﻿using BotCatMaxy.Data;
 using BotCatMaxy.Models;
+using BotCatMaxy.Services.Logging;
 using Discord;
 using Discord.Commands;
 using Discord.Net;

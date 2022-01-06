@@ -6,17 +6,16 @@ using Serilog;
 using Serilog.Configuration;
 using Serilog.Events;
 
-namespace BotCatMaxy.Components.Logging
+namespace BotCatMaxy.Services.Logging;
+
+public static class SerilogSinkExtensions
 {
-    public static class SerilogSinkExtensions
+    public static LoggerConfiguration TempActionSink(
+        this LoggerSinkConfiguration loggerConfiguration, ITextChannel channel, LogEventLevel minLevel, out TempActionSink.FlushLogDelegate _flush,
+        IFormatProvider formatProvider = null)
     {
-        public static LoggerConfiguration TempActionSink(
-            this LoggerSinkConfiguration loggerConfiguration, ITextChannel channel, LogEventLevel minLevel, out TempActionSink.FlushLogDelegate _flush,
-            IFormatProvider formatProvider = null)
-        {
-            var sink = new TempActionSink(channel, formatProvider, out var flush);
-            _flush = flush;
-            return loggerConfiguration.Sink(sink, minLevel);
-        }
+        var sink = new TempActionSink(channel, formatProvider, out var flush);
+        _flush = flush;
+        return loggerConfiguration.Sink(sink, minLevel);
     }
 }

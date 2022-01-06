@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using BotCatMaxy.Services.Logging;
+using Discord;
 
 namespace BotCatMaxy.Models
 {

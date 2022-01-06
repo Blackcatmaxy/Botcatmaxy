@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Services.TempActions;
+using BotCatMaxy.Services.Logging;
 using BotCatMaxy.Startup;
 using BotCatMaxy.Services;
 using Discord;
@@ -17,7 +17,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
 using Serilog.Templates;
 using Serilog.Templates.Themes;
 
