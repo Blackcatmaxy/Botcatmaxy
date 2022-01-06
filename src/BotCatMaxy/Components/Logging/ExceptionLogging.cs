@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Logging;
+using BotCatMaxy.Services;
 using Microsoft.Extensions.Logging;
 using Serilog.Events;
 using Logger = Serilog.Log;
@@ -122,18 +123,6 @@ namespace BotCatMaxy
             {
                 LogException(severity, "Logging", "Something went wrong sending an exception to Discord:", exception);
             }
-        }
-
-        public static void Assert(this bool assertion, string message = "Assertion failed")
-        {
-            if (assertion == false)
-                LogSeverity.Error.Log("Assert", message);
-        }
-
-        public static void AssertWarn(this bool assertion, string message = "Assertion failed")
-        {
-            if (assertion == false)
-                LogSeverity.Warning.Log("Assert", message);
         }
 
         public static async Task LogFilterError(this Exception exception, string type, IGuild guild)
