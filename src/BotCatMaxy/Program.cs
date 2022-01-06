@@ -5,6 +5,7 @@ using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
 using BotCatMaxy.Services.TempActions;
 using BotCatMaxy.Startup;
+using BotCatMaxy.Services;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Commands;
@@ -26,17 +27,18 @@ namespace BotCatMaxy
     {
         public static async Task Main(string[] args)
         {
+            const string template =
+                "[{@t:HH:mm:ss} {@l:u3}]{#if IsDefined(Source)} {Concat(Source,':'),-9}{#end} {@m}{#if IsDefined(GuildID)} (from {GuildID}){#end}\n{@x}";
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.Async(a =>
-                    a.File("logs/log.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
-                .WriteTo.Console(new ExpressionTemplate(
-                             "[{@t:HH:mm:ss} {@l:u3}]{#if IsDefined(Source)} {Concat(Source,':'),-9}{#end} {@m}{#if IsDefined(GuildID)} (from {GuildID}){#end}\n{@x}",
-                             theme: TemplateTheme.Code))
+                    a.File(new ExpressionTemplate(template), "logs/log.txt",
+                        rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
+                .WriteTo.Console(new ExpressionTemplate(template, theme: TemplateTheme.Code))
                 .CreateLogger();
 
             var hostBuilder = Host.CreateDefaultBuilder()
-                .UseSerilog()
+                .UseSerilog(Log.Logger)
                 .ConfigureAppConfiguration((context, config) =>
                 {
                     config.Sources.Clear();

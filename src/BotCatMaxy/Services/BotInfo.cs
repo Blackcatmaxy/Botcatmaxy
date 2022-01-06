@@ -12,8 +12,11 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using Serilog;
 
-namespace BotCatMaxy.Components.Logging
+using ILogger = Serilog.ILogger;
+
+namespace BotCatMaxy.Services
 {
     public class BotInfo : DiscordClientService
     {
@@ -21,16 +24,16 @@ namespace BotCatMaxy.Components.Logging
         public static ISelfUser User { get; private set; }
         private readonly IConfiguration _configuration;
         private readonly DiscordSocketClient _client;
-        private readonly string[] _args;
+        private readonly ILogger _logger;
 
-        public BotInfo(DiscordSocketClient client, ILogger<DiscordClientService> logger, IConfiguration configuration) : base(client, logger)
+        public BotInfo(DiscordSocketClient client, ILogger<BotInfo> logger, IConfiguration configuration) : base(client, logger)
         {
             _client = client;
             _configuration = configuration;
-            //_args = Environment.GetCommandLineArgs();
+            _logger = Log.ForContext("Source", "BotInfo");
         }
-        
-        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+
+        protected override async Task ExecuteAsync(CancellationToken ctx)
         {
             //Gets build date
             const string buildVersionMetadataPrefix = "+build";
@@ -52,10 +55,12 @@ namespace BotCatMaxy.Components.Logging
             }
 
             string version = _configuration["Version"] ?? "unknown";
-            string versionMessage = $"Starting with version {version}, built {buildDate.ToShortDateString()}, {(DateTime.UtcNow - buildDate).LimitedHumanize()} ago";
-            LogSeverity.Info.Log("Main", versionMessage);
+            string shortDate = buildDate.ToShortDateString();
+            string timeAgo = (DateTime.UtcNow - buildDate).LimitedHumanize();
+            _logger.Debug("Starting with version {Version}, built {ShortDate}, {TimeAgo} ago",
+                version, shortDate, timeAgo);
 
-            await _client.WaitForReadyAsync(cancellationToken);
+            await _client.WaitForReadyAsync(ctx);
             try
             {
                 SocketGuild guild = _client.GetGuild(ulong.Parse(_configuration["LogGuild"]));
@@ -63,12 +68,12 @@ namespace BotCatMaxy.Components.Logging
             }
             catch
             {
-                LogSeverity.Warning.Log("BotInfo", "Exception log channel is not set, is the configuration `BotCatMaxy.ini` set up?");
+                _logger.Warning("Exception log channel is not set, is the configuration `BotCatMaxy.ini` set up?");
             }
 
             User = _client.CurrentUser;
 
-            int databaseCount = (await DataManipulator.dbClient.ListDatabasesAsync(cancellationToken)).ToList(cancellationToken: cancellationToken).Count;
+            int databaseCount = (await DataManipulator.dbClient.ListDatabasesAsync(ctx)).ToList(ctx).Count;
             LogSeverity.Info.Log("Mongo",$"Connected to cluster {DataManipulator.dbClient.Cluster.ClusterId} with {databaseCount} databases");
         }
     }
