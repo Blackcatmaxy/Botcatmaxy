@@ -18,8 +18,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Condition="'$(Configuration)'=='Debug'" Update="Properties/BotCatMaxy.DEBUG.ini" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
-        <None Update="Properties/BotCatMaxy.ini" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+        <None Condition="'$(Configuration)'=='Debug'" Update="Properties/BotCatMaxy.DEBUG.ini" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+        <None Update="Properties/BotCatMaxy.ini" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
