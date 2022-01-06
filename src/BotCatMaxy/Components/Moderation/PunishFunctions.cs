@@ -65,7 +65,7 @@ namespace BotCatMaxy.Moderation
 
         public static async Task<WarnResult> Warn(this ulong userID, float size, string reason, ITextChannel channel, IUser warnee = null, string logLink = null)
         {
-            if (size > 999 || size < 0.01)
+            if (size > 999F || size < 0.01F)
             {
                 return new WarnResult("The infraction size must be between `0.01` and `999`.");
             }
