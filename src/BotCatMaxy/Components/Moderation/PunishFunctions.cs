@@ -69,6 +69,11 @@ namespace BotCatMaxy.Moderation
             {
                 return new WarnResult("The infraction size must be between `0.01` and `999`.");
             }
+            
+            if ((size * 100F) % 1F != 0F)
+            {
+                return new WarnResult("The infraction size must have two or less decimal places, like `1.01` or `1`.");
+            }
 
             try
             {
