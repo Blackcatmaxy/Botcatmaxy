@@ -17,6 +17,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
+using Serilog.Events;
 using Serilog.Templates;
 using Serilog.Templates.Themes;
 
@@ -30,10 +31,14 @@ namespace BotCatMaxy
                 "[{@t:HH:mm:ss} {@l:u3}]{#if IsDefined(Source)} {Concat(Source,':'),-9}{#end} {@m}{#if IsDefined(GuildID)} (from {GuildID}){#end}\n{@x}";
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
+                // .Destructure.ByTransforming<Embed>(embed => new { EmbedFields = embed.Fields,
+                //     EmbedTitle = embed.Title, EmbedDescription = embed.Description, EmbedFooter = embed.Footer})
+                .Enrich.FromLogContext()
                 .WriteTo.Async(a =>
                     a.File(new ExpressionTemplate(template), "logs/log.txt",
                         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14))
                 .WriteTo.Console(new ExpressionTemplate(template, theme: TemplateTheme.Code))
+                .WriteTo.DiscordSink(LogEventLevel.Error)
                 .CreateLogger();
 
             var hostBuilder = Host.CreateDefaultBuilder()

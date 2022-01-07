@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 using BotCatMaxy.Services.Logging;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Context;
+using ILogger = Serilog.ILogger;
 
 namespace BotCatMaxy.Startup
 {
@@ -28,6 +31,7 @@ namespace BotCatMaxy.Startup
         private readonly IDiscordClient _client;
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
+        private readonly ILogger _logger;
 
         public CommandHandler(IDiscordClient client, ILogger<CommandHandler> logger,  IServiceProvider services, CommandService commandService) 
             : base(client as DiscordSocketClient, logger)
@@ -35,6 +39,7 @@ namespace BotCatMaxy.Startup
             _commands = commandService;
             _client = client;
             _services = services;
+            _logger = Log.ForContext("Source", "CMDs");
         }
 
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
@@ -59,7 +64,7 @@ namespace BotCatMaxy.Startup
             // See Dependency Injection guide for more information.
             await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
                 services: _services);
-            await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
+            _logger.Information("Commands set up");
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -83,7 +88,15 @@ namespace BotCatMaxy.Startup
             // Create a WebSocket-based command context based on the message and assume if no mock context then use Socket
             context ??= new SocketCommandContext((DiscordSocketClient)_client, (SocketUserMessage)message);
 
-            //var res = filter.CheckMessage(message, context);
+            //Add logging information
+            LogContext.PushProperty("UserId", context.User.Id);
+            LogContext.PushProperty("ChannelId", context.Channel.Id);
+            LogContext.PushProperty("MessageContent", context.Message.Content);
+            LogContext.PushProperty("MessageId", context.Message.Id);
+            if (context.Guild is not null)
+            {
+                LogContext.PushProperty("GuildId", context.Guild.Id);
+            }
 
             // Execute the command with the command context we just
             // created, along with the service provider for precondition checks.
@@ -140,32 +153,12 @@ namespace BotCatMaxy.Startup
         {
             //To make any null variables clear and stand out if they shouldn't normally be null
             const string nullIndicator = "NULL_MESSAGE";
-            string logMessage = $"Command `!{command.Value?.Name ?? nullIndicator}` in";
-
-            if (context.Guild != null)
-                logMessage += $" {await context.Guild.Describe("`")}";
-            else
-                logMessage += $" `{context.User.Describe()}` DMs";
-
-            logMessage += $" encountered: result type `{result.GetType().Name}` with reason: `{result.ErrorReason}`";
-
-            var errorEmbed = new EmbedBuilder()
-            {
-                Title = $"New Command Exception",
-                Timestamp = DateTime.Now,
-                Description = logMessage.Truncate(1500)
-            };
-
-            errorEmbed.AddField("Executor", $"{context.User.Username}#{context.User.Discriminator}\n({context.User.Id})", true);
-            errorEmbed.AddField("Channel", context.Guild is null ? "Direct Messages" : $"{context.Channel.Name}\n({context.Channel.Id})", true);
-
-            if (context.Guild is not null)
-                errorEmbed.AddField("Guild", $"{context.Guild.Name}\n({context.Guild.Id})", true);
-
-            errorEmbed.AddField($"Message Content {context.Message?.Id.ToString() ?? nullIndicator}",
-                $"```{context.Message?.Content ?? nullIndicator}```[Jump to Invocation]({context.Message.GetJumpUrl()})");
-            errorEmbed.AddField("Exception", $"```{exception}```");
-            await LogSeverity.Error.SendExceptionAsync("Command", logMessage, exception, errorEmbed);
+            string commandName = command.Value?.Name ?? nullIndicator;
+            string location = context.Guild != null ? await context.Guild.Describe("`") : $"`{context.User.Describe()}` DMs";
+            string encountered = $"`{result.GetType().Name}` with reason: `{result.ErrorReason}`";
+            LogContext.PushProperty("Location", location);
+            _logger.Error(exception, "Command `!{CommandName}` in {Location} encountered {Encountered}",
+                commandName, location, encountered);
         }
     }
 }

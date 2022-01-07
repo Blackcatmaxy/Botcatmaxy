@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using BotCatMaxy.Data;
+using BotCatMaxy.Services.Logging;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;
@@ -31,6 +32,7 @@ namespace BotCatMaxy.Services
             _client = client;
             _configuration = configuration;
             _logger = Log.ForContext("Source", "BotInfo");
+            DiscordSink.Client = client;
         }
 
         protected override async Task ExecuteAsync(CancellationToken ctx)

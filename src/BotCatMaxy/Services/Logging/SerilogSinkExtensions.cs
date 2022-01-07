@@ -18,4 +18,11 @@ public static class SerilogSinkExtensions
         _flush = flush;
         return loggerConfiguration.Sink(sink, minLevel);
     }
+
+    public static LoggerConfiguration DiscordSink(
+        this LoggerSinkConfiguration loggerConfiguration, LogEventLevel minLevel)
+    {
+        var sink = new DiscordSink();
+        return loggerConfiguration.Sink(sink, minLevel);
+    }
 }
