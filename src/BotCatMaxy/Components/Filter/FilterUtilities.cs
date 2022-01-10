@@ -69,6 +69,10 @@ namespace BotCatMaxy.Components.Filter
                 {
                     //Need to override index system here since we strip characters
                     int index = strippedMessage.IndexOf(badWord.Word, StringComparison.InvariantCultureIgnoreCase);
+                    
+                    if (badWord.Word == "@everyone" || badWord.Word == "@here")
+                        index = message.IndexOf(badWord.Word, StringComparison.InvariantCultureIgnoreCase);
+                    
                     if (index > -1)
                     {
                         try
