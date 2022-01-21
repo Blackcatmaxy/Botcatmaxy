@@ -7,7 +7,7 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempBan : TempAction
     {
-        protected override string LogString => "bann";
+        public override string LogString => "bann";
 
         public override Task ResolveAsync(IGuild guild, RequestOptions requestOptions)
         {

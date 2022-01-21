@@ -14,7 +14,7 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempActionSink : ILogEventSink
     {
-        private const string _format = "[{@t:mm:ss.fff} {@l:u3}]{#if IsDefined(GuildID)} {GuildID} {GuildIndex}:{#end} {@m:lj}\n{@x}";
+        private const string _format = "[{@t:mm:ss.fff} {@l:u3}]{#if IsDefined(GuildId)} {GuildId} {GuildIndex}:{#end} {@m:lj}\n{@x}";
         private readonly ITextFormatter _textFormatter;
         private readonly MemoryStream _memoryStream;
         private readonly StreamWriter _streamWriter;

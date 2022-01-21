@@ -1,6 +1,8 @@
+using System;
 using Discord;
 using Discord.WebSocket;
 using Humanizer;
+using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -15,12 +17,20 @@ public class DiscordSink : ILogEventSink
 
     public void Emit(LogEvent logEvent)
     {
-        _channel ??= BotInfo.LogChannel;
-        if (_channel == null)
-            return;
+        try
+        {
+            _channel ??= BotInfo.LogChannel;
 
-        var embed = RenderEmbed(logEvent);
-        _ = _channel.SendMessageAsync(embed: embed.Build());
+            if (_channel == null)
+                return;
+
+            var embed = RenderEmbed(logEvent);
+            _ = _channel.SendMessageAsync(embed: embed.Build());
+        }
+        catch (Exception e)
+        {
+            Log.Warning(e, "Something went wrong logging to Discord");
+        }
     }
 
     public EmbedBuilder RenderEmbed(LogEvent logEvent)
@@ -73,13 +83,13 @@ public class DiscordSink : ILogEventSink
                 jumpLink = $"[Jump to Invocation]({message.GetJumpUrl()})";
 
             embed.AddField($"Message Content {messageIdString}",
-                $"```{messageContent.Truncate(2000) ?? _nullIndicator}```{jumpLink}");
+                $"```{messageContent.Truncate(1000) ?? _nullIndicator}```{jumpLink}");
         }
 
         //Get Exception if exists and add field
         if (logEvent.Exception != null)
         {
-            embed.AddField("Exception:", $"```{logEvent.Exception.ToString().Truncate(2042)}```");
+            embed.AddField("Exception:", $"```{logEvent.Exception.ToString().Truncate(1016)}```");
         }
 
         return embed;

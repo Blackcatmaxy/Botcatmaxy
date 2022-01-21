@@ -22,7 +22,7 @@ namespace BotCatMaxy.Models
         public TimeSpan Length { get; init; }
         public DateTime EndTime => Start.Add(Length);
         public bool ShouldEnd => DateTime.UtcNow >= EndTime;
-        protected abstract string LogString { get; }
+        public abstract string LogString { get; }
         protected IUser CachedUser;
 
         /// <summary>

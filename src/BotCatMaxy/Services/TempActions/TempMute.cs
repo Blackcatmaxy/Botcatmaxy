@@ -9,7 +9,7 @@ namespace BotCatMaxy.Services.TempActions
     public class TempMute : TempAction
     {
 
-        protected override string LogString => "mut";
+        public override string LogString => "mut";
 
         public override async Task ResolveAsync(IGuild guild, RequestOptions requestOptions)
         {
