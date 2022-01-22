@@ -249,45 +249,5 @@ namespace BotCatMaxy.Moderation
             DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
             userRef.ID.RecordAct(context.Guild, tempBan, "tempban", context.Message.GetJumpUrl());
         }
-
-        public static async Task<RuntimeResult> TempMute(this UserRef userRef, TimeSpan time, string reason, ICommandContext context)
-        {
-            if (time.TotalMinutes < 1)
-                return CommandResult.FromError("Can't temp-mute for less than a minute");
-            var settings = context.Guild.LoadFromFile<ModerationSettings>(false);
-            if (!(context.Message.Author as IGuildUser).HasAdmin())
-            {
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                    return CommandResult.FromError("You are not allowed to punish for that long");
-            }
-            var role = context.Guild.GetRole(settings?.mutedRole ?? 0);
-            if (role == null)
-                return CommandResult.FromError("Muted role is null or invalid");
-            var tempMute = new TempMute
-                {
-                    Length = time,
-                    Reason = reason,
-                    UserId = userRef.ID
-                };
-            var actions = context.Guild.LoadFromFile<TempActionList>(true);
-            actions.tempMutes.Add(tempMute);
-            actions.SaveToFile();
-            if (userRef.GuildUser != null) 
-                await userRef.GuildUser.AddRoleAsync(role);
-            DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "mut", reason, context.Message.GetJumpUrl(), time);
-            if (userRef.User != null)
-            {
-                try
-                {
-                    await userRef.User?.Notify($"tempmuted for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
-                }
-                catch (Exception e)
-                {
-                    if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
-                }
-            }
-            userRef.ID.RecordAct(context.Guild, tempMute, "tempmute", context.Message.GetJumpUrl());
-            return null;
-        }
     }
 }

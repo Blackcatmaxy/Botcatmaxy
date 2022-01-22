@@ -47,10 +47,28 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         return (reaction.IsSuccess && Equals(reaction.Value.Emote, ConfirmEmoji));
     }
 
-    public async Task<RuntimeResult?> ConfirmNoTempAct(IReadOnlyList<TempAction>? actions, ulong userID, PageBuilder page)
+    public async Task<RuntimeResult?> ConfirmNoTempAct(IReadOnlyList<TempAction>? actions, TempAction newAction, UserRef user)
     {
-        if (actions?.Count is null or 0 || actions.Any(action => action.UserId == userID) == false)
+        if (actions?.Count is null or 0 || actions.Any(action => action.UserId == user.ID) == false)
             return null;
+        TempAction? oldAction = null;
+        foreach (var action in actions)
+        {
+            if (action.UserId == user.ID)
+                oldAction = action;
+        }
+
+        if (oldAction == null)
+            return null;
+        string oldInfo =
+            $"{oldAction.Type} for {oldAction.Length.LimitedHumanize()} for `{oldAction.Reason}` started {MentionTime(oldAction.Start, 'R')} and ending {MentionTime(oldAction.EndTime, 'R')}.";
+        var page = new PageBuilder()
+                   .AddField($"Current Action:", oldInfo)
+                   .AddField("Overwrite With:", $"{newAction.Type} starting {MentionTime(newAction.Start, 'R')} and ending {MentionTime(newAction.EndTime, 'R')}.")
+                   .WithTitle($"Are you sure you want to overwrite existing {newAction.Type}?");
+
+        if (user.User != null)
+            page.WithAuthor(user.User);
 
         var selection = new ButtonSelectionBuilder<string>()
                         .AddUser(Context.User)
@@ -102,5 +120,16 @@ public class InteractiveModule : ModuleBase<ICommandContext>
             else
                 await Context.Channel.SendMessageAsync("Invalid number, please reply again with a valid number or ``cancel``");
         }
+    }
+
+    /// <summary>
+    /// Format a <see cref="DateTimeOffset"/> for Discord client rendering.
+    /// </summary>
+    /// <param name="offset">The <see cref="DateTimeOffset"/> to be formatted.</param>
+    /// <param name="styleChar">The <a href="https://discord.com/developers/docs/reference#message-formatting-formats">character to set the style</a> on the client </param>
+    public string MentionTime(DateTimeOffset offset, char? styleChar = null)
+    {
+        string style = (styleChar != null) ? $":{styleChar}" : "";
+        return $"<t:{offset.ToUnixTimeSeconds()}{style}>";
     }
 }
