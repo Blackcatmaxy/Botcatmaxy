@@ -12,7 +12,7 @@ using Tests.Mocks.Guild;
 
 namespace Tests.Mocks
 {
-    public class MockDiscordClient : IDiscordClient, IDisposable
+    public class MockDiscordClient : IDiscordClient
     {
         public MockDiscordClient()
         {
@@ -145,6 +145,11 @@ namespace Tests.Mocks
         }
 
         public Task StopAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask DisposeAsync()
         {
             throw new NotImplementedException();
         }
