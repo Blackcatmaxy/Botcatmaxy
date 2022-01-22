@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Interactivity;
+using BotCatMaxy.Services.TempActions;
+using Fergun.Interactive;
 
 namespace BotCatMaxy
 {
@@ -277,6 +279,12 @@ namespace BotCatMaxy
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task<RuntimeResult> TempMuteUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
         {
+            List<TempMute> tempMutes = Context.Guild.LoadFromFile<TempActionList>(false).tempMutes;
+            var checkResult = await ConfirmNoTempAct(tempMutes, userRef.ID, new PageBuilder()
+                .AddField("Are You Sure?", "User is already tempmuted, do you want to overwrite tempmute?"));
+            if (checkResult != null)
+                return checkResult;
+
             var result = await userRef.TempMute(time, reason, Context);
             result ??= CommandResult.FromSuccess($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}");
             return result;

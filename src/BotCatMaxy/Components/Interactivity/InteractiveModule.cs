@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -42,6 +45,27 @@ public class InteractiveModule : ModuleBase<ICommandContext>
             => reaction.MessageId == message.Id && reaction.UserId == message.Author.Id, timeout: timeout ?? TimeSpan.FromMinutes(2));
 
         return (reaction.IsSuccess && Equals(reaction.Value.Emote, ConfirmEmoji));
+    }
+
+    public async Task<RuntimeResult?> ConfirmNoTempAct(IReadOnlyList<TempAction>? actions, ulong userID, PageBuilder page)
+    {
+        if (actions?.Count is null or 0 || actions.Any(action => action.UserId == userID) == false)
+            return null;
+
+        var selection = new ButtonSelectionBuilder<string>()
+                        .AddUser(Context.User)
+                        .WithSelectionPage(page)
+                        .AddOption(new ButtonOption<string>("Confirm", ButtonStyle.Success))
+                        .AddOption(new ButtonOption<string>("Cancel", ButtonStyle.Danger))
+                        .WithActionOnCancellation(ActionOnStop.DisableInput)
+                        .WithActionOnSuccess(ActionOnStop.DisableInput)
+                        .WithActionOnTimeout(ActionOnStop.DisableInput)
+                        .WithStringConverter(x => x.Option)
+                        .WithAllowCancel(true)
+                        .Build();
+
+        var result = await Interactivity.SendSelectionAsync(selection, Context.Channel, TimeSpan.FromMinutes(1));
+        return result.IsCanceled ? CommandResult.FromError("Command has been canceled.") : null;
     }
 
     /// <summary>
