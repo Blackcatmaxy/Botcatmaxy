@@ -47,7 +47,7 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         return (reaction.IsSuccess && Equals(reaction.Value.Emote, ConfirmEmoji));
     }
 
-    public async Task<RuntimeResult?> ConfirmNoTempAct(IReadOnlyList<TempAction>? actions, TempAction newAction, UserRef user)
+    public async Task<CommandResult?> ConfirmNoTempAct(IReadOnlyList<TempAction>? actions, TempAction newAction, UserRef user)
     {
         if (actions?.Count is null or 0 || actions.Any(action => action.UserId == user.ID) == false)
             return null;

@@ -11,19 +11,22 @@ namespace Discord.Commands
     /// <summary>
     /// A wrapper of <seealso cref="RuntimeResult"/> for communicating the result of a command in the <seealso cref="CommandHandler"/>
     /// </summary>
+    #nullable enable
     public class CommandResult : RuntimeResult
     {
-        public readonly Embed Embed;
+        public readonly Embed? Embed;
+        public readonly string? LogLink;
 
-        public CommandResult(CommandError? error, string reason, Embed embed = null) : base(error, reason)
+        public CommandResult(CommandError? error, string reason, Embed? embed = null, string? logLink = null) : base(error, reason)
         {
             Embed = embed;
+            LogLink = logLink;
         }
 
-        public static CommandResult FromError(string reason, Embed embed = null)
+        public static CommandResult FromError(string reason, Embed? embed = null)
             => new(CommandError.Unsuccessful, reason, embed);
 
-        public static CommandResult FromSuccess(string reason, Embed embed = null)
-            => new(null, reason, embed);
+        public static CommandResult FromSuccess(string reason, Embed? embed = null, string? logLink = null)
+            => new(null, reason, embed, logLink);
     }
 }

@@ -41,10 +41,10 @@ public class TempMuteCommands : InteractiveModule
     [RequireContext(ContextType.Guild)]
     [RequireBotPermission(GuildPermission.ManageRoles)]
     [RequireUserPermission(GuildPermission.KickMembers)]
-    public Task<RuntimeResult> TempMuteUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
-        => TempMute(userRef, time, reason);
+    public async Task<RuntimeResult> TempMuteUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
+        => await TempMute(userRef, time, reason);
 
-    public async Task<RuntimeResult> TempMute(UserRef userRef, TimeSpan time, string reason)
+    public async Task<CommandResult> TempMute(UserRef userRef, TimeSpan time, string reason)
     {
         if (time.TotalMinutes < 1)
             return CommandResult.FromError("Can't temp-mute for less than a minute.");
@@ -71,7 +71,7 @@ public class TempMuteCommands : InteractiveModule
         actions.SaveToFile();
         if (userRef.GuildUser != null)
             await userRef.GuildUser.AddRoleAsync(role);
-        DiscordLogging.LogTempAct(Context.Guild, Context.User, userRef, "mut", reason, Context.Message.GetJumpUrl(), time);
+        string? logLink = await DiscordLogging.LogTempAct(Context.Guild, Context.User, userRef, "mut", reason, Context.Message.GetJumpUrl(), time);
         if (userRef.User != null)
         {
             try
@@ -83,8 +83,8 @@ public class TempMuteCommands : InteractiveModule
                 if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
             }
         }
-        userRef.ID.RecordAct(Context.Guild, tempMute, "tempmute", Context.Message.GetJumpUrl());
-        return CommandResult.FromSuccess($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of `{reason}`.");
+        userRef.ID.RecordAct(Context.Guild, tempMute, "tempmute", logLink ?? Context.Message.GetJumpUrl());
+        return CommandResult.FromSuccess($"Temporarily muted {userRef.Mention()} for {time.LimitedHumanize(3)} because of `{reason}`.", logLink: logLink);
     }
 
     public async Task<RuntimeResult> TempMuteWarn(UserRef userRef, TimeSpan time, string reason, float warnSize)
@@ -95,9 +95,8 @@ public class TempMuteCommands : InteractiveModule
         var muteResult = await TempMute(userRef, time, reason);
         if (muteResult.IsSuccess)
         {
-            var warnResult = await userRef.Warn(warnSize, reason, Context.Channel as ITextChannel, Context.Message.GetJumpUrl());
-            string result =
-                $"Temporarily muted {userRef.Mention()} for `{time.LimitedHumanize(3)}` because of `{reason}`";
+            var warnResult = await userRef.Warn(warnSize, reason, Context.Channel as ITextChannel, muteResult.LogLink ?? Context.Message.GetJumpUrl());
+            string result = $"Temporarily muted {userRef.Mention()} for `{time.LimitedHumanize(3)}` because of `{reason}`";
             if (warnResult.success == false)
                 result = $"{result}, but warn failed. {warnResult.description}";
             muteResult = CommandResult.FromSuccess(result);
