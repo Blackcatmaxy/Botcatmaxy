@@ -6,6 +6,7 @@ using Fergun.Interactive;
 using Fergun.Interactive.Selection;
 
 namespace BotCatMaxy.Components.Interactivity;
+//EXAMPLE FROM FERGUN.INTERACTIVE GITHUB https://github.com/d4n3436/Fergun.Interactive/commit/70d1af1c15408411c2cb7b6386a46480467debad#diff-a4bd3b09e045fea5a7d0691d56ae33e0c08fc7a98dd5f60006e4f2e5ab2fc43b
 
 public class ButtonSelectionBuilder<T> : BaseSelectionBuilder<ButtonSelection<T>, ButtonOption<T>, ButtonSelectionBuilder<T>>
 {
