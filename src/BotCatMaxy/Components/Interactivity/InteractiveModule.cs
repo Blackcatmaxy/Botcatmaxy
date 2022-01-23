@@ -49,11 +49,10 @@ public class InteractiveModule : ModuleBase<ICommandContext>
             .WithActionOnSuccess(ActionOnStop.DisableInput)
             .WithActionOnTimeout(ActionOnStop.DisableInput)
             .WithStringConverter(x => x.Option)
-            .WithAllowCancel(true)
             .Build();
 
         var result = await Interactivity.SendSelectionAsync(selection, Context.Channel, timeout ?? TimeSpan.FromMinutes(2));
-        return result.IsSuccess;
+        return result.IsSuccess && result.Value!.Option == "Confirm";
     }
 
     /// <summary>
@@ -91,20 +90,19 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         var selection = new ButtonSelectionBuilder<string>()
                         .AddUser(Context.User)
                         .WithSelectionPage(page)
-                        .AddOption(new ButtonOption<string>("Confirm", ButtonStyle.Success))
-                        .AddOption(new ButtonOption<string>("Cancel", ButtonStyle.Danger))
+                        .AddOption(new ButtonOption<string>("Confirm", ButtonStyle.Danger))
+                        .AddOption(new ButtonOption<string>("Cancel", ButtonStyle.Secondary))
                         .WithActionOnCancellation(ActionOnStop.DisableInput)
                         .WithActionOnSuccess(ActionOnStop.DisableInput)
                         .WithActionOnTimeout(ActionOnStop.DisableInput)
                         .WithStringConverter(x => x.Option)
-                        .WithAllowCancel(true)
                         .Build();
 
         var result = await Interactivity.SendSelectionAsync(selection, Context.Channel, TimeSpan.FromMinutes(1));
 
-        if (result.IsCanceled)
-            return (CommandResult.FromError("Command has been canceled."), null);
-        return (null, oldAction);
+        if (result.IsSuccess && result.Value!.Option == "Confirm")
+            return (null, oldAction);
+        return (CommandResult.FromError("Command has been canceled."), null);
     }
 
     /// <summary>
