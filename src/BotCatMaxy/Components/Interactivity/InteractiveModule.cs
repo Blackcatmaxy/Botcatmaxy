@@ -14,7 +14,7 @@ namespace BotCatMaxy.Components.Interactivity;
 
 /// <summary>
 /// Wrapper around <see cref="ModuleBase{T}"/> with T as <see cref="ICommandContext"/>
-/// and including an <see cref="Interactivity"/> property
+/// and including an <see cref="Interactivity"/> property as well as useful methods.
 /// </summary>
 public class InteractiveModule : ModuleBase<ICommandContext>
 {
@@ -22,21 +22,19 @@ public class InteractiveModule : ModuleBase<ICommandContext>
     /// This constructor is required for DI to work in both test environment and release without
     /// mocking of <seealso cref="Discord.WebSocket.BaseSocketClient"/>
     /// </summary>
-    public InteractiveModule(IServiceProvider service) : base()
+    public InteractiveModule(IServiceProvider service)
     {
         Interactivity = (InteractiveService)service.GetService(typeof(InteractiveService))!;
     }
 
     protected InteractiveService Interactivity { get; }
-    protected static readonly Emoji ConfirmEmoji = new("\U00002705");
-    protected static readonly Emoji CancelEmoji = new("\U0000274c");
 
     /// <summary>
-    /// Adds confirm and deny reactions to a message and then waits for the author to react.
+    /// Adds confirm and deny buttons to a message and then waits for the author to react.
     /// </summary>
-    /// <param name="message">The message to check for reactions from</param>
+    /// <param name="message">The query to ask the user.</param>
     /// <param name="timeout">The time to wait before the methods returns a timeout result. Defaults to 2 minutes.</param>
-    /// <returns>Returns true if didn't time out and confirm is selected</returns>
+    /// <returns>Returns true if didn't time out and confirm is selected.</returns>
     public async Task<bool> TryConfirmation(string message, TimeSpan? timeout = null)
     {
         var page = new PageBuilder()
@@ -58,6 +56,14 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         return result.IsSuccess;
     }
 
+    /// <summary>
+    /// Confirms a user isn't already under a specific TempAct and displays a confirmation to overwrite if they are.
+    /// </summary>
+    /// <param name="actions">The list of TempActions to be searched.</param>
+    /// <param name="newAction">The TempAction to be compared with the old action.</param>
+    /// <param name="user">If an <see cref="IUser"/> is included show on embed.</param>
+    /// <typeparam name="TAct">The type of act which should be able to be inferred and just serve for type safety.</typeparam>
+    /// <returns>A Tuple so so that the result can be used and action can be removed.</returns>
     public async Task<(CommandResult? result, TAct? action)?> ConfirmNoTempAct<TAct>(IReadOnlyList<TAct>? actions, TAct newAction, UserRef user) where TAct : TempAction
     {
         if (actions?.Count is null or 0 || actions.Any(action => action.UserId == user.ID) == false)
