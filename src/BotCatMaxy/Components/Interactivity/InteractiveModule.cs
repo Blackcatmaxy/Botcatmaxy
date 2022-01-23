@@ -74,6 +74,7 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         string oldInfo =
             $"{oldAction.Type} for {oldAction.Length.LimitedHumanize()} for `{oldAction.Reason}` started {MentionTime(oldAction.Start, 'R')} and ending {MentionTime(oldAction.EndTime, 'R')}.";
         var page = new PageBuilder()
+                   .WithColor(Color.Blue)
                    .AddField($"Current Action:", oldInfo)
                    .AddField("Overwrite With:", $"{newAction.Type} starting {MentionTime(newAction.Start, 'R')} and ending {MentionTime(newAction.EndTime, 'R')}.")
                    .WithTitle($"Are you sure you want to overwrite existing {newAction.Type}?");
