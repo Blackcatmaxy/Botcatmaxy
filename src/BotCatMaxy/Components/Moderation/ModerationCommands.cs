@@ -11,17 +11,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Interactivity;
-using BotCatMaxy.Services.TempActions;
-using Fergun.Interactive;
 
 namespace BotCatMaxy
 {
     [Name("Moderation")]
     public class ModerationCommands : InteractiveModule
     {
-        public ModerationCommands(IServiceProvider service) : base(service)
-        {
-        }
+        public ModerationCommands(IServiceProvider service) : base(service) { }
 
         public async Task<RuntimeResult> ExecuteWarnAsync(UserRef userRef, float size, string reason)
         {
@@ -153,122 +149,6 @@ namespace BotCatMaxy
             _ = user.Notify("kicked", reason, Context.Guild, Context.Message.Author);
             await user.KickAsync(reason);
             Context.Message.DeleteOrRespond($"{user.Mention} has been kicked for {reason}", Context.Guild);
-        }
-
-        [Command("tempban")]
-        [Summary("Temporarily bans a user.")]
-        [Alias("tban", "temp-ban")]
-        [RequireContext(ContextType.Guild)]
-        [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempBanUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
-        {
-            if (time.TotalMinutes < 1)
-            {
-                await ReplyAsync("Can't temp-ban for less than a minute");
-                return;
-            }
-            if (!(Context.Message.Author as IGuildUser).HasAdmin())
-            {
-                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                {
-                    await ReplyAsync("You are not allowed to punish for that long");
-                    return;
-                }
-            }
-            var actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            var oldAct = actions.tempBans.FirstOrDefault(tempBan => tempBan.UserId == userRef.ID);
-            if (oldAct != null)
-            {
-                if (!(Context.Message.Author as IGuildUser).HasAdmin() && (oldAct.Length - (DateTime.UtcNow - oldAct.Start)) >= time)
-                {
-                    await ReplyAsync($"{Context.User.Mention} please contact your admin(s) in order to shorten length of a punishment");
-                    return;
-                }
-
-                string timeLeft = (oldAct.Length - (DateTime.UtcNow - oldAct.Start)).LimitedHumanize();
-                var query = await ReplyAsync(
-                    $"{userRef.Name(true)} is already temp-banned for {oldAct.Length.LimitedHumanize()} ({timeLeft} left), are you sure you want to change the length?");
-                if (await TryConfirmation(query))
-                {
-                    actions.tempBans.Remove(oldAct);
-                    actions.SaveToFile();
-                }
-                else
-                {
-                    await ReplyAsync("Command canceled");
-                    return;
-                }
-            }
-            await userRef.TempBan(time, reason, Context, actions);
-            Context.Message.DeleteOrRespond($"Temporarily banned {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}", Context.Guild);
-        }
-
-        [Command("tempbanwarn")]
-        [Summary("Temporarily bans a user, and warns them with a reason.")]
-        [Alias("tbanwarn", "temp-banwarn", "tempbanandwarn", "tbw")]
-        [RequireContext(ContextType.Guild)]
-        [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempBanWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, [Remainder] string reason)
-        {
-            if (time.TotalMinutes < 1)
-            {
-                await ReplyAsync("Can't temp-ban for less than a minute");
-                return;
-            }
-            if (!(Context.Message.Author as IGuildUser).HasAdmin())
-            {
-                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                {
-                    await ReplyAsync("You are not allowed to punish for that long");
-                    return;
-                }
-            }
-            await userRef.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
-            var actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.UserId == userRef.ID))
-            {
-                Context.Message.DeleteOrRespond($"{userRef.Name()} is already temp-banned (the warn did go through)", Context.Guild);
-                return;
-            }
-            await userRef.TempBan(time, reason, Context, actions);
-            Context.Message.DeleteOrRespond($"Temporarily banned {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}", Context.Guild);
-        }
-
-        [Command("tempbanwarn")]
-        [Alias("tbanwarn", "temp-banwarn", "tempbanwarn", "warntempban", "tbw")]
-        [Summary("Temporarily bans a user, and warns them with a specific size along with a reason.")]
-        [RequireContext(ContextType.Guild)]
-        [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task TempBanWarnUser([RequireHierarchy] UserRef userRef, TimeSpan time, float size, [Remainder] string reason)
-        {
-            if (time.TotalMinutes < 1)
-            {
-                await ReplyAsync("Can't temp-ban for less than a minute");
-                return;
-            }
-            if (!(Context.Message.Author as IGuildUser).HasAdmin())
-            {
-                ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
-                if (settings?.maxTempAction != null && time > settings.maxTempAction)
-                {
-                    await ReplyAsync("You are not allowed to punish for that long");
-                    return;
-                }
-            }
-            await userRef.Warn(size, reason, Context.Channel as ITextChannel, "Discord");
-            var actions = Context.Guild.LoadFromFile<TempActionList>(true);
-            if (actions.tempBans.Any(tempBan => tempBan.UserId == userRef.ID))
-            {
-                await ReplyAsync($"{userRef.Name()} is already temp-banned (the warn did go through)");
-                return;
-            }
-            await userRef.TempBan(time, reason, Context, actions);
-            Context.Message.DeleteOrRespond($"Temporarily banned {userRef.Mention()} for {time.LimitedHumanize(3)} because of {reason}", Context.Guild);
         }
 
         [Command("ban", RunMode = RunMode.Async)]

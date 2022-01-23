@@ -7,6 +7,15 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class TempBan : TempAction
     {
+        public TempBan() { }
+
+        public TempBan(TimeSpan length, string reason, ulong userId)
+        {
+            Length = length;
+            Reason = reason;
+            UserId = userId;
+        }
+
         public override TempActionType Type => TempActionType.TempBan;
         protected override string LogString => "bann";
 

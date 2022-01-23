@@ -227,27 +227,5 @@ namespace BotCatMaxy.Moderation
 
             return embed.Build();
         }
-
-        public static async Task TempBan(this UserRef userRef, TimeSpan time, string reason, ICommandContext context, TempActionList actions = null)
-        {
-            var tempBan = new TempBan {Length = time, Reason = reason, UserId = userRef.ID};
-            actions ??= context.Guild.LoadFromFile<TempActionList>(true);
-            actions.tempBans.Add(tempBan);
-            actions.SaveToFile();
-            if (userRef.User != null)
-            {
-                try
-                {
-                    await userRef.User.Notify($"tempbanned for {time.LimitedHumanize()}", reason, context.Guild, context.Message.Author);
-                }
-                catch (Exception e)
-                {
-                    if (e is NullReferenceException) await new LogMessage(LogSeverity.Error, "TempAct", "Something went wrong notifying person", e).Log();
-                }
-            }
-            await context.Guild.AddBanAsync(userRef.ID, reason: reason);
-            DiscordLogging.LogTempAct(context.Guild, context.User, userRef, "bann", reason, context.Message.GetJumpUrl(), time);
-            userRef.ID.RecordAct(context.Guild, tempBan, "tempban", context.Message.GetJumpUrl());
-        }
     }
 }
