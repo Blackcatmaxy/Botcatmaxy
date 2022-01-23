@@ -65,8 +65,11 @@ public class TempMuteCommands : InteractiveModule
             UserId = userRef.ID
         };
         var checkResult = await ConfirmNoTempAct(actions.tempMutes, tempMute, userRef);
-        if (checkResult != null)
-            return checkResult;
+        if (checkResult?.result != null)
+            return checkResult.Value.result;
+        if (checkResult?.action != null)
+            actions.tempMutes.Remove(checkResult.Value.action);
+
         actions.tempMutes.Add(tempMute);
         actions.SaveToFile();
         if (userRef.GuildUser != null)

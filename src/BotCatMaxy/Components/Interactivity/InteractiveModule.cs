@@ -47,11 +47,11 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         return (reaction.IsSuccess && Equals(reaction.Value.Emote, ConfirmEmoji));
     }
 
-    public async Task<CommandResult?> ConfirmNoTempAct(IReadOnlyList<TempAction>? actions, TempAction newAction, UserRef user)
+    public async Task<(CommandResult? result, TAct? action)?> ConfirmNoTempAct<TAct>(IReadOnlyList<TAct>? actions, TAct newAction, UserRef user) where TAct : TempAction
     {
         if (actions?.Count is null or 0 || actions.Any(action => action.UserId == user.ID) == false)
             return null;
-        TempAction? oldAction = null;
+        TAct? oldAction = null;
         foreach (var action in actions)
         {
             if (action.UserId == user.ID)
@@ -83,7 +83,10 @@ public class InteractiveModule : ModuleBase<ICommandContext>
                         .Build();
 
         var result = await Interactivity.SendSelectionAsync(selection, Context.Channel, TimeSpan.FromMinutes(1));
-        return result.IsCanceled ? CommandResult.FromError("Command has been canceled.") : null;
+
+        if (result.IsCanceled)
+            return (CommandResult.FromError("Command has been canceled."), null);
+        return (null, oldAction);
     }
 
     /// <summary>
