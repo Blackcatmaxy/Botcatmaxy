@@ -156,38 +156,29 @@ namespace BotCatMaxy
         [RequireContext(ContextType.Guild)]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason)
+        public async Task<RuntimeResult> Ban([RequireHierarchy] UserRef userRef, [Remainder] string reason)
         {
-            if (reason.Split(' ').First().ToTime() != null)
+            if (reason.Split(' ').First().ToTime() != null && await TryConfirmation("Are you sure you don't mean to use `!tempban`?") == false)
             {
-                var query = await ReplyAsync("Are you sure you don't mean to use `!tempban`?");
-                if (await TryConfirmation(query))
-                {
-                    await ReplyAsync("Command canceled.");
-                    return;
-                }
+                return CommandResult.FromError("Command canceled.");
             }
 
             var actions = Context.Guild.LoadFromFile<TempActionList>(false);
             if (actions?.tempBans?.Any(tempBan => tempBan.UserId == userRef.ID) ?? false)
             {
-                var query = await ReplyAsync("User is already tempbanned, are you sure you want to ban?");
-                if (!await TryConfirmation(query))
-                {
-                    await ReplyAsync("Command canceled.");
-                    return;
-                }
+                if (await TryConfirmation("User is already TempBanned, are you sure you want to ban?") == false)
+                    return CommandResult.FromError("Command canceled.");
                 actions.tempBans.Remove(actions.tempBans.First(tempBan => tempBan.UserId == userRef.ID));
             }
-            else if ((await Context.Guild.GetBansAsync()).Any(ban => ban.User.Id == userRef.ID))
+            else if (await Context.Guild.GetBanAsync(userRef.ID) != null)
             {
-                await ReplyAsync("User has already been banned permanently");
-                return;
+                return CommandResult.FromError("User has already been banned permanently.");
             }
-            userRef.User?.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
+            if (userRef.User != null)
+                await userRef.User.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
-            DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
-            Context.Message.DeleteOrRespond($"{userRef.Name(true)} has been banned for {reason}", Context.Guild);
+            await DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
+            return CommandResult.FromSuccess($"{userRef.Name(true)} has been banned for `{reason}`.");
         }
 
         [Command("delete")]

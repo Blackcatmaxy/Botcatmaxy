@@ -37,14 +37,25 @@ public class InteractiveModule : ModuleBase<ICommandContext>
     /// <param name="message">The message to check for reactions from</param>
     /// <param name="timeout">The time to wait before the methods returns a timeout result. Defaults to 2 minutes.</param>
     /// <returns>Returns true if didn't time out and confirm is selected</returns>
-    public async Task<bool> TryConfirmation(IMessage message, TimeSpan? timeout = null)
+    public async Task<bool> TryConfirmation(string message, TimeSpan? timeout = null)
     {
-        await message.AddReactionAsync(CancelEmoji);
-        await message.AddReactionAsync(ConfirmEmoji);
-        var reaction = await Interactivity.NextReactionAsync(reaction
-            => reaction.MessageId == message.Id && reaction.UserId == message.Author.Id, timeout: timeout ?? TimeSpan.FromMinutes(2));
+        var page = new PageBuilder()
+                   .WithColor(Color.Blue)
+                   .WithDescription(message);
+        var selection = new ButtonSelectionBuilder<string>()
+            .AddUser(Context.User)
+            .WithSelectionPage(page)
+            .AddOption(new ButtonOption<string>("Confirm", ButtonStyle.Success))
+            .AddOption(new ButtonOption<string>("Cancel", ButtonStyle.Danger))
+            .WithActionOnCancellation(ActionOnStop.DisableInput)
+            .WithActionOnSuccess(ActionOnStop.DisableInput)
+            .WithActionOnTimeout(ActionOnStop.DisableInput)
+            .WithStringConverter(x => x.Option)
+            .WithAllowCancel(true)
+            .Build();
 
-        return (reaction.IsSuccess && Equals(reaction.Value.Emote, ConfirmEmoji));
+        var result = await Interactivity.SendSelectionAsync(selection, Context.Channel, timeout ?? TimeSpan.FromMinutes(2));
+        return result.IsSuccess;
     }
 
     public async Task<(CommandResult? result, TAct? action)?> ConfirmNoTempAct<TAct>(IReadOnlyList<TAct>? actions, TAct newAction, UserRef user) where TAct : TempAction
