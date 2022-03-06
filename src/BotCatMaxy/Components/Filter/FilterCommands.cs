@@ -1,4 +1,4 @@
-﻿using BotCatMaxy.Data;
+using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
@@ -27,7 +27,7 @@ namespace BotCatMaxy.Components.Filter
         [Command("list")]
         [Summary("View filter information.")]
         [Alias("info")]
-        [RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
+        [AdminOrDM]
         public async Task<RuntimeResult> ListAutoMod(string? extension = null)
         {
             var guild = await QueryMutualGuild();
