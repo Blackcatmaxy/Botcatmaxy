@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic    ;
+using Discord;
 
 namespace BotCatMaxy.Models
 {
@@ -20,10 +21,14 @@ namespace BotCatMaxy.Models
     /// A collection of <seealso cref="Infraction"/>s to store and load from the database
     /// </summary>
     [BsonIgnoreExtraElements]
-    public class UserInfractions
+    public class UserInfractions : IGuildData
     {
+        public ulong GuildId => Guild.Id;
+
         [BsonId]
-        public ulong ID { get; init; }
+        public ulong userId { get; init; }
+        [Newtonsoft.Json.JsonIgnore]
+        public IGuild Guild { get; init; }
         public List<Infraction> infractions = new();
     }
 }

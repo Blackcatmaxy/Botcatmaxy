@@ -332,7 +332,7 @@ namespace BotCatMaxy
                     modSettings = "Not set";
             }
 
-            string logSettings;
+            /*string logSettings;
             if (Context.Guild.GetFromCache<LogSettings>(out _, out _) != null)
                 logSettings = "In cache";
             else
@@ -346,12 +346,12 @@ namespace BotCatMaxy
                 }
                 else
                     logSettings = "Not set";
-            }
+            }*/
 
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithColor(Color.LighterGrey);
             embed.AddField("Moderation settings", modSettings, true);
-            embed.AddField("Logging settings", logSettings, true);
+            //embed.AddField("Logging settings", logSettings, true);
             await ReplyAsync(embed: embed.Build());
         }
 

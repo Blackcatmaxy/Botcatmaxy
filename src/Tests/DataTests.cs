@@ -50,7 +50,7 @@ namespace Tests
             Assert.False(collection.FindSync((Builders<BsonDocument>.Filter.Eq("_id", 1234))).Any());
             var infractions = new UserInfractions()
             {
-                ID = 1234,
+                userId = 1234,
                 infractions = new List<Infraction>
                     {
                         new Infraction() { Reason = "Test", Time = DateTime.UtcNow }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.Logging;
 using BotCatMaxy.Data;
+using BotCatMaxy.Services;
 using BotCatMaxy.Services.TempActions;
 using BotCatMaxy.Startup;
 using Discord;
@@ -77,11 +78,11 @@ namespace BotCatMaxy
                     //Tell Dependency Injection that it can put DiscordSocketClient where IDiscordClient is requested 
                     services.AddSingleton<IDiscordClient, DiscordSocketClient>(x => x.GetRequiredService<DiscordSocketClient>());
                     //Set up and add Mongo
-                    var mongo = new MongoClient(context.Configuration["DataToken"]);
+                    /*var mongo = new MongoClient(context.Configuration["DataToken"]);
                     DataManipulator.dbClient = mongo;
-                    DataManipulator.MapTypes();
+                    DataManipulator.MapTypes();*/
 
-                    services.AddSingleton(mongo);
+                    //services.AddSingleton(mongo);
                     services.AddSingleton(context.Configuration);
                     services.AddSingleton<InteractiveService>();
                     services.AddSingleton(new CommandService(new CommandServiceConfig
@@ -90,13 +91,14 @@ namespace BotCatMaxy
                         CaseSensitiveCommands = false,
                         IgnoreExtraArgs = true
                     }));
-
-                    services.AddHostedService<BotInfo>();
-                    services.AddHostedService<StatusManager>();
-                    services.AddHostedService<FilterHandler>();
-                    services.AddHostedService<LoggingHandler>();
+                    services.AddSingleton<DataService>();
+                    services.AddHostedService<DataExperimentService>();
+                    //services.AddHostedService<BotInfo>();
+                    //services.AddHostedService<StatusManager>();
+                    //services.AddHostedService<FilterHandler>();
+                    //services.AddHostedService<LoggingHandler>();
                     services.AddHostedService<CommandHandler>();
-                    services.AddHostedService<TempActionService>();
+                    //services.AddHostedService<TempActionService>();
                 });
 
             try

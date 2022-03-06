@@ -85,10 +85,10 @@ namespace BotCatMaxy.Data
             }
         }
 
-        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T : DataObject
+        public static T LoadFromFile<T>(this IGuild guild, bool createFile = false) where T : class, IGuildData
         {
-            T file = guild.GetFromCache<T>(out FieldInfo field, out GuildSettings gCache);
-            if (file != null) return file;
+            T file = null; /*guild.GetFromCache<T>(out FieldInfo field, out GuildSettings gCache);
+            if (file != null) return file;*/
 
             var collection = guild.GetCollection(createFile);
             if (collection != null)
@@ -102,25 +102,24 @@ namespace BotCatMaxy.Data
 
                 if (createFile && file == null)
                 {
-                    file = (T)Activator.CreateInstance(typeof(T));
-                    file.guild = guild;
+                    //file = (T)Activator.CreateInstance<T>() { guild = guild}
                 }
             }
 
             //small things like set cache
-            if (file != null)
+            /*if (file != null)
             {
                 file.guild = guild;
                 file.AddToCache(field, gCache);
-            }
+            }*/
 
             return file;
         }
 
-        public static void SaveToFile<T>(this T file) where T : DataObject
+        public static void SaveToFile<T>(this T file) where T : IGuildData
         {
-            file.AddToCache();
-            var collection = file.guild.GetCollection(true);
+            //file.AddToCache();
+            var collection = file.Guild.GetCollection(true);
             var name = typeof(T).Name;
             var filter = Builders<BsonDocument>.Filter.Eq("_id", name);
             var document = file.ToBsonDocument()
@@ -207,7 +206,7 @@ namespace BotCatMaxy.Data
         {
             var collection = guild.GetInfractionsCollection(true);
             var filter = Builders<BsonDocument>.Filter.Eq("_id", userID);
-            var document = new UserInfractions { ID = userID, infractions = infractions }.ToBsonDocument();
+            var document = new UserInfractions { userId = userID, infractions = infractions }.ToBsonDocument();
             collection.ReplaceOne(filter, document, replaceOptions);
         }
     }
@@ -216,9 +215,13 @@ namespace BotCatMaxy.Data
     /// A class most of our DB objects wrap for easy load and saving
     /// </summary>
     [BsonIgnoreExtraElements(Inherited = true)]
-    public class DataObject
+    public class DataObject : IGuildData
     {
-        [BsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public IGuild guild;
+        public ulong GuildId => Guild.Id;
+
+        [Newtonsoft.Json.JsonIgnore]
+        public IGuild Guild { get => guild; init => guild = value; }
     }
 }
