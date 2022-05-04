@@ -1,4 +1,4 @@
-﻿using BotCatMaxy.Data;
+using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
@@ -30,10 +30,14 @@ namespace BotCatMaxy.Components.Settings
         {
             if (time.TotalSeconds % 1 != 0)
             {
-                await ReplyAsync("Can't set slowmode precision for less than a second");
+                await ReplyAsync("Can't set slowmode precision to less than a second");
                 return;
             }
-            await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = time.Seconds);
+
+            int maxSeconds = 21600;
+            int totalSeconds = (int)Math.Clamp(time.TotalSeconds, 0, maxSeconds);
+
+            await (Context.Channel as SocketTextChannel).ModifyAsync(channel => channel.SlowModeInterval = totalSeconds);
             await ReplyAsync($"Set channel slowmode to {time.LimitedHumanize()}");
         }
 
