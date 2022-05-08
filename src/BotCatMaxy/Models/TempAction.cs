@@ -21,7 +21,7 @@ namespace BotCatMaxy.Models
         public ulong UserId { get; init; }
         public TimeSpan Length { get; init; }
         public DateTime EndTime => Start.Add(Length);
-        public bool ShouldEnd => DateTime.UtcNow >= EndTime;
+        public bool IsTimeEnd => DateTime.UtcNow >= EndTime;
         protected abstract string LogString { get; }
         protected IUser CachedUser;
 
