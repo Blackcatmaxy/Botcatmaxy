@@ -47,6 +47,43 @@ public class LoggingCommands : InteractiveModule
         await message.ModifyAsync(msg => msg.Content = "Set log channel to this channel");
     }
 
+    [Command("addblacklistedchannel"), Alias("blacklistchannel")]
+    [HasAdmin]
+    public async Task AddBlacklistChannel()
+    {
+        IUserMessage botMessage = await ReplyAsync("Setting...");
+        LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
+
+        if (settings.channelLogBlacklist.Contains(botMessage.Channel.Id)) {
+            await botMessage.ModifyAsync(msg => msg.Content = "This channel is already blacklisted from logging");
+            return;
+        }
+
+        settings.channelLogBlacklist.Add(botMessage.Channel.Id);
+        settings.SaveToFile();
+
+        await botMessage.ModifyAsync(msg => msg.Content = "Successfully added this channel to the logging blacklist");
+    }
+
+    [Command("removeblacklistedchannel"), Alias("allowchannel")]
+    [HasAdmin]
+    public async Task RemoveBlacklistChannel()
+    {
+        IUserMessage botMessage = await ReplyAsync("Removing...");
+        LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
+
+        if (!settings.channelLogBlacklist.Contains(botMessage.Channel.Id))
+        {
+            await botMessage.ModifyAsync(msg => msg.Content = "This channel isn't blacklisted from logging");
+            return;
+        }
+
+        settings.channelLogBlacklist.Remove(botMessage.Channel.Id);
+        settings.SaveToFile();
+
+        await botMessage.ModifyAsync(msg => msg.Content = "Successfully removed this channel from logging blacklist");
+    }
+
     [Command("setpubchannel"), Alias("setpublog", "publogset", "setpublogchannel")]
     [Summary("Sets this channel as the public logging channel.")]
     [HasAdmin]

@@ -1,5 +1,6 @@
-﻿using BotCatMaxy.Data;
+using BotCatMaxy.Data;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
 
 namespace BotCatMaxy.Models
 {
@@ -15,6 +16,9 @@ namespace BotCatMaxy.Models
         public bool logDeletes = true;
         public bool logEdits = false;
         public ulong? backupChannel = null;
+
+        public HashSet<ulong> channelLogBlacklist = new();
+
         public ulong? BestLog
         {
             get
