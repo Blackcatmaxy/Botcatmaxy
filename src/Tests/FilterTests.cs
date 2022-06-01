@@ -22,7 +22,7 @@ namespace Tests
         private readonly MockDiscordClient client = new();
         private readonly MockGuild guild = new();
         private readonly FilterHandler filter;
-        private FilterSettings settings;
+        private readonly FilterSettings settings;
         private Task<ITextChannel> channelTask;
 
         public FilterTests()
@@ -30,7 +30,7 @@ namespace Tests
             filter = new(client);
             client.guilds.Add(guild);
             channelTask = guild.CreateTextChannelAsync("TestChannel");
-            FilterSettings settings = new()
+            settings = new()
             {
                 guild = guild,
                 moderateNames = true,

@@ -24,8 +24,10 @@ namespace Tests.Mocks.Guild
         }
 
         public DateTimeOffset? JoinedAt => throw new NotImplementedException();
+        public string DisplayName { get; }
 
         public string Nickname => throw new NotImplementedException();
+        public string DisplayAvatarId { get; }
         public string GuildAvatarId { get; }
 
         public GuildPermissions GuildPermissions
@@ -77,6 +79,7 @@ namespace Tests.Mocks.Guild
         public string VoiceSessionId => throw new NotImplementedException();
 
         public bool IsStreaming => throw new NotImplementedException();
+        public bool IsVideoing { get; }
         public DateTimeOffset? RequestToSpeakTimestamp { get; }
 
         public Task AddRoleAsync(ulong roleId, RequestOptions options = null)
@@ -110,6 +113,11 @@ namespace Tests.Mocks.Guild
         }
 
         public string GetGuildAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetDisplayAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
         {
             throw new NotImplementedException();
         }
