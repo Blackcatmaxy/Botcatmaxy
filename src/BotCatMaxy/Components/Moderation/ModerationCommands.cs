@@ -359,7 +359,7 @@ namespace BotCatMaxy
                 }
                 actions.tempBans.Remove(actions.tempBans.First(tempBan => tempBan.UserId == userRef.ID));
             }
-            else if ((await Context.Guild.GetBansAsync()).Any(ban => ban.User.Id == userRef.ID))
+            else if (await Context.Guild.GetBanAsync(userRef.ID) != null)
             {
                 await ReplyAsync("User has already been banned permanently");
                 return;
