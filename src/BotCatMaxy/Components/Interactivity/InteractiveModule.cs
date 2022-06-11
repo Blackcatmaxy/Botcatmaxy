@@ -32,14 +32,15 @@ public class InteractiveModule : ModuleBase<ICommandContext>
     /// Adds confirm and deny reactions to a message and then waits for the author to react.
     /// </summary>
     /// <param name="message">The message to check for reactions from</param>
+    /// <param name="userId">The user allowed to react</param>
     /// <param name="timeout">The time to wait before the methods returns a timeout result. Defaults to 2 minutes.</param>
     /// <returns>Returns true if didn't time out and confirm is selected</returns>
-    public async Task<bool> TryConfirmation(IMessage message, TimeSpan? timeout = null)
+    public async Task<bool> TryConfirmation(IMessage message, ulong userId,  TimeSpan? timeout = null)
     {
         await message.AddReactionAsync(CancelEmoji);
         await message.AddReactionAsync(ConfirmEmoji);
         var reaction = await Interactivity.NextReactionAsync(reaction
-            => reaction.MessageId == message.Id && reaction.UserId == message.Author.Id, timeout: timeout ?? TimeSpan.FromMinutes(2));
+            => reaction.MessageId == message.Id && reaction.UserId == userId, timeout: timeout ?? TimeSpan.FromMinutes(2));
 
         return (reaction.IsSuccess && Equals(reaction.Value.Emote, ConfirmEmoji));
     }
