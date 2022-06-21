@@ -121,21 +121,20 @@ public class LoggingHandler : DiscordClientService
         IMessageChannel channel = await cachedChannel.GetOrDownloadAsync();
         try
         {
-            if (!(channel is SocketGuildChannel))
+            if (channel is not SocketGuildChannel guildChannel || guildChannel.Guild == null)
                 return;
-            SocketGuild guild = (channel as SocketGuildChannel).Guild;
+            SocketGuild guild = guildChannel.Guild;
 
             // Check if we should stop doing the log based on settings
-            LogSettings settings = guild.LoadFromFile<LogSettings>();
-
-            if (settings.channelLogBlacklist.Contains(channel.Id))
+            LogSettings settings = guild.LoadFromFile<LogSettings>(false);
+            if (settings?.channelLogBlacklist != null && settings.channelLogBlacklist.Contains(channel.Id))
                 return;
+
             await DiscordLogging.LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
         }
         catch (Exception exception)
         {
-            await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
+            LogSeverity.Error.LogException("Logging", "Error logging deleted message", exception);
         }
-        //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
     }
 }
