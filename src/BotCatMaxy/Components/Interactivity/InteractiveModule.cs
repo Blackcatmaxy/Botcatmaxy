@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Fergun.Interactive;
+using Fergun.Interactive.Selection;
+using Humanizer;
 
 #nullable enable
 namespace BotCatMaxy.Components.Interactivity;
@@ -114,31 +117,41 @@ public class InteractiveModule : ModuleBase<ICommandContext>
         if (Context.Guild != null)
             return Context.Guild;
 
+        var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var mutualGuilds = (await Context.Message.Author.GetMutualGuildsAsync(Context.Client)).ToImmutableArray();
 
-        var guildsEmbed = new EmbedBuilder();
-        guildsEmbed.WithTitle("Reply with the number corresponding to the server you're asking about:");
-
+        //var guildsEmbed = new EmbedBuilder();
+        //guildsEmbed.WithTitle("Reply with the number corresponding to the server you're asking about:");
+        var pageBuilder = new PageBuilder()
+            .WithTitle("Please select the relevant server in the dropdown below")
+            .WithColor(Color.Teal);
+        var options = new List<SelectMenuOption>(mutualGuilds.Length);
         for (var i = 0; i < mutualGuilds.Length; i++)
         {
-            guildsEmbed.AddField($"[{i + 1}] {mutualGuilds[i].Name}", mutualGuilds[i].Id);
+            string name = mutualGuilds[i].Name.Truncate(30, "...");
+            string id = mutualGuilds[i].Id.ToString();
+            pageBuilder.AddField($"[{i + 1}] {name}", id);
+            //Could pad ID right, but honestly is it worth it?
+            options.Add(new SelectMenuOptionBuilder($"{name} ({id})", id).Build());
         }
 
-        await Context.Channel.SendMessageAsync(embed: guildsEmbed.Build());
-        while (true)
+        var selection = new SelectionBuilder<SelectMenuOption>()
+            .WithSelectionPage(pageBuilder)
+            .WithOptions(options)
+            .WithInputType(InputType.SelectMenus)
+            .WithActionOnCancellation(ActionOnStop.DisableInput)
+            .WithActionOnSuccess(ActionOnStop.DisableInput)
+            .WithActionOnTimeout(ActionOnStop.DisableInput)
+            .WithStringConverter(option => option.Label)
+            .Build();
+
+        var result = await Interactivity.SendSelectionAsync(selection, Context.Channel, TimeSpan.FromMinutes(2), cancellationToken: cts.Token);
+        if (result.IsSuccess && ulong.TryParse(result.Value.Value, out ulong parsedId))
         {
-            Task<InteractiveResult<SocketMessage?>> task = Interactivity.NextMessageAsync(msg => msg.Channel.Id == Context.Channel.Id, timeout: TimeSpan.FromMinutes(1));
-            IMessage? message = (await task).Value;
-            if (message?.Content is null or "cancel")
-            {
-                return null;
-            }
-
-            if (byte.TryParse(message.Content, out byte index) && index > 0)
-                return mutualGuilds[index - 1];
-            else
-                await Context.Channel.SendMessageAsync("Invalid number, please reply again with a valid number or ``cancel``");
+            return await Context.Client.GetGuildAsync(parsedId);
         }
+
+        return null;
     }
 
     /// <summary>
