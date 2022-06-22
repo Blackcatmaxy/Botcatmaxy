@@ -15,17 +15,23 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using BotCatMaxy.Components.CommandHandling;
+using BotCatMaxy.Components.Interactivity;
 using BotCatMaxy.Services.TempActions;
 using BotCatMaxy.Startup;
+using Fergun.Interactive;
+using Fergun.Interactive.Pagination;
 
 namespace BotCatMaxy
 {
-    public class MiscCommands : ModuleBase<SocketCommandContext>
+    public class MiscCommands : InteractiveModule
     {
         private const string GITHUB = "https://github.com/Blackcatmaxy/Botcatmaxy";
         private readonly CommandService _service;
+        //For using socket classes in this ICommandContext environment
+        private SocketCommandContext SocketContext =>
+            Context as SocketCommandContext ?? throw new NotImplementedException("Command is not ready for tests.");
 
-        public MiscCommands(CommandService service)
+        public MiscCommands(CommandService service, IServiceProvider serviceProvider) : base(serviceProvider)
         {
             _service = service;
         }
@@ -99,10 +105,14 @@ namespace BotCatMaxy
             extraHelpEmbed.AddField("Wiki", $"[Click Here]({GITHUB}/wiki)", true);
             extraHelpEmbed.AddField("Submit bugs, enhancements, and contribute", $"[Click Here]({GITHUB})", true);
             await Context.User.SendMessageAsync(embed: extraHelpEmbed.Build());
-            IUserMessage msg = await Context.User.SendMessageAsync("Fetching commands...");
+
+            if (Context.User is not SocketUser socketUser)
+                throw new NotImplementedException("Command is not ready for tests.");
+
+            IUserMessage msg = await socketUser.SendMessageAsync("Fetching commands...");
 
             List<ICommandContext> contexts = new() { Context };
-            foreach (SocketGuild guild in Context.User.MutualGuilds)
+            foreach (SocketGuild guild in socketUser!.MutualGuilds)
             {
                 var channel = guild.Channels.First(channel => channel is IMessageChannel) as IMessageChannel;
 
@@ -116,12 +126,16 @@ namespace BotCatMaxy
                 });
             }
 
+            var paginator = new StaticPaginatorBuilder()
+                .AddUser(Context.User)
+                .WithInputType(InputType.Buttons);
             foreach (ModuleInfo module in _service.Modules)
             {
-                EmbedBuilder embed = new()
-                {
-                    Title = module.Name
-                };
+                var page = new PageBuilder()
+                    .WithTitle(module.Name)
+                    .WithDescription("These are all the commands you have permissions to use in this module:")
+                    .WithAuthor(Context.Client.CurrentUser)
+                    .WithColor(Color.Green);
 
                 foreach (CommandInfo command in module.Commands)
                 {
@@ -140,18 +154,17 @@ namespace BotCatMaxy
 
                     if (isAllowed)
                     {
-                        embed.AddField(MakeCommandField(command));
+                        page.AddField(MakeCommandField(command));
                     }
                 }
 
-                if (embed.Fields.Count > 0)
+                if (page.Fields.Count > 0)
                 {
-                    await ReplyAsync(embed: embed.Build());
+                    paginator.AddPage(page);
                 }
             }
 
-            msg.DeleteAsync();
-            await ReplyAsync("These are all the commands you have permissions to use");
+            await Interactivity.SendPaginatorAsync(paginator.Build(), msg, TimeSpan.FromMinutes(3));
         }
 
         [Command("describecommand"), Alias("describecmd", "dc", "commanddescribe")]
@@ -179,12 +192,12 @@ namespace BotCatMaxy
         [RequireOwner(Group = "Permission")]
         public async Task CheckPerms()
         {
-            GuildPermissions perms = Context.Guild.CurrentUser.GuildPermissions;
-            var embed = new EmbedBuilder();
-            embed.AddField("Manage roles", perms.ManageRoles, true);
-            embed.AddField("Manage messages", perms.ManageMessages, true);
-            embed.AddField("Kick", perms.KickMembers, true);
-            embed.AddField("Ban", perms.BanMembers, true);
+            GuildPermissions perms = SocketContext.Guild.CurrentUser.GuildPermissions;
+            var embed = new EmbedBuilder()
+                        .AddField("Manage roles", perms.ManageRoles, true)
+                        .AddField("Manage messages", perms.ManageMessages, true)
+                        .AddField("Kick", perms.KickMembers, true)
+                        .AddField("Ban", perms.BanMembers, true);
             await ReplyAsync(embed: embed.Build());
         }
 
@@ -215,15 +228,16 @@ namespace BotCatMaxy
         [Alias("statistics")]
         public async Task Statistics()
         {
-            var embed = new EmbedBuilder();
-            embed.WithTitle("Statistics");
-            embed.AddField($"Part of", $"{Context.Client.Guilds.Count} discord guilds", true);
+            var guilds = SocketContext.Client.Guilds;
+            var embed = new EmbedBuilder()
+                .WithTitle("Statistics")
+                .AddField($"Part of", $"{guilds.Count.ToString()} discord guilds", true);
             ulong infractions24Hours = 0;
             ulong totalInfractons = 0;
             ulong members = 0;
             uint tempBannedPeople = 0;
             uint tempMutedPeople = 0;
-            foreach (SocketGuild guild in Context.Client.Guilds)
+            foreach (SocketGuild guild in guilds)
             {
                 members += (ulong)guild.MemberCount;
                 var collection = guild.GetInfractionsCollection(false);
@@ -271,7 +285,7 @@ namespace BotCatMaxy
         {
             var tempActsToEnd = new List<TempAction>();
             RequestOptions requestOptions = new RequestOptions() { RetryMode = RetryMode.AlwaysRetry };
-            foreach (SocketGuild sockGuild in Context.Client.Guilds)
+            foreach (SocketGuild sockGuild in SocketContext.Client.Guilds)
             {
                 TempActionList actions = sockGuild.LoadFromFile<TempActionList>(false);
                 if (actions != null)
@@ -388,4 +402,6 @@ namespace BotCatMaxy
             await ReplyAsync("All data cleared from cache");
         }
     }
+
+    public class InteractiveModule<T> { }
 }

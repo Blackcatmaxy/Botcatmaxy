@@ -119,9 +119,6 @@ public class InteractiveModule : ModuleBase<ICommandContext>
 
         var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         var mutualGuilds = (await Context.Message.Author.GetMutualGuildsAsync(Context.Client)).ToImmutableArray();
-
-        //var guildsEmbed = new EmbedBuilder();
-        //guildsEmbed.WithTitle("Reply with the number corresponding to the server you're asking about:");
         var pageBuilder = new PageBuilder()
             .WithTitle("Please select the relevant server in the dropdown below")
             .WithColor(Color.Teal);
