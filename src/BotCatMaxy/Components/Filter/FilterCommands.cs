@@ -40,7 +40,8 @@ namespace BotCatMaxy.Components.Filter
 
             if (filterSettings == null)
             {
-                embed.AddField("Filter Settings", "Are not set.", true);
+                embed.AddField("Filter Settings", "Are not set.", true)
+                     .WithColor(Color.Gold);
             }
             else
             {
@@ -52,7 +53,8 @@ namespace BotCatMaxy.Components.Filter
                 else
                 {
                     string allowedLinks = filterSettings.allowedLinks.ListItems("\n");
-                    embed.AddField("Link filter:", allowedLinks, true);
+                    embed.AddField("Link filter:", allowedLinks, true)
+                         .WithColor(Color.Red);
 
                     if (filterSettings.allowedToLink?.Count is not null or 0)
                     {
@@ -93,9 +95,7 @@ namespace BotCatMaxy.Components.Filter
                     }
                     else
                     {
-                        await ReplyAsync("Are you sure you want to view the explicit filter? Reply with !confirm if you are sure.");
-                        var result = await Interactivity.NextMessageAsync(msg => msg.Channel.Id == msg.Id);
-                        useExplicit = "!confirm".Equals(result.Value?.Content, StringComparison.InvariantCultureIgnoreCase);
+                        useExplicit = await TryConfirmation("Are you sure you want to view the explicit filter?", TimeSpan.FromMinutes(1));
                     }
                 }
 
