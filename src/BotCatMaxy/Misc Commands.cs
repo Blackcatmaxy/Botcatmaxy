@@ -126,9 +126,12 @@ namespace BotCatMaxy
                 });
             }
 
+            const ActionOnStop finalAct = ActionOnStop.DisableInput;
             var paginator = new StaticPaginatorBuilder()
                 .AddUser(Context.User)
-                .WithInputType(InputType.Buttons);
+                .WithInputType(InputType.Buttons)
+                .WithActionOnCancellation(finalAct)
+                .WithActionOnTimeout(finalAct);
             foreach (ModuleInfo module in _service.Modules)
             {
                 var page = new PageBuilder()
