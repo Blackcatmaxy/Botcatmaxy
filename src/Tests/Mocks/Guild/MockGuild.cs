@@ -161,11 +161,6 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
-        public Task<IGuildIntegration> CreateIntegrationAsync(ulong id, string type, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<IRole> CreateRoleAsync(string name, GuildPermissions? permissions = null, Color? color = null, bool isHoisted = false, RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -251,6 +246,13 @@ namespace Tests.Mocks.Guild
 
         public Task<IGuildScheduledEvent> CreateEventAsync(string name, DateTimeOffset startTime, GuildScheduledEventType type,
             GuildScheduledEventPrivacyLevel privacyLevel = GuildScheduledEventPrivacyLevel.Private, string description = null, DateTimeOffset? endTime = null,
+            ulong? channelId = null, string location = null, Image? coverImage = null, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IGuildScheduledEvent> CreateEventAsync(string name, DateTimeOffset startTime, GuildScheduledEventType type,
+            GuildScheduledEventPrivacyLevel privacyLevel = GuildScheduledEventPrivacyLevel.Private, string description = null, DateTimeOffset? endTime = null,
             ulong? channelId = null, string location = null, RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -298,16 +300,16 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public IAsyncEnumerable<IReadOnlyCollection<IBan>> GetBansAsync(IUser fromUser, Direction dir, int limit = 1000, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IBan> GetBanAsync(IUser user, RequestOptions options = null)
             => Task.FromResult(bans.FirstOrDefault(ban => ban.User.Id == user.Id) as IBan);
 
         public Task<IBan> GetBanAsync(ulong userId, RequestOptions options = null)
             => Task.FromResult(bans.FirstOrDefault(ban => ban.User.Id == userId) as IBan);
-
-        public Task<IReadOnlyCollection<IBan>> GetBansAsync(RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
 
         public Task<IReadOnlyCollection<ICategoryChannel>> GetCategoriesAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
         {
@@ -332,11 +334,6 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
-        public Task<IGuildChannel> GetEmbedChannelAsync(CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<IReadOnlyCollection<GuildEmote>> GetEmotesAsync(RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -347,7 +344,7 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
-        public Task<IReadOnlyCollection<IGuildIntegration>> GetIntegrationsAsync(RequestOptions options = null)
+        public Task DeleteIntegrationAsync(ulong id, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
@@ -429,6 +426,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        Task<IReadOnlyCollection<IIntegration>> IGuild.GetIntegrationsAsync(RequestOptions options)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IWebhook> GetWebhookAsync(ulong id, RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -445,6 +447,16 @@ namespace Tests.Mocks.Guild
         }
 
         public Task LeaveAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IAsyncEnumerable<IReadOnlyCollection<IBan>> GetBansAsync(int limit = 1000, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IAsyncEnumerable<IReadOnlyCollection<IBan>> GetBansAsync(ulong fromUserId, Direction dir, int limit = 1000, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }

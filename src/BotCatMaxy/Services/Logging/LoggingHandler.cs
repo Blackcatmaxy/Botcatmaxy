@@ -52,6 +52,11 @@ public class LoggingHandler : DiscordClientService
         if (message.Channel as SocketGuildChannel != null && message.MentionedRoleIds != null && message.MentionedRoleIds.Count > 0)
         {
             SocketGuild guild = (message.Channel as SocketGuildChannel).Guild;
+            // Check if we should stop doing the log based on settings
+            LogSettings settings = guild.LoadFromFile<LogSettings>();
+
+            if (settings.channelLogBlacklist.Contains(message.Channel.Id))
+                return Task.CompletedTask;
             Task.Run(() => DiscordLogging.LogMessage("Role ping", message, guild, true));
         }
         return Task.CompletedTask;
@@ -61,14 +66,17 @@ public class LoggingHandler : DiscordClientService
     {
         try
         {
-            //Just makes sure that it's not logged when it shouldn't be
+            // Prevent from logging non-guild channels or invalid messages
             if (!(channel is SocketGuildChannel)) return;
             SocketGuild guild = (channel as SocketGuildChannel).Guild;
             IMessage oldMessage = await cachedMessage.GetOrDownloadAsync();
             if (oldMessage?.Content == newMessage.Content || newMessage.Author.IsBot || guild == null) return;
+            // Check if we should stop doing the log based on settings
             LogSettings settings = guild.LoadFromFile<LogSettings>();
-            //if settings or the log channel are null, or edit logging is disabled, just stop
             if (settings?.logChannel == null || !settings.logEdits) return;
+            if (settings.channelLogBlacklist.Contains(newMessage.Channel.Id)) 
+                return;
+            // Make sure we have a log channel set or abort
             SocketTextChannel logChannel = guild.GetChannel(settings.logChannel.Value) as SocketTextChannel;
             if (logChannel == null) return;
 
@@ -113,13 +121,20 @@ public class LoggingHandler : DiscordClientService
         IMessageChannel channel = await cachedChannel.GetOrDownloadAsync();
         try
         {
-            if (!(channel is SocketGuildChannel)) return;
+            if (channel is not SocketGuildChannel guildChannel || guildChannel.Guild == null)
+                return;
+            SocketGuild guild = guildChannel.Guild;
+
+            // Check if we should stop doing the log based on settings
+            LogSettings settings = guild.LoadFromFile<LogSettings>(false);
+            if (settings?.channelLogBlacklist != null && settings.channelLogBlacklist.Contains(channel.Id))
+                return;
+
             await DiscordLogging.LogMessage("Deleted message", message.GetOrDownloadAsync().Result);
         }
         catch (Exception exception)
         {
-            await new LogMessage(LogSeverity.Error, "Logging", "Error", exception).Log();
+            LogSeverity.Error.LogException("Logging", "Error logging deleted message", exception);
         }
-        //Console.WriteLine(new LogMessage(LogSeverity.Info, "Logging", "Message deleted"));
     }
 }

@@ -127,7 +127,7 @@ public static string HighlightFiltered(string content, string badText, int? inde
             await context.FilterPunish(context.User as IGuildUser, reason, modSettings, filterSettings, badText,
                 index: index, delete: true, warnSize: warnSize);
         }
-        
+
         public static async Task FilterPunish(this ICommandContext context, IGuildUser user, string reason,
             ModerationSettings modSettings, FilterSettings filterSettings, string badText, int? index = null,
             bool delete = true, float warnSize = 0.5f)
@@ -137,11 +137,11 @@ public static string HighlightFiltered(string content, string badText, int? inde
                 authorOveride: user, textOverride: highlighted);
             await user.Warn(warnSize, reason, context.Channel as ITextChannel, logLink: jumpLink);
 
-            if (filterSettings?.announcementChannels?.Contains(context.Channel.Id) ??
-                false) //If this channel is an anouncement channel
+            //If this channel is an announcement channel
+            if (filterSettings?.announcementChannels?.Contains(context.Channel.Id) ?? false)
                 return;
 
-            Task<IUserMessage> warnMessage = await NotifyPunish(context, user, reason, modSettings, highlighted);
+            IUserMessage warnMessage = await NotifyPunish(context, user, reason, highlighted);
 
             if (delete)
             {
@@ -150,11 +150,10 @@ public static string HighlightFiltered(string content, string badText, int? inde
                     DiscordLogging.deletedMessagesCache.Enqueue(context.Message.Id);
                     await context.Message.DeleteAsync();
                 }
-                catch (Exception e)
+                catch
                 {
-                    await new LogMessage(LogSeverity.Warning, "Filter", "Error in removing message", e).Log();
-                    await warnMessage?.Result?.ModifyAsync(msg =>
-                        msg.Content += ", something went wrong removing the message.");
+                    await warnMessage.ModifyAsync(msg =>
+                        msg.Content = warnMessage.Content + ", something went wrong removing the message.");
                 }
             }
         }
@@ -162,10 +161,9 @@ public static string HighlightFiltered(string content, string badText, int? inde
         public const string notifyInfoRegex =
             @"<@!?(\d+)> has been given their (\d+)\w+-?(?:\d+\w+)? infraction because of (.+)";
 
-        public static async Task<Task<IUserMessage>> NotifyPunish(ICommandContext context, IGuildUser user,
-            string reason, ModerationSettings settings, string highlight)
+        public static async Task<IUserMessage> NotifyPunish(ICommandContext context, IGuildUser user,
+            string reason, string highlight)
         {
-            Task<IUserMessage> warnMessage = null;
             LogSettings logSettings = context.Guild.LoadFromFile<LogSettings>(false);
 
             string infractionAmount = user.LoadInfractions().Count.Suffix();
@@ -178,29 +176,27 @@ public static string HighlightFiltered(string content, string badText, int? inde
             if (highlight != null) embed.WithDescription(highlight);
             await user.TryNotify(embed.Build());
 
-            var messages =
-                (await context.Channel.GetMessagesAsync(5).FlattenAsync()).Where(msg =>
-                    msg.Author.Id == context.Client.CurrentUser.Id);
-            //If need to go from "@person has been given their 3rd infractions because of fdsfd" to "@person has been given their 3rd-4th infractions because of fdsfd"
+            var messages = (await context.Channel.GetMessagesAsync(5).FlattenAsync())
+                .Where(msg => msg.Author.Id == context.Client.CurrentUser.Id);
+
+            //If need to go from "@person has been given their 3rd infractions because of fdsfd"
+            //to                 "@person has been given their 3rd-4th infractions because of fdsfd"
             if (messages.MatchInMessages(user.Id, out Match match, out IMessage message))
             {
                 int oldInfraction = int.Parse(match.Groups[2].Value);
-                await (message as IUserMessage).ModifyAsync(msg =>
-                    msg.Content =
-                        $"{user.Mention} has been given their {oldInfraction.Suffix()}-{infractionAmount} infraction because of {reason}");
+                await (message as IUserMessage)!.ModifyAsync(msg => msg.Content =
+                    $"{user.Mention} has been given their {oldInfraction.Suffix()}-{infractionAmount} infraction because of {reason}");
+
+                //No new message to send
                 return null;
             }
-            else
-            {
-                //Public channel nonsense if someone want a public log (don't think this has been used since the old Vesteria Discord but backward compat)
-                string toSay = $"{user.Mention} has been given their {infractionAmount} infraction because of {reason}";
-                var pubLogChannel = await context.Guild.GetTextChannelAsync(logSettings?.pubLogChannel ?? 0);
-                if (pubLogChannel != null)
-                    warnMessage = pubLogChannel.SendMessageAsync(toSay);
-                else
-                    warnMessage = context.Channel.SendMessageAsync(toSay);
-                return warnMessage;
-            }
+
+            string toSay = $"{user.Mention} has been given their {infractionAmount} infraction because of {reason}";
+
+            //Public channel nonsense if someone want a public log (don't think this has been used since the old Vesteria Discord but backward compat)
+            var pubLogChannel = await context.Guild.GetTextChannelAsync(logSettings?.pubLogChannel ?? 0);
+            var channel = pubLogChannel ?? context.Channel;
+            return await channel.SendMessageAsync(toSay);
         }
 
         public static bool MatchInMessages(this IEnumerable<IMessage> messages, ulong userID, out Match match,

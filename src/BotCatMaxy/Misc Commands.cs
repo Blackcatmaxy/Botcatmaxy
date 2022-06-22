@@ -279,7 +279,7 @@ namespace BotCatMaxy
                     if (actions.tempBans?.Count is not (null or 0))
                     {
                         tempActsToEnd.AddRange(actions.tempBans.
-                                                       Where(action => (action as TempAction).ShouldEnd));
+                                                       Where(action => (action as TempAction).IsTimeEnd));
                     }
 
                     ModerationSettings settings = sockGuild.LoadFromFile<ModerationSettings>();
@@ -287,7 +287,7 @@ namespace BotCatMaxy
                                              && actions.tempMutes?.Count is not (null or 0))
                     {
                         tempActsToEnd.AddRange(actions.tempMutes
-                                                      .Where(action => (action as TempAction).ShouldEnd));
+                                                      .Where(action => (action as TempAction).IsTimeEnd));
                     }
                 }
             }

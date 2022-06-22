@@ -8,7 +8,7 @@ using Discord;
 
 namespace Tests.Mocks.Guild
 {
-    public class MockTextChannel : MockMessageChannel, ITextChannel, IGuildChannel
+    public class MockTextChannel : MockMessageChannel, ITextChannel
     {
         public MockTextChannel(ISelfUser user, IGuild guild, string name) : base(user, name)
         {
@@ -28,6 +28,7 @@ namespace Tests.Mocks.Guild
         public string Topic => throw new NotImplementedException();
 
         public int SlowModeInterval => throw new NotImplementedException();
+        public ThreadArchiveDuration DefaultArchiveDuration { get; }
 
         public string Mention => throw new NotImplementedException();
 

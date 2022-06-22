@@ -16,6 +16,7 @@ namespace BotCatMaxy.Services.TempActions
 {
     public class GuildActChecker
     {
+        private readonly DateTime minStartTime;
         private readonly RequestOptions _requestOptions = new();
         private readonly DiscordSocketClient _client;
         private readonly CancellationToken? _ct;
@@ -37,6 +38,8 @@ namespace BotCatMaxy.Services.TempActions
             _ct = ct;
             _requestOptions.CancelToken = ct;
             _requestOptions.RetryMode = RetryMode.AlwaysRetry;
+            //Get DateTime for a faster way of checking if we're ending too early than calculating this each check
+            minStartTime = DateTime.UtcNow - TimeSpan.FromSeconds(30);
         }
 
         public async Task CheckGuildAsync()
@@ -86,14 +89,24 @@ namespace BotCatMaxy.Services.TempActions
 
         public async Task CheckTempAct<TAction>(TAction action, List<TAction> editedActions) where TAction : TempAction
         {
+            //Checking too early could be causing problems per issue #152, check if the start was _after_ our "minimum" DateTime
+            //(calculated earlier which should be more optimized than calculating each check), if start is after the time then it's
+            //too early to check and we should just return for this cycle
+            if (action.Start > minStartTime)
+                return;
+
             string actType = typeof(TAction).Name;
             try
             {
                 if (await action.CheckResolvedAsync(_guild, ResolutionType.Early, _requestOptions))
                 {
                     await RemoveActionAsync(action, editedActions, ResolutionType.Early);
+
+                    return;
                 }
-                else if (action.ShouldEnd)
+
+
+                if (action.IsTimeEnd)
                 {
                     await action.ResolveAsync(_guild, _requestOptions);
                     var result = await action.CheckResolvedAsync(_guild, ResolutionType.Normal, _requestOptions);
