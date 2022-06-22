@@ -24,7 +24,7 @@ namespace BotCatMaxy.Models
         public bool IsTimeEnd => DateTime.UtcNow >= EndTime;
         protected abstract string LogString { get; }
         protected IUser CachedUser;
-
+        public abstract TempActionType Type { get; }
         /// <summary>
         /// Resolve the temp action
         /// </summary>
@@ -54,5 +54,11 @@ namespace BotCatMaxy.Models
     {
         Early,
         Normal
+    }
+
+    public enum TempActionType
+    {
+        TempMute,
+        TempBan
     }
 }

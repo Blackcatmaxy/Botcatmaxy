@@ -108,31 +108,26 @@ public static class DiscordLogging
         return null;
     }
 
-    public static void LogTempAct(IGuild guild, IUser warner, UserRef subject, string actType, string reason, string warnLink, TimeSpan length)
+    #nullable enable
+    public static async Task<string?> LogTempAct(IGuild guild, IUser warner, UserRef subject, string actType, string reason, string execLink, TimeSpan length)
     {
-        try
-        {
-            LogSettings settings = guild.LoadFromFile<LogSettings>();
-            ITextChannel channel = guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0).Result;
-            if (channel == null) return;
+        LogSettings settings = guild.LoadFromFile<LogSettings>();
+        ITextChannel channel = await guild.GetTextChannelAsync(settings?.pubLogChannel ?? settings?.logChannel ?? 0);
+        if (channel == null)
+            return null;
 
-            var embed = new EmbedBuilder();
-            embed.WithAuthor(warner);
-            if (length == TimeSpan.Zero) //if not for forever
-                embed.AddField($"{subject.Name(true, true)} has been perm {actType}ed", $"Because of {reason}");
-            else
-                embed.AddField($"{subject.Name(true, true)} has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
-            if (!warnLink.IsNullOrEmpty()) embed.AddField("Jumplink", $"[Click Here]({warnLink})");
-            embed.WithColor(Color.Red);
-            embed.WithCurrentTimestamp();
+        var embed = new EmbedBuilder()
+            .WithAuthor(warner)
+            .WithColor(Color.Red)
+            .WithCurrentTimestamp();
+        if (length == TimeSpan.Zero)
+            embed.AddField($"{subject.Name(true, true)} has been perm {actType}ed", $"Because of {reason}");
+        else
+            embed.AddField($"{subject.Name(true, true)} has been temp-{actType}ed for {length.LimitedHumanize()}", $"Because of {reason}");
+        if (string.IsNullOrWhiteSpace(execLink) == false)
+            embed.AddField("Jumplink", $"[Click Here]({execLink})");
 
-            channel.SendMessageAsync(embed: embed.Build());
-            return;
-        }
-        catch (Exception e)
-        {
-            _ = new LogMessage(LogSeverity.Error, "Logging", "Error", e).Log();
-        }
-        return;
+        var message = await channel.SendMessageAsync(embed: embed.Build());
+        return message.GetJumpUrl();
     }
 }
