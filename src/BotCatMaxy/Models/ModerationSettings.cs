@@ -1,4 +1,4 @@
-﻿using BotCatMaxy.Data;
+using BotCatMaxy.Data;
 using System;
 using System.Collections.Generic;
 
@@ -12,6 +12,9 @@ namespace BotCatMaxy.Models
         public List<ulong> ableToWarn = new();
         public List<ulong> ableToBan = new();
         public Dictionary<string, double> dynamicSlowmode = new();
+        #nullable enable
+        public string? appealLink = null;
+        #nullable disable
         public TimeSpan? maxTempAction = null;
         public ulong mutedRole = 0;
         public bool useOwnerID = false;

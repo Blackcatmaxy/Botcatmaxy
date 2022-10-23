@@ -1,9 +1,10 @@
-﻿using BotCatMaxy.Data;
+using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace BotCatMaxy
@@ -43,6 +44,27 @@ namespace BotCatMaxy
         {
             return CommandResult.FromSuccess(
                 "This is a legacy feature, if you want this done now contact blackcatmaxy@gmail.com with your guild invite and your username so I can get back to you");
+        }
+
+        [Command("setappeallink"), Alias("appeallink")]
+        [Summary("Sets the link sent to all banned users to appeal. Use this command by itself to disable.")]
+        [RequireContext(ContextType.Guild)]
+        [HasAdmin]
+        public async Task SetAppealLink(string link = "")
+        {
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
+
+            if (link.IsNullOrEmpty())
+                settings.appealLink = null;
+            else
+                settings.appealLink = link;
+
+            settings.SaveToFile();
+
+            if (link.IsNullOrEmpty())
+                await ReplyAsync("Cleared appeal link");
+            else
+                await ReplyAsync($"Set the appeal link to `{link}`");
         }
 
         [Command("allowwarn"), Alias("allowtowarn")]
