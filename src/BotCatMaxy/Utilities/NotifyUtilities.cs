@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -13,14 +13,21 @@ namespace BotCatMaxy
         /// <summary>
         /// Embeds a DM to a user about an action with a reason
         /// </summary>
-        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, IUser author = null, Color color = default)
+        public static async Task Notify(this IUser user, string action, string reason, IGuild guild, IUser author = null, Color color = default, string appealLink = "")
         {
+            var newReason = reason;
+
             if (color == default) color = Color.LightGrey;
             var embed = new EmbedBuilder()
-                .AddField($"You have been {action}", reason)
                 .WithCurrentTimestamp()
                 .WithGuildAsAuthor(guild)
                 .WithColor(color);
+
+            if (!appealLink.IsNullOrEmpty())
+                newReason += $"\n\n[Click here to appeal.]({appealLink})";
+
+            embed.AddField($"You have been {action}", newReason);
+
             if (author != null) embed.WithFooter($"Done by {author.Username}#{author.Discriminator}", author.GetAvatarUrl());
             await user.TryNotify(embed.Build());
         }

@@ -1,4 +1,4 @@
-﻿using BotCatMaxy.Data;
+using BotCatMaxy.Data;
 using BotCatMaxy.Models;
 using BotCatMaxy.Moderation;
 using BotCatMaxy.Services.Logging;
@@ -164,6 +164,8 @@ namespace BotCatMaxy
             }
 
             var actions = Context.Guild.LoadFromFile<TempActionList>(false);
+            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+
             if (actions?.tempBans?.Any(tempBan => tempBan.UserId == userRef.ID) ?? false)
             {
                 if (await TryConfirmation("User is already TempBanned, are you sure you want to ban?") == false)
@@ -174,8 +176,14 @@ namespace BotCatMaxy
             {
                 return CommandResult.FromError("User has already been banned permanently.");
             }
+
+            string newReason = $"You have been perm banned in the {Context.Guild.Name} discord for {reason}";
+
+            if (!settings.appealLink.IsNullOrEmpty())
+                newReason += $"\nUse this link to appeal: {settings.appealLink}";
+
             if (userRef.User != null)
-                await userRef.User.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
+                await userRef.User.TryNotify(newReason);
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             await DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
             return CommandResult.FromSuccess($"{userRef.Name(true)} has been banned for `{reason}`.");

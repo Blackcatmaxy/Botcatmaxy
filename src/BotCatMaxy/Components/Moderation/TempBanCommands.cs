@@ -49,9 +49,10 @@ public class TempBanCommands : InteractiveModule
         if (time.TotalMinutes < 1)
             return CommandResult.FromError("Can't temp-ban for less than a minute.");
 
+        ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
+
         if (!(Context.Message.Author as IGuildUser).HasAdmin())
         {
-            ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(false);
             if (settings?.maxTempAction != null && time > settings.maxTempAction)
             {
                 return CommandResult.FromError("You are not allowed to punish for that long.");
@@ -71,7 +72,7 @@ public class TempBanCommands : InteractiveModule
         {
             try
             {
-                await userRef.User.Notify($"tempbanned for {time.LimitedHumanize()}", reason, Context.Guild, Context.Message.Author);
+                await userRef.User.Notify($"tempbanned for {time.LimitedHumanize()}", reason, Context.Guild, Context.Message.Author, appealLink: settings.appealLink);
             }
             catch (Exception e)
             {
