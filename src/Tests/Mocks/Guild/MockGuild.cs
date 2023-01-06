@@ -156,6 +156,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IForumChannel> CreateForumChannelAsync(string name, Action<ForumChannelProperties> func = null, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<GuildEmote> CreateEmoteAsync(string name, Image image, Optional<IEnumerable<IRole>> roles = default, RequestOptions options = null)
         {
             throw new NotImplementedException();
@@ -251,14 +256,7 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
-        public Task<IGuildScheduledEvent> CreateEventAsync(string name, DateTimeOffset startTime, GuildScheduledEventType type,
-            GuildScheduledEventPrivacyLevel privacyLevel = GuildScheduledEventPrivacyLevel.Private, string description = null, DateTimeOffset? endTime = null,
-            ulong? channelId = null, string location = null, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IReadOnlyCollection<IApplicationCommand>> GetApplicationCommandsAsync(RequestOptions options = null)
+        public Task<IReadOnlyCollection<IApplicationCommand>> GetApplicationCommandsAsync(bool withLocalizations = false, string locale = null, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }

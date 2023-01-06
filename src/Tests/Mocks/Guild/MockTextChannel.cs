@@ -23,6 +23,11 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<IReadOnlyCollection<IThreadChannel>> GetActiveThreadsAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public bool IsNsfw => throw new NotImplementedException();
 
         public string Topic => throw new NotImplementedException();
@@ -35,6 +40,7 @@ namespace Tests.Mocks.Guild
         public ulong? CategoryId => null;
 
         public int Position => throw new NotImplementedException();
+        public ChannelFlags Flags { get; }
 
         public IGuild Guild { get; init; }
 

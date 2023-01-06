@@ -62,7 +62,8 @@ namespace Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<IReadOnlyCollection<IApplicationCommand>> GetGlobalApplicationCommandsAsync(RequestOptions options = null)
+        public Task<IReadOnlyCollection<IApplicationCommand>> GetGlobalApplicationCommandsAsync(bool withLocalizations = false, string locale = null,
+            RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
