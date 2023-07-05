@@ -8,10 +8,10 @@ namespace Tests
     {
         [Theory]
         [InlineData("hey", null)]
-        [InlineData("30m", 30)]
-        [InlineData("1h", 60)]
-        [InlineData("30m1h", 90)]
-        [InlineData("1h30m", 90)]
+        [InlineData("30m", 30d)]
+        [InlineData("1h", 60d)]
+        [InlineData("30m1h", 90d)]
+        [InlineData("1h30m", 90d)]
         public void TimeSpanTheory(string input, double? minutes)
         {
             double? result = null;
