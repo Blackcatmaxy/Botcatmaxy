@@ -177,13 +177,9 @@ namespace BotCatMaxy
                 return CommandResult.FromError("User has already been banned permanently.");
             }
 
-            string newReason = $"You have been perm banned in the {Context.Guild.Name} discord for {reason}";
-
-            if (!settings.appealLink.IsNullOrEmpty())
-                newReason += $"\nUse this link to appeal: {settings.appealLink}";
-
             if (userRef.User != null)
-                await userRef.User.TryNotify(newReason);
+                await userRef.User.Notify($"permanently banned", reason, Context.Guild, Context.Message.Author, appealLink: settings.appealLink);
+                // await userRef.User.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             await DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
             return CommandResult.FromSuccess($"{userRef.Name(true)} has been banned for `{reason}`.");
