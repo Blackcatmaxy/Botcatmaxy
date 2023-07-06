@@ -25,7 +25,7 @@ namespace BotCatMaxy
                 .WithColor(color);
 
             if (!appealLink.IsNullOrEmpty())
-                embed.AddField("Appeal", $"Click **[here]({appealLink})** if you'd like to appeal.");
+                embed.AddField("Appeal", $"**[Click here]({appealLink})** if you'd like to appeal.");
 
             if (author != null) embed.WithFooter($"Done by {author.Username}#{author.Discriminator}", author.GetAvatarUrl());
             await user.TryNotify(embed.Build());
