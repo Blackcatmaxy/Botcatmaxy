@@ -179,7 +179,6 @@ namespace BotCatMaxy
 
             if (userRef.User != null)
                 await userRef.User.Notify($"permanently banned", reason, Context.Guild, Context.Message.Author, appealLink: settings.appealLink);
-                // await userRef.User.TryNotify($"You have been perm banned in the {Context.Guild.Name} discord for {reason}");
             await Context.Guild.AddBanAsync(userRef.ID, reason: reason);
             await DiscordLogging.LogTempAct(Context.Guild, Context.Message.Author, userRef, "Bann", reason, Context.Message.GetJumpUrl(), TimeSpan.Zero);
             return CommandResult.FromSuccess($"{userRef.Name(true)} has been banned for `{reason}`.");
