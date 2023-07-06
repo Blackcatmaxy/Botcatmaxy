@@ -50,7 +50,7 @@ namespace BotCatMaxy
         [Summary("Sets the link sent to all banned users to appeal. Use this command by itself to disable.")]
         [RequireContext(ContextType.Guild)]
         [HasAdmin]
-        public async Task SetAppealLink(string link = "")
+        public async Task SetAppealLink(string link = null)
         {
             ModerationSettings settings = Context.Guild.LoadFromFile<ModerationSettings>(true);
 
