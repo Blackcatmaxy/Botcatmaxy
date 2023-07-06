@@ -61,7 +61,7 @@ namespace BotCatMaxy
 
             settings.SaveToFile();
 
-            if (link.IsNullOrEmpty() || link == "none" || link == "null")
+            if (link.IsNullOrEmpty() || link.ToLower() == "none" || link.ToLower() == "null")
                 await ReplyAsync("Cleared appeal link");
             else
                 await ReplyAsync($"Set the appeal link to `{link}`");
