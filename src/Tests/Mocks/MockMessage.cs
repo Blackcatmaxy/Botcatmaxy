@@ -40,6 +40,7 @@ namespace Tests.Mocks
         public IMessageChannel Channel { get; init; }
 
         public IUser Author { get; init; }
+        public IThreadChannel Thread { get; }
 
         public IReadOnlyCollection<IAttachment> Attachments => throw new NotImplementedException();
 
@@ -67,6 +68,7 @@ namespace Tests.Mocks
 
         public MessageFlags? Flags => throw new NotImplementedException();
         public IMessageInteraction Interaction { get; }
+        public MessageRoleSubscriptionData RoleSubscriptionData { get; }
 
         public DateTimeOffset CreatedAt => throw new NotImplementedException();
 

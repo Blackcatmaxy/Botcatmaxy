@@ -33,6 +33,7 @@ namespace Tests.Mocks.Guild
         public string Topic => throw new NotImplementedException();
 
         public int SlowModeInterval => throw new NotImplementedException();
+        public int DefaultSlowModeInterval { get; }
         public ThreadArchiveDuration DefaultArchiveDuration { get; }
 
         public string Mention => throw new NotImplementedException();

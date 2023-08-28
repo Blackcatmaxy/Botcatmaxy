@@ -29,6 +29,42 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<WelcomeScreen> GetWelcomeScreenAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<WelcomeScreen> ModifyWelcomeScreenAsync(bool enabled, WelcomeScreenChannelProperties[] channels, string description = null,
+            RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IAutoModRule[]> GetAutoModRulesAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IAutoModRule> GetAutoModRuleAsync(ulong ruleId, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IAutoModRule> CreateAutoModRuleAsync(Action<AutoModRuleProperties> props, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IGuildOnboarding> GetOnboardingAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IGuildOnboarding> ModifyOnboardingAsync(Action<GuildOnboardingProperties> props, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public string Name => "TestName";
 
         public int AFKTimeout => throw new NotImplementedException();
@@ -60,6 +96,7 @@ namespace Tests.Mocks.Guild
         public ulong? AFKChannelId => throw new NotImplementedException();
 
         public ulong? WidgetChannelId => throw new NotImplementedException();
+        public ulong? SafetyAlertsChannelId { get; }
 
         public ulong? SystemChannelId => throw new NotImplementedException();
 
@@ -104,6 +141,7 @@ namespace Tests.Mocks.Guild
         public int? MaxMembers => throw new NotImplementedException();
 
         public int? MaxVideoChannelUsers => throw new NotImplementedException();
+        public int? MaxStageVideoChannelUsers { get; }
 
         public int? ApproximateMemberCount => userList.Count;
 
@@ -208,12 +246,24 @@ namespace Tests.Mocks.Guild
             throw new NotImplementedException();
         }
 
+        public Task<ICustomSticker> CreateStickerAsync(string name, Image image, IEnumerable<string> tags, string description = null,
+            RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<ICustomSticker> CreateStickerAsync(string name, string description, IEnumerable<string> tags, Image image, RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
 
         public Task<ICustomSticker> CreateStickerAsync(string name, string description, IEnumerable<string> tags, string path, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ICustomSticker> CreateStickerAsync(string name, Stream stream, string filename, IEnumerable<string> tags, string description = null,
+            RequestOptions options = null)
         {
             throw new NotImplementedException();
         }
@@ -425,6 +475,12 @@ namespace Tests.Mocks.Guild
         }
 
         Task<IReadOnlyCollection<IIntegration>> IGuild.GetIntegrationsAsync(RequestOptions options)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyCollection<IAuditLogEntry>> GetAuditLogsAsync(int limit = 100, CacheMode mode = CacheMode.AllowDownload, RequestOptions options = null,
+            ulong? beforeId = null, ulong? userId = null, ActionType? actionType = null, ulong? afterId = null)
         {
             throw new NotImplementedException();
         }

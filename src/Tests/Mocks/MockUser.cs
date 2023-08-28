@@ -25,8 +25,6 @@ namespace Tests.Mocks
         }
 
         public string AvatarId => throw new NotImplementedException();
-        public string BannerId { get; }
-        public Color? AccentColor { get; }
 
         public string Discriminator => $"#{DiscriminatorValue}";
 
@@ -39,6 +37,7 @@ namespace Tests.Mocks
         public string Username { get; init; }
 
         public UserProperties? PublicFlags => throw new NotImplementedException();
+        public string GlobalName { get; }
 
         public DateTimeOffset CreatedAt => throw new NotImplementedException();
 
@@ -53,11 +52,6 @@ namespace Tests.Mocks
         public IReadOnlyCollection<IActivity> Activities => throw new NotImplementedException();
 
         public string GetAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string GetBannerUrl(ImageFormat format = ImageFormat.Auto, ushort size = 256)
         {
             throw new NotImplementedException();
         }
