@@ -135,8 +135,9 @@ public class LoggingCommands : InteractiveModule
             return;
         }
 
-        embed.AddField("Log channel", logChannel.Mention, true);
-        embed.AddField("Log deleted messages", settings.logDeletes, true);
+        embed.AddField("Log channel", logChannel.Mention, true)
+             .AddField("Log deleted messages", settings.logDeletes, true)
+             .AddField("Log Thread Changes", settings.logThreads, true);
         if (settings.pubLogChannel != null)
         {
             var pubLogChannel = socketContext.Guild.GetTextChannel(settings.pubLogChannel.Value);
@@ -218,5 +219,26 @@ public class LoggingCommands : InteractiveModule
 
         settings.SaveToFile();
         await ReplyAsync("Set backup channel to this channel");
+    }
+
+    [Command("togglelogthread"), Alias("togglelogthreads")]
+    [Summary("Toggles if thread create, update, and delete should be logged.")]
+    [HasAdmin]
+    public async Task ToggleLogThread()
+    {
+        IUserMessage message = await ReplyAsync("Setting...");
+        LogSettings settings = Context.Guild.LoadFromFile<LogSettings>(true);
+
+        settings.logThreads = !settings.logThreads;
+
+        settings.SaveToFile();
+        if (settings.logThreads)
+        {
+            await message.ModifyAsync(msg => msg.Content = "Thread creation, update, and deletion will now be logged in the logging channel.");
+        }
+        else
+        {
+            await message.ModifyAsync(msg => msg.Content = "Thread creation, update, and deletion will now not be logged.");
+        }
     }
 }

@@ -15,6 +15,7 @@ namespace BotCatMaxy.Models
         public ulong? logChannel = null;
         public bool logDeletes = true;
         public bool logEdits = false;
+        public bool logThreads = false;
         public ulong? backupChannel = null;
 
         public HashSet<ulong> channelLogBlacklist = new();

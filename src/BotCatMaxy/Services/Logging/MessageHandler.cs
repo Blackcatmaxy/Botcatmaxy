@@ -11,10 +11,10 @@ using Microsoft.Extensions.Logging;
 
 namespace BotCatMaxy.Services.Logging;
 
-public class LoggingHandler : DiscordClientService
+public class MessageHandler : DiscordClientService
 {
     private readonly DiscordSocketClient _client;
-    public LoggingHandler(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
+    public MessageHandler(DiscordSocketClient client, ILogger<DiscordClientService> logger) : base(client, logger)
     {
         _client = client;
     }
