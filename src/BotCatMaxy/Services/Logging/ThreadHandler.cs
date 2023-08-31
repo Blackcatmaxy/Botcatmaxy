@@ -93,7 +93,6 @@ public class ThreadHandler : DiscordClientService
                 return;
 
             EmbedBuilder embed = new EmbedBuilder()
-                                 .WithAuthor(threadChannel.Owner)
                                  .WithFooter($"User ID:{threadChannel.Owner.Id}")
                                  .WithTitle("Thread Name Updated")
                                  .WithDescription($"Changed from `{oldThreadChannel.Name}` to `{threadChannel.Name}`")
@@ -124,11 +123,9 @@ public class ThreadHandler : DiscordClientService
                 return;
 
             EmbedBuilder embed = new EmbedBuilder()
-                                 .WithAuthor(threadChannel.Owner)
                                  .WithFooter($"User ID:{threadChannel.Owner.Id}")
                                  .WithTitle("Thread Deleted")
                                  .AddField("Thread Name", threadChannel.Name, true)
-                                 // .AddField("Updated Thread Name", threadChannel.Name, true)
                                  .AddField("Thread", threadChannel.Mention, true)
                                  // This ugliness because can't mention SocketGuildChannel?
                                  .AddField("Parent Channel", $"<#{threadChannel.ParentChannel.Id.ToString()}>", true)
