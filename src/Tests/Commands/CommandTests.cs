@@ -22,7 +22,7 @@ namespace Tests
         protected MockDiscordClient Client { get; } = new();
         protected MockGuild Guild { get; } = new();
         protected CommandService Service { get; }
-        protected CommandHandler Handler { get; }
+        protected TextCommandHandler Handler { get; }
         protected ServiceProvider Provider { get; }
         protected CommandResult CommandResult { get; private set; }
         protected TaskCompletionSource<CommandResult> CompletionSource { get; private set; }
@@ -35,7 +35,7 @@ namespace Tests
                 .AddSingleton(Client)
                 .BuildServiceProvider();
             Service = new CommandService();
-            Handler = new CommandHandler(Client, null, Provider, Service);
+            Handler = new TextCommandHandler(Client, null, Provider, Service);
             Service.CommandExecuted += CommandExecuted;
         }
 
@@ -57,7 +57,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Executes after command is finished with full info <seealso cref="CommandHandler"/>'s CommandExecuted
+        /// Executes after command is finished with full info <seealso cref="SlashCommandHandler"/>'s CommandExecuted
         /// </summary>
         private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext context, IResult result)
         {

@@ -9,7 +9,7 @@ using BotCatMaxy.Startup;
 namespace Discord.Commands
 {
     /// <summary>
-    /// A wrapper of <seealso cref="RuntimeResult"/> for communicating the result of a command in the <seealso cref="CommandHandler"/>
+    /// A wrapper of <seealso cref="RuntimeResult"/> for communicating the result of a command in the <seealso cref="TextCommandHandler"/>
     /// </summary>
     #nullable enable
     public class CommandResult : RuntimeResult

@@ -92,7 +92,7 @@ namespace BotCatMaxy
                     services.AddHostedService<StatusManager>();
                     services.AddHostedService<FilterHandler>();
                     services.AddHostedService<LoggingHandler>();
-                    services.AddHostedService<CommandHandler>();
+                    services.AddHostedService<TextCommandHandler>();
                     services.AddHostedService<TempActionService>();
                 });
 

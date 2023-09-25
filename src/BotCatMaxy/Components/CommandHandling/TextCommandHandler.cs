@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BotCatMaxy.Startup
 {
-    public class CommandHandler : DiscordClientService
+    public class TextCommandHandler : DiscordClientService
     {
         /*public readonly HashSet<string> ignoredCMDErrors = new HashSet<string>() { "User not found.",
                             "The input text has too few parameters.", "Invalid context for command; accepted contexts: Guild.",
@@ -29,7 +29,7 @@ namespace BotCatMaxy.Startup
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
 
-        public CommandHandler(IDiscordClient client, ILogger<CommandHandler> logger,  IServiceProvider services, CommandService commandService) 
+        public TextCommandHandler(IDiscordClient client, ILogger<TextCommandHandler> logger,  IServiceProvider services, CommandService commandService) 
             : base(client as DiscordSocketClient, logger)
         {
             _commands = commandService;
