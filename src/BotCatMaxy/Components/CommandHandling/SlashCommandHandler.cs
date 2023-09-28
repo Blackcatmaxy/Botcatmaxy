@@ -111,8 +111,12 @@ namespace BotCatMaxy.Startup
             }
 
             //Try to use above override, otherwise use provided error reason from event
-            await context.Channel.SendMessageAsync(message ?? result.ErrorReason);
-            
+            message ??= result.ErrorReason;
+            if (context.Interaction.HasResponded)
+                await context.Interaction.FollowupAsync(message);
+            else
+                await context.Interaction.RespondAsync(message, ephemeral: true);
+
             //Debug info
             if (result.Error is InteractionCommandError.Exception or InteractionCommandError.Unsuccessful)
                 await LogCommandException(slashCommandInfo, context, result);

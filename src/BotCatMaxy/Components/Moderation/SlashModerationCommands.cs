@@ -23,7 +23,6 @@ namespace BotCatMaxy
     [Name("Moderation")]
     public class SlashModerationCommands : InteractionModuleBase
     {
-        [Discord.Interactions.RequireContext(Discord.Interactions.ContextType.Guild)]
         public async Task<RuntimeResult> ExecuteWarnAsync(IUser user, float size, string reason)
         {
             var warns = user.Id.LoadInfractions(Context.Guild);
@@ -57,8 +56,8 @@ namespace BotCatMaxy
         //
         [SlashCommand("warn", "warn a user")]
         [Discord.Commands.Summary("Warn a user with a specific size, along with a reason.")]
-        [CanWarn()]
-        public Task WarnUserWithSizeAsync([RequireHierarchy] IUser user, string reason, float size = 1)
+        [Discord.Interactions.CanWarn()]
+        public Task WarnUserWithSizeAsync([Discord.Interactions.RequireHierarchy] IUser user, string reason, float size = 1)
             => ExecuteWarnAsync(user, size, reason);
 
         #nullable enable
@@ -93,8 +92,7 @@ namespace BotCatMaxy
         #nullable disable
 
         [SlashCommand("warns", "view a user's warns")]
-        [Discord.Commands.Summary("Views a user's infractions.")]
-        [CanWarn]
+        [Discord.Interactions.CanWarn]
         [Alias("infractions", "warnings")]
         public async Task CheckUserWarnsAsync(IUser user = null, int amount = 5)
         {
@@ -109,10 +107,9 @@ namespace BotCatMaxy
         }
 
         [SlashCommand("removewarn", "remove a user's warn")]
-        [Discord.Commands.Summary("Removes a warn from a user.")]
         [Alias("warnremove", "removewarning")]
         [HasAdmin()]
-        public async Task<RuntimeResult> RemoveWarnAsync([RequireHierarchy] IUser user, int index)
+        public async Task<RuntimeResult> RemoveWarnAsync([Discord.Interactions.RequireHierarchy] IUser user, int index)
         {
             List<Infraction> infractions = user.Id.LoadInfractions(Context.Guild, false);
             if (infractions?.Count is null or 0)
@@ -137,7 +134,7 @@ namespace BotCatMaxy
         [Alias("warnkick", "warnandkick", "kickandwarn")]
         [Discord.Commands.RequireContext(ContextType.Guild)]
         [Discord.Commands.RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task KickAndWarn([RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
+        public async Task KickAndWarn([Discord.Interactions.RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
         {
             var invocation = await Context.Interaction.GetOriginalResponseAsync();
             await user.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
