@@ -203,6 +203,9 @@ namespace BotCatMaxy.Moderation
             }
         }
 
+        public static Embed GetEmbed(this List<Infraction> infractions, IUser user, IGuild guild, int amount = 5, bool showLinks = false)
+            => GetEmbed(infractions, new UserRef(user), guild, amount, showLinks);
+
         public static Embed GetEmbed(this List<Infraction> infractions, UserRef userRef, IGuild guild, int amount = 5, bool showLinks = false)
         {
             InfractionInfo data = new(infractions, amount, showLinks);

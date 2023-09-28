@@ -7,10 +7,12 @@ using Discord.WebSocket;
 using Humanizer;
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Services.Logging;
 using Discord.Addons.Hosting;
 using Microsoft.Extensions.Logging;
@@ -59,7 +61,8 @@ namespace BotCatMaxy.Startup
             // See Dependency Injection guide for more information.
             await _commands.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
                 services: _services);
-            await new LogMessage(LogSeverity.Info, "CMDs", "Commands set up").Log();
+            int commands = _commands.Commands.Count();
+            await new LogMessage(LogSeverity.Info, "CMDs", $"{commands} Text commands set up").Log();
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -100,7 +103,7 @@ namespace BotCatMaxy.Startup
 
         private async Task CommandExecuted(Optional<CommandInfo> command, ICommandContext context, IResult result)
         {
-            if (result is CommandResult commandResult)
+            if (result is TextResult commandResult)
             {
                 if (!string.IsNullOrEmpty(result.ErrorReason))
                     await context.Channel.SendMessageAsync(result.ErrorReason, embed: commandResult.Embed);

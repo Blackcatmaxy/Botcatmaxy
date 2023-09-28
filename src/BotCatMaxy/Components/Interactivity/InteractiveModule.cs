@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Models;
 using Discord;
 using Discord.Commands;

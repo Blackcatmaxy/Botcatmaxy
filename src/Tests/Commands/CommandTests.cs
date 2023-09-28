@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using Microsoft.Extensions.DependencyInjection;
 using Tests.Mocks;
 using Tests.Mocks.Guild;
@@ -24,8 +25,8 @@ namespace Tests
         protected CommandService Service { get; }
         protected TextCommandHandler Handler { get; }
         protected ServiceProvider Provider { get; }
-        protected CommandResult CommandResult { get; private set; }
-        protected TaskCompletionSource<CommandResult> CompletionSource { get; private set; }
+        protected TextResult CommandResult { get; private set; }
+        protected TaskCompletionSource<TextResult> CompletionSource { get; private set; }
 
         public CommandTests()
         {
@@ -45,13 +46,13 @@ namespace Tests
         public Task DisposeAsync()
             => Task.CompletedTask;
 
-        public async Task<CommandResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
+        public async Task<RuntimeResult> TryExecuteCommand(string text, IUser user, MockTextChannel channel)
         {
             Assert.NotNull(channel);
             Assert.NotNull(user);
             var message = channel.SendMessageAsOther(text, user);
             var context = new MockCommandContext(Client, message);
-            CompletionSource = new TaskCompletionSource<CommandResult>();
+            CompletionSource = new TaskCompletionSource<TextResult>();
             await Handler.ExecuteCommand(message, context);
             return await CompletionSource.Task;
         }
@@ -61,14 +62,14 @@ namespace Tests
         /// </summary>
         private Task CommandExecuted(Optional<CommandInfo> arg1, ICommandContext context, IResult result)
         {
-            if (result is CommandResult commandResult)
+            if (result is TextResult commandResult)
             {
                 CommandResult = commandResult;
                 CompletionSource.SetResult(commandResult);
             }
             else if (result.Error == CommandError.Exception) CompletionSource.SetException(((ExecuteResult)result).Exception);
             else if (!result.IsSuccess) CompletionSource.SetException(new Exception(result.ErrorReason));
-            else CompletionSource.SetResult(new CommandResult(null, "Test"));
+            else CompletionSource.SetResult(new TextResult(null, "Test"));
 
             return Task.CompletedTask;
         }

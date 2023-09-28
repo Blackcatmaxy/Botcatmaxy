@@ -9,6 +9,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Components.Interactivity;
 
 namespace BotCatMaxy.Components.Filter
@@ -28,7 +29,7 @@ namespace BotCatMaxy.Components.Filter
         [Summary("View filter information.")]
         [Alias("info")]
         [AdminOrDM]
-        public async Task<RuntimeResult> ListAutoMod(string? extension = null)
+        public async Task<IResult> ListAutoMod(string? extension = null)
         {
             var guild = await QueryMutualGuild();
             if (guild == null)
@@ -315,7 +316,7 @@ namespace BotCatMaxy.Components.Filter
         [Summary("Toggle strict filtering and checks if a bad word is sent even if inside another word.")]
         [Alias("togglecontainword", "togglecontainword")]
         [HasAdmin()]
-        public async Task<RuntimeResult> ToggleContainBadWord(string word)
+        public async Task<IResult> ToggleContainBadWord(string word)
         {
             var file = Context.Guild.LoadFromFile<BadWordList>(false);
             var badWords = file?.badWords;

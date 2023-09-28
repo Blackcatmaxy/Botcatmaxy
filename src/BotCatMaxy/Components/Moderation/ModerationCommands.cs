@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Components.Interactivity;
 
 namespace BotCatMaxy
