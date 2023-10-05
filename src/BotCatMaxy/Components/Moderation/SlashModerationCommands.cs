@@ -17,24 +17,21 @@ using ContextType = Discord.Commands.ContextType;
 using IResult = Discord.Interactions.IResult;
 using RunMode = Discord.Commands.RunMode;
 using RuntimeResult = Discord.Interactions.RuntimeResult;
+#nullable enable
 
 namespace BotCatMaxy
 {
-    [Name("Moderation")]
-    public class SlashModerationCommands : InteractionModuleBase
+    public class SlashModerationCommands : CommandModule
     {
         public async Task<RuntimeResult> ExecuteWarnAsync(IUser user, float size, string reason)
         {
-            var warns = user.Id.LoadInfractions(Context.Guild);
-            string modifier = (size != 1) ? $"(size of `{size}x`) " : "";
-            // await RespondAsync($"{user.Mention} is being given their `{warns.Count.Suffix()}` warning {modifier}because of `{reason}`.");
-            await DeferAsync();
-            var message = await Context.Interaction.GetOriginalResponseAsync();
+            var message = await DeferWithMessageAsync();
             IUserMessage logMessage = await DiscordLogging.LogWarn(Context.Guild, Context.User, user.Id, reason, message.GetJumpUrl());
             WarnResult result = await user.Id.Warn(size, reason, Context.Channel as ITextChannel, user, logMessage?.GetJumpUrl());
 
             if (result.success)
             {
+                string modifier = (size != 1) ? $"(size of `{size}x`) " : "";
                 return CommandResult.FromSuccess($"{user.Mention} has been given their `{result.warnsAmount.Suffix()}` warning {modifier}because of `{reason}`.");
             }
 
@@ -47,67 +44,44 @@ namespace BotCatMaxy
             }
             return CommandResult.FromError(result.description.Truncate(1500));
         }
-        
-        // [SlashCommand("warn", "warn a user")]
-        // [Discord.Commands.Summary("Warn a user with a reason.")]
-        // [CanWarn()]
-        // public Task<RuntimeResult> WarnUserAsync([RequireHierarchy] IUser user, [Remainder] string reason)
-        //     => ExecuteWarnAsync(user, 1, reason);
-        //
+
         [SlashCommand("warn", "warn a user")]
-        [Discord.Commands.Summary("Warn a user with a specific size, along with a reason.")]
         [Discord.Interactions.CanWarn()]
         public Task WarnUserWithSizeAsync([Discord.Interactions.RequireHierarchy] IUser user, string reason, float size = 1)
             => ExecuteWarnAsync(user, size, reason);
 
-        #nullable enable
-        [SlashCommand("dmwarns", "warn a user")]
-        [Discord.Commands.Summary("Views a user's infractions.")]
-        [Discord.Commands.RequireContext(ContextType.DM, ErrorMessage = "This command now only works in the bot's DMs")]
-        [Alias("dminfractions", "dmwarnings", "warns", "infractions", "warnings")]
-        public async Task<RuntimeResult> DMUserWarnsAsync(IUser? user = null, int amount = 50)
+        [SlashCommand("displaywarns", "show a user's warns")]
+        [Discord.Interactions.CanWarn]
+        public async Task<RuntimeResult> DisplayUserWarnsAsync(IUser? user = null, int amount = 5)
         {
             if (amount < 1)
                 return CommandResult.FromError("Why would you want to see that many infractions?");
 
-            // var guild = await QueryMutualGuild();
-            // if (guild == null)
-                return CommandResult.FromError("You have timed out or canceled.");
-            //
-            // user ??= new IUser(Context.Message.Author);
-            // List<Infraction> infractions = user.LoadInfractions(guild, false);
-            // if (infractions?.Count is null or 0)
-            // {
-            //     var message = $"{user.Mention()} has no infractions";
-            //     if (user.User == null)
-            //         message += " or doesn't exist";
-            //     return CommandResult.FromSuccess(message);
-            // }
-            //
-            // user = user with { GuildUser = await guild.GetUserAsync(user.ID) };
-            // var embed = infractions.GetEmbed(user, guild, amount: amount);
-            // return CommandResult.FromSuccess($"Here are {user.Mention()}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
-            //     embed: embed);
-        }
-        #nullable disable
-
-        [SlashCommand("warns", "view a user's warns")]
-        [Discord.Interactions.CanWarn]
-        [Alias("infractions", "warnings")]
-        public async Task CheckUserWarnsAsync(IUser user = null, int amount = 5)
-        {
-            // user ??= new IUser(Context.User as IGuildUser);
+            user ??= Context.User;
             List<Infraction> infractions = user.Id.LoadInfractions(Context.Guild, false);
             if (infractions?.Count is null or 0)
+                return CommandResult.FromSuccess($"{user.Mention} has no infractions.");
+
+            var embed = infractions.GetEmbed(user, Context.Guild, amount: amount);
+            return CommandResult.FromSuccess($"Here are {user.Mention}'s {((amount < infractions.Count) ? $"last {amount} out of " : "")}{"infraction".ToQuantity(infractions.Count)}",
+                embed: embed);
+        }
+
+        [SlashCommand("warns", "view a user's warns")]
+        public async Task CheckUserWarnsAsync(IUser? user = null, int amount = 5)
+        {
+            user ??= Context.User;
+            var guild = await QueryMutualGuild();
+            List<Infraction> infractions = user.Id.LoadInfractions(guild, false);
+            if (infractions?.Count is null or 0)
             {
-                await RespondAsync($"{user.Username} has no infractions");
+                await FollowupAsync($"{user.Username} has no infractions", ephemeral: true);
                 return;
             }
-            await RespondAsync(embed: infractions.GetEmbed(user, Context.Guild, amount: amount, showLinks: true));
+            await FollowupAsync(embed: infractions.GetEmbed(user, guild, amount: amount, showLinks: true), ephemeral: true);
         }
 
         [SlashCommand("removewarn", "remove a user's warn")]
-        [Alias("warnremove", "removewarning")]
         [HasAdmin()]
         public async Task<RuntimeResult> RemoveWarnAsync([Discord.Interactions.RequireHierarchy] IUser user, int index)
         {
@@ -131,10 +105,9 @@ namespace BotCatMaxy
 
         [SlashCommand("kickwarn", "kick a user and warn them with an optional reason")]
         [Discord.Commands.Summary("Kicks a user, and warns them with an optional reason.")]
-        [Alias("warnkick", "warnandkick", "kickandwarn")]
         [Discord.Commands.RequireContext(ContextType.Guild)]
         [Discord.Commands.RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task KickAndWarn([Discord.Interactions.RequireHierarchy] SocketGuildUser user, [Remainder] string reason = "Unspecified")
+        public async Task KickAndWarn([Discord.Interactions.RequireHierarchy] SocketGuildUser user, string reason = "Unspecified")
         {
             var invocation = await Context.Interaction.GetOriginalResponseAsync();
             await user.Warn(1, reason, Context.Channel as ITextChannel, "Discord");
@@ -195,9 +168,7 @@ namespace BotCatMaxy
         // }
 
         [SlashCommand("delete", "clear a specific number of messages")]
-        [Discord.Commands.Summary("Clear a specific number of messages between 0-300.")]
-        [Alias("clean", "clear", "deletemany", "purge")]
-        [Discord.Commands.RequireUserPermission(ChannelPermission.ManageMessages)]
+        [Discord.Interactions.RequireUserPermission(ChannelPermission.ManageMessages)]
         public async Task DeleteMany(uint number, IUser user = null)
         {
             if (number == 0 || number > 300)

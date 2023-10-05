@@ -40,7 +40,12 @@ namespace BotCatMaxy.Startup
             {
                 socketClient.Ready += async () =>
                 {
+#if DEBUG
                     await _interaction.RegisterCommandsToGuildAsync(285529027383525376);
+#else
+                    await interactionService.RegisterCommandsGloballyAsync();
+#endif
+                    LogSeverity.Info.Log("CMDs", "Registered commands");
                 };
                 // Hook the MessageReceived event into our command handler
                 socketClient.InteractionCreated += async (x) =>
@@ -51,14 +56,6 @@ namespace BotCatMaxy.Startup
             };
 
             _interaction.SlashCommandExecuted += CommandExecuted;
-
-            //Adds custom type readers
-            // _interaction.addty
-            // _interaction.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
-            // _interaction.AddTypeReader(typeof(UserRef), new UserRefTypeReader());
-            // _interaction.AddTypeReader(typeof(IUser), new BetterUserTypeReader());
-            // _interaction.AddTypeReader(typeof(TimeSpan), new TimeSpanTypeReader(), true);
-            // _interaction.AddTypeReader(typeof(CommandInfo[]), new CommandTypeReader());
 
             // See Dependency Injection guide for more information.
             await _interaction.AddModulesAsync(assembly: Assembly.GetAssembly(typeof(Program)),
