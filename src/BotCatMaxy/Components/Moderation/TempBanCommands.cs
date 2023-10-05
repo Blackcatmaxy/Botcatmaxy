@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using BotCatMaxy.Components.CommandHandling;
 using BotCatMaxy.Components.Interactivity;
 using BotCatMaxy.Data;
 using BotCatMaxy.Models;

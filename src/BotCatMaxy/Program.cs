@@ -9,6 +9,7 @@ using BotCatMaxy.Services;
 using Discord;
 using Discord.Addons.Hosting;
 using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Fergun.Interactive;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,7 @@ using MongoDB.Driver;
 using Serilog;
 using Serilog.Templates;
 using Serilog.Templates.Themes;
+using RunMode = Discord.Commands.RunMode;
 
 namespace BotCatMaxy
 {
@@ -81,6 +83,7 @@ namespace BotCatMaxy
                     AddMongoToServices(context, services);
                     services.AddSingleton(context.Configuration);
                     services.AddSingleton<InteractiveService>();
+                    services.AddSingleton<InteractionService>();
                     services.AddSingleton(new CommandService(new CommandServiceConfig
                     {
                         DefaultRunMode = RunMode.Async,
@@ -92,7 +95,8 @@ namespace BotCatMaxy
                     services.AddHostedService<StatusManager>();
                     services.AddHostedService<FilterHandler>();
                     services.AddHostedService<LoggingHandler>();
-                    services.AddHostedService<CommandHandler>();
+                    services.AddHostedService<TextCommandHandler>();
+                    services.AddHostedService<SlashCommandHandler>();
                     services.AddHostedService<TempActionService>();
                 });
 
